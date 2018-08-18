@@ -1435,7 +1435,7 @@ db_build_query_clause(struct query_params *qp)
   else
     qc->where = sqlite3_mprintf("WHERE f.disabled = 0");
 
-  if (qp->having && (qp->type & (Q_GROUP_ALBUMS | Q_GROUP_ARTISTS)))
+  if (qp->having && (qp->type & (Q_GROUP_ALBUMS | Q_GROUP_ARTISTS | Q_GROUP_GENRES)))
       qc->having = sqlite3_mprintf("HAVING %s", qp->having);
     else
       qc->having = sqlite3_mprintf("");
@@ -1721,6 +1721,25 @@ db_build_query_group_artists(struct query_params *qp)
 }
 
 static char *
+db_build_query_group_genres(struct query_params *qp)
+{
+  struct query_clause *qc;
+  char *count;
+  char *query;
+
+  qc = db_build_query_clause(qp);
+  if (!qc)
+    return NULL;
+
+  count = sqlite3_mprintf("SELECT COUNT(DISTINCT f.genre) FROM files f %s;", qc->where);
+  query = sqlite3_mprintf("SELECT g.id, g.persistentid, f.genre, f.album_artist_sort, COUNT(f.id) as track_count, COUNT(DISTINCT f.songalbumid) as album_count, f.album_artist, f.songartistid, SUM(f.song_length) FROM files f JOIN groups g ON f.songalbumid = g.persistentid %s GROUP BY f.genre %s %s %s;", qc->where, qc->having, qc->order, qc->index);
+
+  db_free_query_clause(qc);
+
+  return db_build_query_check(qp, count, query);
+}
+
+static char *
 db_build_query_group_items(struct query_params *qp)
 {
   enum group_type gt;
@@ -1877,6 +1896,10 @@ db_query_start(struct query_params *qp)
 
       case Q_GROUP_ARTISTS:
 	query = db_build_query_group_artists(qp);
+	break;
+
+      case Q_GROUP_GENRES:
+	query = db_build_query_group_genres(qp);
 	break;
 
       case Q_GROUP_ITEMS:
@@ -2149,7 +2172,7 @@ db_query_fetch_group(struct query_params *qp, struct db_group_info *dbgri)
       return -1;
     }
 
-  if ((qp->type != Q_GROUP_ALBUMS) && (qp->type != Q_GROUP_ARTISTS))
+  if ((qp->type != Q_GROUP_ALBUMS) && (qp->type != Q_GROUP_ARTISTS) && (qp->type != Q_GROUP_GENRES))
     {
       DPRINTF(E_LOG, L_DB, "Not a groups query!\n");
       return -1;

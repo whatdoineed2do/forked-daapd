@@ -44,6 +44,7 @@ enum query_type {
   Q_GROUP_ITEMS      = 7,
   Q_GROUP_DIRS       = 8,
   Q_COUNT_ITEMS      = 9,
+  Q_GROUP_GENRES     = 10,
 
   // Keep in sync with browse_clause[]
   Q_BROWSE_ARTISTS   = Q_F_BROWSE | 1,
