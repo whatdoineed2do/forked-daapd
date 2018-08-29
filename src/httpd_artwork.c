@@ -54,14 +54,14 @@ artwork_to_evbuf(struct httpd_request *hreq, struct db_group_info *dbgri, uint32
     {
       int  gpid;
       safe_atoi32(dbgri->id, &gpid);
-      if ( (ret = artwork_get_group(hreq->reply, gpid, 800, 800)) < 0)
+      if ( (ret = artwork_get_group(hreq->reply, gpid, 600, 600)) < 0)
         {
           DPRINTF(E_LOG, L_WEB, "artwork: failed to retreive for group %d\n", gpid);
         }
     }
   if (dbmfi_id)
     {
-      if ( (ret = artwork_get_item(hreq->reply, *dbmfi_id, 800, 800)) < 0)
+      if ( (ret = artwork_get_item(hreq->reply, *dbmfi_id, 600, 600)) < 0)
         {
           DPRINTF(E_LOG, L_WEB, "artwork: failed to retreive for item %d\n", *dbmfi_id);
         }
@@ -82,7 +82,7 @@ artwork_to_evbuf(struct httpd_request *hreq, struct db_group_info *dbgri, uint32
         if (len > 0) evbuffer_drain(hreq->reply, len);
         ret = -1;
     }
-  DPRINTF(E_DBG, L_WEB, "artwork: type=%s len=%d\n", ctype, len);
+  DPRINTF(E_DBG, L_WEB, "artwork: via %s  type=%s len=%d\n", (dbgri ? "group" : "item"), ctype, len);
 
   if (ret)
     {
