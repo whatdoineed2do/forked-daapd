@@ -1,3 +1,19 @@
+# IMPORTANT
+
+This branch contains PRs/features that are yet to be merged/not accepted into the [upstream master](https://github.com/ejurgensen/forked-daapd/); althernatively the merged backend functionality has yet to be sync with the frontend.  This branch includes the corresponding web ui files.
+
+As of Sept 2018, the [web ui](https://github.com/chme/forked-daapd-web) and backend are still seperate reps although there is an [outstanding PR to merge](https://github.com/ejurgensen/forked-daapd/pull/575).
+
+Additional features over upstream included:
+
+!feature                    |backend|frontend|github refs|
+|---------------------------|-------|--------|-----------|
+|genre listing functionality|   M   |   P    |[a](https://github.com/ejurgensen/forked-daapd/pull/559), [b](https://github.com/chme/forked-daapd-web/pull/6)|
+|http/web artwork           |   P   |   P    |[a](https://github.com/ejurgensen/forked-daapd/pull/573)|
+|indx navigation for albums |   -   |   P    |[a](https://github.com/chme/forked-daapd-web/pull/11)|
+|play next                  |   P   |   P    |[a](https://github.com/ejurgensen/forked-daapd/pull/581), [b](https://github.com/chme/forked-daapd-web/pull/12)|
+
+
 # forked-daapd
 
 forked-daapd is a Linux/FreeBSD DAAP (iTunes), MPD (Music Player Daemon) and
