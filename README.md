@@ -12,6 +12,7 @@ Additional features over upstream included:
 |http/web artwork           |   P   |   P    |[a](https://github.com/ejurgensen/forked-daapd/pull/573)|
 |indx navigation for albums |   -   |   P    |[a](https://github.com/chme/forked-daapd-web/pull/11)|
 |play next                  |   P   |   P    |[a](https://github.com/ejurgensen/forked-daapd/pull/581), [b](https://github.com/chme/forked-daapd-web/pull/12)|
+|artist page can list all tracks|-|-||
 
 
 # forked-daapd
