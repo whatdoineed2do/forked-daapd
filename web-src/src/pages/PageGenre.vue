@@ -1,7 +1,19 @@
 <template>
   <div>
     <tabs-music></tabs-music>
-
+    <template>
+      <div class="container" v-if="links.length > 1">
+        <div class="columns is-centered">
+          <div class="column is-three-quarters">
+            <div class="tabs is-centered is-small">
+              <ul>
+                <tab-idx-nav-item v-for="link in links" :key="link.n" :link="link"></tab-idx-nav-item>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
     <content-with-heading>
       <template slot="heading-left">
         <p class="title is-4">{{ name }}</p>
@@ -24,6 +36,7 @@ import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import TabsMusic from '@/components/TabsMusic'
 import ListItemAlbums from '@/components/ListItemAlbum'
+import TabIdxNavItem from '@/components/TabsIdxNav'
 import webapi from '@/webapi'
 
 const genreData = {
@@ -54,7 +67,7 @@ const genreData = {
 export default {
   name: 'PageGenre',
   mixins: [ LoadDataBeforeEnterMixin(genreData) ],
-  components: { ContentWithHeading, TabsMusic, ListItemAlbums },
+  components: { ContentWithHeading, TabsMusic, ListItemAlbums, TabIdxNavItem },
 
   data () {
     return {

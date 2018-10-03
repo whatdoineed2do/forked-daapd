@@ -53,6 +53,7 @@
 # include "spotify_webapi.h"
 # include "spotify.h"
 #endif
+#include "misc_artwork.h"
 
 /* -------------------------------- HELPERS --------------------------------- */
 
@@ -1432,6 +1433,41 @@ jsonapi_reply_player_seek(struct httpd_request *hreq)
   return HTTP_NOCONTENT;
 }
 
+static char*
+jsonapi_artwork_uri(struct evhttp_request *ev_req, char* artwork)
+{
+  char *buf;
+  const char *host;
+  const char *proto;
+  int len;
+
+  if (ev_req == NULL || artwork == NULL)
+    {
+      return NULL;
+    }
+
+  /* figure out where the cli request thinks this server is located via 
+   * http/1.1 mandatory 'host' header
+   */
+  if ( (host = evhttp_find_header(evhttp_request_get_input_headers(ev_req), "Host")) == NULL)
+    {
+      DPRINTF(E_DBG, L_WEB, "missing 'Host' http request header\n");
+      return NULL;
+    }
+
+  len = 8 + strlen(host) + strlen(artwork) +1;
+  buf = (char*)malloc(len);
+  snprintf(buf, len, "%s://%s%s", 
+              ( (proto = evhttp_find_header(evhttp_request_get_input_headers(ev_req), "X-Forwarded-Proto")) == NULL ?
+                    "http" : proto),
+              host,
+              artwork);
+
+  DPRINTF(E_DBG, L_WEB, "full artwork uri=%s\n", buf);
+  
+  return buf;
+}
+
 static int
 jsonapi_reply_player(struct httpd_request *hreq)
 {
@@ -1490,9 +1526,16 @@ jsonapi_reply_player(struct httpd_request *hreq)
 
       if (queue_item)
 	{
+          char *fau = queue_item->data_kind == DATA_KIND_FILE ? 
+                          jsonapi_artwork_uri(hreq->req, queue_item->artwork_url) :
+                          NULL;
+
 	  json_object_object_add(reply, "item_id", json_object_new_int(queue_item->id));
 	  json_object_object_add(reply, "item_length_ms", json_object_new_int(queue_item->song_length));
 	  json_object_object_add(reply, "item_progress_ms", json_object_new_int(0));
+          safe_json_add_string(reply, "artwork_url", fau);
+
+          free(fau);
 	  free_queue_item(queue_item, 0);
 	}
       else
@@ -1500,6 +1543,7 @@ jsonapi_reply_player(struct httpd_request *hreq)
 	  json_object_object_add(reply, "item_id", json_object_new_int(0));
 	  json_object_object_add(reply, "item_length_ms", json_object_new_int(0));
 	  json_object_object_add(reply, "item_progress_ms", json_object_new_int(0));
+	  json_object_object_add(reply, "artwork_url", NULL);
 	}
     }
 
@@ -1570,6 +1614,11 @@ queue_item_to_json(struct db_queue_item *queue_item, char shuffle)
       if (ret < sizeof(artwork_url))
 	json_object_object_add(item, "artwork_url", json_object_new_string(artwork_url));
     }
+
+  safe_json_add_string(item, "artwork_url", 
+                       (queue_item->data_kind == DATA_KIND_FILE) ? 
+                           queue_item->artwork_url : 
+                           NULL);
 
   return item;
 }
@@ -1682,16 +1731,16 @@ queue_tracks_add_playlist(const char *id, int pos)
 }
 
 static int
-jsonapi_reply_queue_tracks_add(struct httpd_request *hreq)
+queue_tracks_add(struct httpd_request *hreq, bool addnext)
 {
   const char *param;
   char *uris;
   char *uri;
+  char *p;
   const char *id;
   int pos = -1;
   int count = 0;
   int ret = 0;
-
 
   param = evhttp_find_header(hreq->query, "position");
   if (param)
@@ -1715,7 +1764,7 @@ jsonapi_reply_queue_tracks_add(struct httpd_request *hreq)
     }
 
   uris = strdup(param);
-  uri = strtok(uris, ",");
+  uri = strtok_r(uris, ",", &p);
 
   do
     {
@@ -1755,7 +1804,7 @@ jsonapi_reply_queue_tracks_add(struct httpd_request *hreq)
       if (pos >= 0)
 	pos += count;
     }
-  while ((uri = strtok(NULL, ",")));
+  while ((uri = strtok_r(p, ",", &p)));
 
   free(uris);
 
@@ -1763,6 +1812,18 @@ jsonapi_reply_queue_tracks_add(struct httpd_request *hreq)
     return HTTP_INTERNAL;
 
   return HTTP_NOCONTENT;
+}
+
+static int
+jsonapi_reply_queue_tracks_add(struct httpd_request *hreq)
+{
+  return queue_tracks_add(hreq, false);
+}
+
+static int
+jsonapi_reply_queue_tracks_addnext(struct httpd_request *hreq)
+{
+  return queue_tracks_add(hreq, true);
 }
 
 static int
@@ -2961,6 +3022,7 @@ static struct httpd_uri_map adm_handlers[] =
     { EVHTTP_REQ_GET,    "^/api/queue$",                                 jsonapi_reply_queue },
     { EVHTTP_REQ_PUT,    "^/api/queue/clear$",                           jsonapi_reply_queue_clear },
     { EVHTTP_REQ_POST,   "^/api/queue/items/add$",                       jsonapi_reply_queue_tracks_add },
+    { EVHTTP_REQ_POST,   "^/api/queue/items/addnext$",                   jsonapi_reply_queue_tracks_addnext },
     { EVHTTP_REQ_PUT,    "^/api/queue/items/[[:digit:]]+$",              jsonapi_reply_queue_tracks_move },
     { EVHTTP_REQ_DELETE, "^/api/queue/items/[[:digit:]]+$",              jsonapi_reply_queue_tracks_delete },
 

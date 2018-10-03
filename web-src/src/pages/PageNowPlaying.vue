@@ -75,6 +75,8 @@ export default {
       if (this.state.state === 'play') {
         this.interval_id = window.setInterval(this.tick, 1000)
       }
+      // console.log('[ ] artwork =' + this.state.artwork_url)
+      this.artwork_uri = this.state.artwork_url
     })
   },
 
@@ -92,7 +94,6 @@ export default {
     now_playing () {
       return this.$store.getters.now_playing
     },
-
     artwork_url: function () {
       if (this.now_playing.artwork_url && this.now_playing.artwork_url.startsWith('/')) {
         return this.now_playing.artwork_url + '?maxwidth=600&maxheight=600'
@@ -131,6 +132,10 @@ export default {
       if (this.state.state === 'play') {
         this.interval_id = window.setInterval(this.tick, 1000)
       }
+    },
+    'artwork' () {
+      this.artwork_uri = this.state.artwork_url
+      // console.log('[w] artwork url=' + this.artwork_uri)
     }
   }
 }
