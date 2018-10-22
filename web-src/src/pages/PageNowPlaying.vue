@@ -75,8 +75,6 @@ export default {
       if (this.state.state === 'play') {
         this.interval_id = window.setInterval(this.tick, 1000)
       }
-      // console.log('[ ] artwork =' + this.state.artwork_url)
-      this.artwork_uri = this.state.artwork_url
     })
   },
 
@@ -132,10 +130,6 @@ export default {
       if (this.state.state === 'play') {
         this.interval_id = window.setInterval(this.tick, 1000)
       }
-    },
-    'artwork' () {
-      this.artwork_uri = this.state.artwork_url
-      // console.log('[w] artwork url=' + this.artwork_uri)
     }
   }
 }
