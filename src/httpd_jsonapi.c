@@ -1682,12 +1682,11 @@ queue_tracks_add_playlist(const char *id, int pos)
 }
 
 static int
-queue_tracks_add(struct httpd_request *hreq, bool addnext)
+jsonapi_reply_queue_tracks_add(struct httpd_request *hreq)
 {
   const char *param;
   char *uris;
   char *uri;
-  char *p;
   const char *id;
   int pos = -1;
   int count = 0;
@@ -1715,7 +1714,7 @@ queue_tracks_add(struct httpd_request *hreq, bool addnext)
     }
 
   uris = strdup(param);
-  uri = strtok_r(uris, ",", &p);
+  uri = strtok(uris, ",");
 
   do
     {
@@ -1755,7 +1754,7 @@ queue_tracks_add(struct httpd_request *hreq, bool addnext)
       if (pos >= 0)
 	pos += count;
     }
-  while ((uri = strtok_r(p, ",", &p)));
+  while ((uri = strtok(NULL, ",")));
 
   free(uris);
 
@@ -1763,18 +1762,6 @@ queue_tracks_add(struct httpd_request *hreq, bool addnext)
     return HTTP_INTERNAL;
 
   return HTTP_NOCONTENT;
-}
-
-static int
-jsonapi_reply_queue_tracks_add(struct httpd_request *hreq)
-{
-  return queue_tracks_add(hreq, false);
-}
-
-static int
-jsonapi_reply_queue_tracks_addnext(struct httpd_request *hreq)
-{
-  return queue_tracks_add(hreq, true);
 }
 
 static int
@@ -2973,7 +2960,6 @@ static struct httpd_uri_map adm_handlers[] =
     { EVHTTP_REQ_GET,    "^/api/queue$",                                 jsonapi_reply_queue },
     { EVHTTP_REQ_PUT,    "^/api/queue/clear$",                           jsonapi_reply_queue_clear },
     { EVHTTP_REQ_POST,   "^/api/queue/items/add$",                       jsonapi_reply_queue_tracks_add },
-    { EVHTTP_REQ_POST,   "^/api/queue/items/addnext$",                   jsonapi_reply_queue_tracks_addnext },
     { EVHTTP_REQ_PUT,    "^/api/queue/items/[[:digit:]]+$",              jsonapi_reply_queue_tracks_move },
     { EVHTTP_REQ_DELETE, "^/api/queue/items/[[:digit:]]+$",              jsonapi_reply_queue_tracks_delete },
 
