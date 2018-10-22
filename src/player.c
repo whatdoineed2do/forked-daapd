@@ -928,8 +928,23 @@ source_prev()
     }
 
   queue_item = db_queue_fetch_prev(cur_streaming->item_id, shuffle);
-  if (!queue_item)
-    return NULL;
+  if (!queue_item) 
+    {
+      int queue_count;
+      int pos = db_queue_get_pos(cur_streaming->item_id, shuffle);
+
+      // do we have no prev item because we're the first item?
+      if ( pos != 0)
+        return NULL;
+
+      queue_count = db_queue_get_count();
+      if (queue_count < 0)
+        return NULL;
+
+      queue_item = db_queue_fetch_bypos(queue_count-1, shuffle);
+      if (!queue_item)
+        return NULL;
+    }
 
   ps = source_new(queue_item);
   free_queue_item(queue_item, 0);
