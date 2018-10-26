@@ -25,7 +25,16 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artist">{{ artist.album_count }} albums</a> | {{ artist.track_count }} tracks</p>
-        <list-item-track v-for="(track, index) in tracks.items" :key="track.id" :track="track" :position="index" :context_uri="track.uri"></list-item-track>
+        <div class="columns is-centered">
+          <div class="column is-three-quarters">
+            <div class="tabs is-centered is-small">
+              <ul>
+                <tab-idx-nav-item v-for="link in links" :key="link.n" :link="link"></tab-idx-nav-item>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <list-item-track v-for="(track, index) in tracks.items" :key="track.id" :track="track" :position="index" :context_uri="track.uri" :links="links"></list-item-track>
       </template>
     </content-with-heading>
   </div>
