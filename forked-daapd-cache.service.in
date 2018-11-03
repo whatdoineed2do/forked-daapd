@@ -1,0 +1,12 @@
+[Unit]
+Description=forked daapd overlay cache service
+Before=forked-daapd.service
+
+[Service]
+Type=oneshot
+ExecStart=@sbindir@/forked-daapd-cache.sh start
+ExecStop=@sbindir@/forked-daapd-cache.sh stop
+RemainAfterExit=true
+
+[Install]
+RequiredBy=forked-daapd.service
