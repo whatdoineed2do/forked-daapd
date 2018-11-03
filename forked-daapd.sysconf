@@ -1,0 +1,4 @@
+# /etc/sysconfig/forked-daapd or /etc/default/forked-daapd
+# Tunable parameters for the forked-daapd* service
+
+CACHE_OVERLAY_SZ=64M
