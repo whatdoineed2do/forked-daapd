@@ -6,7 +6,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 RPM_SPEC_FILE = owntone.spec
 CONF_FILE = owntone.conf
-SYSTEMD_SERVICE_FILE = owntone.service
+SYSTEMD_SERVICE_FILE = owntone.service forked-daapd-cache.service forked-daapd-cache.sh
 SYSTEMD_TSERVICE_FILE = owntone@.service
 
 if COND_INSTALL_SYSTEMD
