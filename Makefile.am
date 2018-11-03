@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 RPM_SPEC_FILE = forked-daapd.spec
 CONF_FILE = forked-daapd.conf
-SYSTEMD_SERVICE_FILE = forked-daapd.service
+SYSTEMD_SERVICE_FILE = forked-daapd.service forked-daapd-cache.service forked-daapd-cache.sh
 
 sysconf_DATA = $(CONF_FILE)
 
