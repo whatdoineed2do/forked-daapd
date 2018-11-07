@@ -19,7 +19,7 @@
     <content-with-heading>
       <template slot="heading-left">
         <p class="title is-4">Albums</p>
-        <p class="heading">{{ albums.total }} albums</p>
+        <p class="heading">{{ albums.total }} albums | {{ tracks }} tracks</p>
       </template>
       <template slot="heading-right">
         <a class="button is-small" :class="{ 'is-info': hide_singles }" @click="update_hide_singles">
@@ -67,6 +67,7 @@ const albumsData = {
         li++
         v = n
       }
+      vm.tracks += vm.albums.items[i].track_count
     }
     vm.dsp_total = vm.albums.items.length
   }
@@ -80,6 +81,7 @@ export default {
   data () {
     return {
       albums: {},
+      tracks: 0,
       links: [],
       dsp_albums: [],
       dsp_offset: 0,

@@ -17,7 +17,7 @@
     <content-with-heading>
       <template slot="heading-left">
         <p class="title is-4">{{ name }}</p>
-        <p class="heading">{{ genreAlbums.total }} albums</p>
+        <p class="heading">{{ genreAlbums.total }} albums | {{ tracks }} tracks</p>
       </template>
       <template slot="heading-right">
         <a class="button is-small is-dark is-rounded" @click="play">
@@ -60,6 +60,7 @@ const genreData = {
         li++
         v = n
       }
+      vm.tracks += vm.genreAlbums.items[i].track_count
     }
   }
 }
@@ -73,6 +74,7 @@ export default {
     return {
       name: '',
       genreAlbums: {},
+      tracks: 0,
       links: []
     }
   },
