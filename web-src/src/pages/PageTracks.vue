@@ -2,7 +2,7 @@
   <div>
     <content-with-heading>
       <template slot="heading-left">
-        <p class="title is-4">{{ artist.name }}</p>
+        <p class="title is-4i has-text-link has-text-weight-normal" @click="open_artist">{{ artist.name }}</p>
         <p class="heading">{{ tracks.total }} tracks</p>
       </template>
       <template slot="heading-right">
@@ -63,9 +63,6 @@ const tracksData = {
     var v = null
     var i
     for (i = 0; i < vm.tracks.items.length; i++) {
-      if (i === 0) {
-        vm.artist = vm.tracks.items[0].artist
-      }
       var n = vm.tracks.items[i].title.charAt(0).toUpperCase()
       if (n !== v) {
         var obj = {}
@@ -87,7 +84,7 @@ export default {
   data () {
     return {
       tracks: {},
-      artist: '',
+      artist: {},
       links: []
     }
   },
