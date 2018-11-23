@@ -843,6 +843,11 @@ httpd_gen_cb(struct evhttp_request *req, void *arg)
       jsonapi_request(req, parsed);
       goto out;
     }
+  else if (artworkapi_is_request(parsed->path))
+    {
+      artworkapi_request(req, parsed);
+      goto out;
+    }
   else if (streaming_is_request(parsed->path))
     {
       streaming_request(req, parsed);
@@ -1823,6 +1828,8 @@ httpd_init(const char *webroot)
 #endif
   oauth_deinit();
  oauth_fail:
+  artworkapi_deinit();
+ artworkapi_fail:
   jsonapi_deinit();
  jsonapi_fail:
   dacp_deinit();
