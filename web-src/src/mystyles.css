@@ -50,7 +50,7 @@ a.navbar-item {
 }
 
 .fd-is-fullheight {
-  height: calc(100vh - 3.25rem - 3.25rem);
+  height: calc(100vh - 8rem);
 }
 
 .fd-is-fullheight-body {
