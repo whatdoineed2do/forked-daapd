@@ -1,5 +1,5 @@
 <template>
-  <a href="#" v-scroll-to="{ el: '#' + link.a, offset: -50 }">{{ link.n }}</a>
+  <a href="#" v-scroll-to="{ el: '#' + link.a, offset: -120 }">{{ link.n }}</a>
 </template>
 
 <script>

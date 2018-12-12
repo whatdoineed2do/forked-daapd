@@ -1,15 +1,7 @@
 <template>
   <div>
-    <content-with-heading>
-      <template slot="heading-left">
-        <p class="title is-4">{{ genre }}</p>
-        <p class="heading">{{ tracks.total }} tracks</p>
-      </template>
-      <template slot="heading-right">
-        <a class="button is-small is-dark is-rounded" @click="play">
-          <span class="icon"><i class="mdi mdi-shuffle"></i></span> <span>Shuffle</span>
-        </a>
-      </template>
+    <tabs-music></tabs-music>
+    <section class="section fd-tabs-bottom-section">
       <template>
         <div class="container" v-if="links.length > 1">
           <div class="columns is-centered">
@@ -23,17 +15,20 @@
           </div>
         </div>
       </template>
+    </section>
+
+    <content-with-heading>
+      <template slot="heading-left">
+        <p class="title is-4">{{ genre }}</p>
+        <p class="heading">{{ tracks.total }} tracks</p>
+      </template>
+      <template slot="heading-right">
+        <a class="button is-small is-dark is-rounded" @click="play">
+          <span class="icon"><i class="mdi mdi-shuffle"></i></span> <span>Shuffle</span>
+        </a>
+      </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_genre">albums</a> | tracks</p>
-        <div class="columns is-centered">
-          <div class="column is-three-quarters">
-            <div class="tabs is-centered is-small">
-              <ul>
-                <tab-idx-nav-item v-for="link in links" :key="link.n" :link="link"></tab-idx-nav-item>
-              </ul>
-            </div>
-          </div>
-        </div>
         <list-item-track v-for="(track, index) in tracks.items" :key="track.id" :track="track" :position="index" :context_uri="tracks.items.map(a => a.uri).join(',')" :links="links"></list-item-track>
       </template>
     </content-with-heading>
@@ -43,6 +38,7 @@
 <script>
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
+import TabsMusic from '@/components/TabsMusic'
 import ListItemTrack from '@/components/ListItemTrack'
 import TabIdxNavItem from '@/components/TabsIdxNav'
 import webapi from '@/webapi'
@@ -76,7 +72,7 @@ const tracksData = {
 export default {
   name: 'PageGenreTracks',
   mixins: [ LoadDataBeforeEnterMixin(tracksData) ],
-  components: { ContentWithHeading, ListItemTrack, TabIdxNavItem },
+  components: { ContentWithHeading, TabsMusic, ListItemTrack, TabIdxNavItem },
 
   data () {
     return {
