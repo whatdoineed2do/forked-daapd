@@ -111,6 +111,16 @@ a.navbar-item {
   width: 100%;
 }
 
+.fd-tabs-bottom-section {
+  padding-bottom: 5px;
+  padding-top: 5px;
+  background: white;
+  bottom: 3.25rem;
+  z-index: 20;
+  position: fixed;
+  width: 100%;
+}
+
 section.fd-tabs-section + section.fd-content {
   margin-top: 24px;
 }
@@ -182,3 +192,4 @@ section.fd-tabs-section + section.fd-content {
   margin-left: 16px;
   margin-right: 16px;
 }
+
