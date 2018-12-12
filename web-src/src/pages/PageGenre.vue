@@ -19,7 +19,8 @@
         </div>
       </template>
       <template slot="content">
-        <p class="heading has-text-centered-mobile">{{ genre_albums.total }} albums | <a class="has-text-link" @click="open_tracks">{{ tracks }} tracks</a></p>
+        <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artists">artists</a> | {{ genre_albums.total }} albums | <a class="has-text-link" @click="open_tracks">tracks</a> | <a class="has-text-link" @click="open_composers">composers</a> </p>
+        <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_toptracks">top tracks</a></p>
         <list-item-albums v-for="album in genre_albums.items" :key="album.id" :album="album" @click="open_album(album)">
           <template slot="actions">
             <a @click="open_dialog(album)">
@@ -46,7 +47,7 @@ import webapi from '@/webapi'
 
 const genreData = {
   load: function (to) {
-    return webapi.library_genre(to.params.genre)
+    return webapi.library_genre_albums(to.params.genre)
   },
 
   set: function (vm, response) {
@@ -87,6 +88,21 @@ export default {
     open_tracks: function () {
       this.show_details_modal = false
       this.$router.push({ name: 'GenreTracks', params: { genre: this.name } })
+    },
+
+    open_toptracks: function () {
+      this.show_details_modal = false
+      this.$router.push({ name: 'TopGenreTracks', params: { condition: 'genre is "' + this.name + '" and media_kind is music', id: this.name } })
+    },
+
+    open_artists: function () {
+      this.show_details_modal = false
+      this.$router.push({ name: 'GenreArtists', params: { genre: this.name } })
+    },
+
+    open_composers: function () {
+      this.show_details_modal = false
+      this.$router.push({ name: 'Composers', params: { genre: this.name } })
     },
 
     play: function () {
