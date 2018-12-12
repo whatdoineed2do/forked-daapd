@@ -2,13 +2,12 @@
   <div>
     <tabs-music></tabs-music>
 
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
-      <template slot="options">
-        <index-button-list :index="index_list"></index-button-list>
-      </template>
       <template slot="heading-left">
         <p class="title is-4">Artists</p>
-        <p class="heading">{{ artists.total }} artists</p>
+        <p class="heading">{{ artists.total }} artists | {{ albums }} albums</p>
       </template>
       <template slot="heading-right">
         <a class="button is-small" :class="{ 'is-info': hide_singles }" @click="update_hide_singles">
@@ -40,9 +39,9 @@
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import TabsMusic from '@/components/TabsMusic'
-import IndexButtonList from '@/components/IndexButtonList'
 import ListItemArtist from '@/components/ListItemArtist'
 import ModalDialogArtist from '@/components/ModalDialogArtist'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 
@@ -53,18 +52,22 @@ const artistsData = {
 
   set: function (vm, response) {
     vm.artists = response.data
+    var i
+    for (i = 0; i < vm.artists.items.length; i++) {
+      vm.albums += vm.artists.items[i].album_count
+    }
   }
 }
 
 export default {
   name: 'PageArtists',
   mixins: [ LoadDataBeforeEnterMixin(artistsData) ],
-  components: { ContentWithHeading, TabsMusic, IndexButtonList, ListItemArtist, ModalDialogArtist },
+  components: { ContentWithHeading, TabsMusic, IndexList, ListItemArtist, ModalDialogArtist },
 
   data () {
     return {
+      albums: 0,
       artists: { items: [] },
-
       show_details_modal: false,
       selected_artist: {}
     }
