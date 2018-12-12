@@ -2,6 +2,8 @@
   <div>
     <tabs-music></tabs-music>
 
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
       <template slot="options">
         <index-button-list :index="artists_list.indexList"></index-button-list>
@@ -50,6 +52,7 @@ import TabsMusic from '@/components/TabsMusic'
 import IndexButtonList from '@/components/IndexButtonList'
 import ListArtists from '@/components/ListArtists'
 import DropdownMenu from '@/components/DropdownMenu'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 import Artists from '@/lib/Artists'
@@ -61,22 +64,33 @@ const artistsData = {
 
   set: function (vm, response) {
     vm.artists = response.data
+    var i
+    for (i = 0; i < vm.artists.items.length; i++) {
+      vm.albums += vm.artists.items[i].album_count
+    }
   }
 }
 
 export default {
   name: 'PageArtists',
   mixins: [LoadDataBeforeEnterMixin(artistsData)],
-  components: { ContentWithHeading, TabsMusic, IndexButtonList, ListArtists, DropdownMenu },
+  components: { ContentWithHeading, TabsMusic, IndexList, IndexButtonList, ListArtists, DropdownMenu },
 
   data () {
     return {
+      albums: 0,
       artists: { items: [] },
       sort_options: ['Name', 'Recently added']
     }
   },
 
   computed: {
+    index_list () {
+      return [...new Set(this.artists.items
+        .filter(artist => !this.$store.state.hide_singles || artist.track_count > (artist.album_count * 2))
+        .map(artist => artist.name_sort.charAt(0).toUpperCase()))]
+    },
+
     artists_list () {
       return new Artists(this.artists.items, {
         hideSingles: this.hide_singles,
