@@ -106,6 +106,10 @@ export default {
       return this.$store.getters.now_playing
     },
 
+    artwork_url: function () {
+      return webapi.artwork_url_append_size_params(this.now_playing.artwork_url)
+    },
+
     settings_option_show_composer_now_playing () {
       return this.$store.getters.settings_option_show_composer_now_playing
     },
