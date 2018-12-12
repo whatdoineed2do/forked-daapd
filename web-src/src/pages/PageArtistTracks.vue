@@ -1,5 +1,9 @@
 <template>
   <div>
+    <tabs-music></tabs-music>
+
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
       <template slot="options">
         <index-button-list :index="index_list"></index-button-list>
@@ -32,6 +36,8 @@ import ContentWithHeading from '@/templates/ContentWithHeading'
 import IndexButtonList from '@/components/IndexButtonList'
 import ListTracks from '@/components/ListTracks'
 import ModalDialogArtist from '@/components/ModalDialogArtist'
+import TabsMusic from '@/components/TabsMusic'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 
 const tracksData = {
@@ -53,7 +59,7 @@ const tracksData = {
 export default {
   name: 'PageArtistTracks',
   mixins: [LoadDataBeforeEnterMixin(tracksData)],
-  components: { ContentWithHeading, ListTracks, IndexButtonList, ModalDialogArtist },
+  components: { ContentWithHeading, ListTracks, IndexButtonList, ModalDialogArtist, IndexList, TabsMusic },
 
   data () {
     return {

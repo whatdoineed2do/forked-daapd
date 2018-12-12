@@ -1,4 +1,9 @@
 <template>
+  <div>
+    <tabs-music></tabs-music>
+
+    <index-list :index="index_list"></index-list>
+
   <content-with-heading>
       <template slot="options">
         <div class="columns">
@@ -9,7 +14,7 @@
         </div>
       </template>
     <template slot="heading-left">
-      <p class="title is-4">{{ name }}</p>
+      <p class="title is-4">{{ artist.name }}</p>
     </template>
     <template slot="heading-right">
       <div class="buttons is-centered">
@@ -27,14 +32,17 @@
       <modal-dialog-artist :show="show_artist_details_modal" :artist="artist" @close="show_artist_details_modal = false" />
     </template>
   </content-with-heading>
+  </div>
 </template>
 
 <script>
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import ListAlbums from '@/components/ListAlbums'
+import TabsMusic from '@/components/TabsMusic'
 import ModalDialogArtist from '@/components/ModalDialogArtist'
 import DropdownMenu from '@/components/DropdownMenu'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 import Albums from '@/lib/Albums'
@@ -54,11 +62,11 @@ const artistData = {
     vm.albums = response[1].data
 
     vm.consolidated_artist = {
-      'id': vm.id,
-      'name': vm.name,
-      'album_count': vm.albums.items.length,
-      'track_count': vm.track_count,
-      'uri': vm.albums.items.map(a => a.uri).join(',')
+      id: vm.id,
+      name: vm.name,
+      album_count: vm.albums.items.length,
+      track_count: vm.track_count,
+      uri: vm.albums.items.map(a => a.uri).join(',')
     }
   }
 }
@@ -66,7 +74,7 @@ const artistData = {
 export default {
   name: 'PageArtist',
   mixins: [LoadDataBeforeEnterMixin(artistData)],
-  components: { ContentWithHeading, ListAlbums, ModalDialogArtist, DropdownMenu },
+  components: { ContentWithHeading, ListAlbums, ModalDialogArtist, DropdownMenu, TabsMusic, IndexList },
 
   data () {
     return {
@@ -82,8 +90,12 @@ export default {
   },
 
   computed: {
+    index_list () {
+      return [...new Set(this.albums.items
+        .map(album => album.name_sort.charAt(0).toUpperCase()))]
+    },
+
     track_count () {
-      var n = 0
       return this.albums.items.reduce((acc, item) => {
         acc += item.track_count
         return acc
