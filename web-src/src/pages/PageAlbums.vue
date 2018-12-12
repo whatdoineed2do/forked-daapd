@@ -30,8 +30,7 @@
         </a>
       </template>
       <template slot="content">
-        <list-item-album v-for="album in dsp_albums" :key="album.id" :album="album" :links="links" v-if="!hide_singles || album.track_count > 2"></list-item-album>
-        <infinite-loading v-if="dsp_total === 0 || dsp_offset < dsp_total" @infinite="dsp_next"><span slot="no-more">.</span></infinite-loading>
+        <list-item-album v-for="album in albums.items" :key="album.id" :album="album" :links="links" v-if="!hide_singles || album.track_count > 2"></list-item-album>
       </template>
     </content-with-heading>
   </div>
@@ -45,7 +44,6 @@ import ListItemAlbum from '@/components/ListItemAlbum'
 import TabIdxNavItem from '@/components/TabsIdxNav'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
-import InfiniteLoading from 'vue-infinite-loading'
 
 const albumsData = {
   load: function (to) {
@@ -69,23 +67,19 @@ const albumsData = {
       }
       vm.tracks += vm.albums.items[i].track_count
     }
-    vm.dsp_total = vm.albums.items.length
   }
 }
 
 export default {
   name: 'PageAlbums',
   mixins: [ LoadDataBeforeEnterMixin(albumsData) ],
-  components: { ContentWithHeading, TabsMusic, ListItemAlbum, TabIdxNavItem, InfiniteLoading },
+  components: { ContentWithHeading, TabsMusic, TabIdxNavItem, ListItemAlbum },
 
   data () {
     return {
-      albums: {},
+      albums: { },
       tracks: 0,
-      links: [],
-      dsp_albums: [],
-      dsp_offset: 0,
-      dsp_total: 0
+      links: []
     }
   },
 
@@ -100,14 +94,8 @@ export default {
       this.$store.commit(types.HIDE_SINGLES, !this.hide_singles)
     },
 
-    dsp_next: function ($state) {
-      this.dsp_albums = this.albums.items
-      this.dsp_offset = this.dsp_albums.length
-
-      if ($state) {
-        $state.loaded()
-        $state.complete()
-      }
+    anchor: function (album, index) {
+      return album.name_sort.charAt(0).toUpperCase()
     }
   }
 }

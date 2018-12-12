@@ -30,8 +30,7 @@
         </a>
       </template>
       <template slot="content">
-        <list-item-artist v-for="artist in dsp_artists" :key="artist.id" :artist="artist" :links="links" v-if="!hide_singles || artist.track_count > (artist.album_count * 2)"></list-item-artist>
-        <infinite-loading v-if="dsp_total === 0 || dsp_offset < dsp_total" @infinite="dsp_next"><span slot="no-more">.</span></infinite-loading>
+        <list-item-artist v-for="artist in artists.items" :key="artist.id" :artist="artist" :links="links" v-if="!hide_singles || artist.track_count > (artist.album_count * 2)"></list-item-artist>
       </template>
     </content-with-heading>
   </div>
@@ -45,7 +44,6 @@ import ListItemArtist from '@/components/ListItemArtist'
 import TabIdxNavItem from '@/components/TabsIdxNav'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
-import InfiniteLoading from 'vue-infinite-loading'
 
 const artistsData = {
   load: function (to) {
@@ -69,23 +67,19 @@ const artistsData = {
       }
       vm.albums += vm.artists.items[i].album_count
     }
-    vm.dsp_total = vm.artists.items.length
   }
 }
 
 export default {
   name: 'PageArtists',
   mixins: [ LoadDataBeforeEnterMixin(artistsData) ],
-  components: { ContentWithHeading, TabsMusic, ListItemArtist, TabIdxNavItem, InfiniteLoading },
+  components: { ContentWithHeading, TabsMusic, TabIdxNavItem, ListItemArtist },
 
   data () {
     return {
       artists: {},
       albums: 0,
-      links: [],
-      dsp_artists: [],
-      dsp_offset: 0,
-      dsp_total: 0
+      links: []
     }
   },
 
@@ -98,16 +92,6 @@ export default {
   methods: {
     update_hide_singles: function (e) {
       this.$store.commit(types.HIDE_SINGLES, !this.hide_singles)
-    },
-
-    dsp_next: function ($state) {
-      this.dsp_artists = this.artists.items
-      this.dsp_offset = this.dsp_artists.length
-
-      if ($state) {
-        $state.loaded()
-        $state.complete()
-      }
     }
   }
 }
