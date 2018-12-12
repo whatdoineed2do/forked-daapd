@@ -56,7 +56,6 @@ const albumsData = {
       acc += item.track_count
       return acc
     }, 0)
-
     vm.index_list = [...new Set(vm.albums.items
       .filter(album => !vm.$store.state.hide_singles || album.track_count > 2)
       .map(album => album.name_sort.charAt(0).toUpperCase()))]
