@@ -2,6 +2,8 @@
   <div>
     <tabs-music></tabs-music>
 
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
       <template slot="options">
         <index-button-list :index="albums_list.indexList"></index-button-list>
@@ -50,6 +52,7 @@ import TabsMusic from '@/components/TabsMusic'
 import IndexButtonList from '@/components/IndexButtonList'
 import ListAlbums from '@/components/ListAlbums'
 import DropdownMenu from '@/components/DropdownMenu'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 import Albums from '@/lib/Albums'
@@ -61,6 +64,10 @@ const albumsData = {
 
   set: function (vm, response) {
     vm.albums = response.data
+    var i
+    for (i = 0; i < vm.albums.items.length; i++) {
+      vm.tracks += vm.albums.items[i].track_count
+    }
     vm.index_list = [...new Set(vm.albums.items
       .filter(album => !vm.$store.state.hide_singles || album.track_count > 2)
       .map(album => album.name_sort.charAt(0).toUpperCase()))]
@@ -70,10 +77,12 @@ const albumsData = {
 export default {
   name: 'PageAlbums',
   mixins: [LoadDataBeforeEnterMixin(albumsData)],
-  components: { ContentWithHeading, TabsMusic, IndexButtonList, ListAlbums, DropdownMenu },
+  components: { ContentWithHeading, TabsMusic, IndexList, IndexButtonList, ListAlbums, DropdownMenu },
 
   data () {
     return {
+      index_list: [],
+      tracks: 0,
       albums: { items: [] },
       sort_options: ['Name', 'Recently added', 'Recently released']
     }

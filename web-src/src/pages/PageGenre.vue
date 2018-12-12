@@ -1,9 +1,10 @@
 <template>
   <div>
+    <tabs-music></tabs-music>
+
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
-      <template slot="options">
-        <index-button-list :index="index_list"></index-button-list>
-      </template>
       <template slot="heading-left">
         <p class="title is-4">{{ name }}</p>
       </template>
@@ -18,7 +19,7 @@
         </div>
       </template>
       <template slot="content">
-        <p class="heading has-text-centered-mobile">{{ genre_albums.total }} albums | <a class="has-text-link" @click="open_tracks">tracks</a></p>
+        <p class="heading has-text-centered-mobile">{{ genre_albums.total }} albums | <a class="has-text-link" @click="open_tracks">{{ tracks }} tracks</a></p>
         <list-albums :albums="genre_albums.items"></list-albums>
         <modal-dialog-genre :show="show_genre_details_modal" :genre="{ 'name': name }" @close="show_genre_details_modal = false" />
       </template>
@@ -29,9 +30,10 @@
 <script>
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
-import IndexButtonList from '@/components/IndexButtonList'
 import ListAlbums from '@/components/ListAlbums'
+import TabsMusic from '@/components/TabsMusic'
 import ModalDialogGenre from '@/components/ModalDialogGenre'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 
 const genreData = {
@@ -42,17 +44,22 @@ const genreData = {
   set: function (vm, response) {
     vm.name = vm.$route.params.genre
     vm.genre_albums = response.data.albums
+    var i
+    for (i = 0; i < vm.genre_albums.items.length; i++) {
+      vm.tracks += vm.genre_albums.items[i].track_count
+    }
   }
 }
 
 export default {
   name: 'PageGenre',
   mixins: [LoadDataBeforeEnterMixin(genreData)],
-  components: { ContentWithHeading, IndexButtonList, ListAlbums, ModalDialogGenre },
+  components: { ContentWithHeading, ListAlbums, ModalDialogGenre, IndexList, TabsMusic },
 
   data () {
     return {
       name: '',
+      tracks: 0,
       genre_albums: { items: [] },
 
       show_genre_details_modal: false
@@ -62,7 +69,7 @@ export default {
   computed: {
     index_list () {
       return [...new Set(this.genre_albums.items
-        .map(album => album.name.charAt(0).toUpperCase()))]
+        .map(album => album.name_sort.charAt(0).toUpperCase()))]
     }
   },
 
