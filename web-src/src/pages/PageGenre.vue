@@ -1,9 +1,10 @@
 <template>
   <div>
+    <tabs-music></tabs-music>
+
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
-      <template slot="options">
-        <index-button-list :index="index_list"></index-button-list>
-      </template>
       <template slot="heading-left">
         <p class="title is-4">{{ name }}</p>
       </template>
@@ -37,10 +38,10 @@
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import TabsMusic from '@/components/TabsMusic'
-import IndexButtonList from '@/components/IndexButtonList'
 import ListItemAlbums from '@/components/ListItemAlbum'
 import ModalDialogAlbum from '@/components/ModalDialogAlbum'
 import ModalDialogGenre from '@/components/ModalDialogGenre'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 
 const genreData = {
@@ -57,13 +58,12 @@ const genreData = {
 export default {
   name: 'PageGenre',
   mixins: [ LoadDataBeforeEnterMixin(genreData) ],
-  components: { ContentWithHeading, TabsMusic, IndexButtonList, ListItemAlbums, ModalDialogAlbum, ModalDialogGenre },
+  components: { ContentWithHeading, TabsMusic, ListItemAlbums, IndexList, ModalDialogAlbum, ModalDialogGenre },
 
   data () {
     return {
       name: '',
       genre_albums: { items: [] },
-
       show_details_modal: false,
       selected_album: {},
 
@@ -74,7 +74,7 @@ export default {
   computed: {
     index_list () {
       return [...new Set(this.genre_albums.items
-        .map(album => album.name.charAt(0).toUpperCase()))]
+        .map(album => album.name_sort.charAt(0).toUpperCase()))]
     }
   },
 
