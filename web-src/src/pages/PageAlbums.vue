@@ -2,13 +2,12 @@
   <div>
     <tabs-music></tabs-music>
 
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
-      <template slot="options">
-        <index-button-list :index="index_list"></index-button-list>
-      </template>
       <template slot="heading-left">
         <p class="title is-4">Albums</p>
-        <p class="heading">{{ albums.total }} albums</p>
+        <p class="heading">{{ albums.total }} albums | {{ tracks }} tracks</p>
       </template>
       <template slot="heading-right">
         <a class="button is-small" :class="{ 'is-info': hide_singles }" @click="update_hide_singles">
@@ -40,8 +39,8 @@
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import TabsMusic from '@/components/TabsMusic'
-import IndexButtonList from '@/components/IndexButtonList'
 import ListItemAlbum from '@/components/ListItemAlbum'
+import IndexList from '@/components/IndexList'
 import ModalDialogAlbum from '@/components/ModalDialogAlbum'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
@@ -53,6 +52,10 @@ const albumsData = {
 
   set: function (vm, response) {
     vm.albums = response.data
+    var i
+    for (i = 0; i < vm.albums.items.length; i++) {
+      vm.tracks += vm.albums.items[i].track_count
+    }
     vm.index_list = [...new Set(vm.albums.items
       .filter(album => !vm.$store.state.hide_singles || album.track_count > 2)
       .map(album => album.name_sort.charAt(0).toUpperCase()))]
@@ -62,10 +65,11 @@ const albumsData = {
 export default {
   name: 'PageAlbums',
   mixins: [ LoadDataBeforeEnterMixin(albumsData) ],
-  components: { ContentWithHeading, TabsMusic, IndexButtonList, ListItemAlbum, ModalDialogAlbum },
+  components: { ContentWithHeading, TabsMusic, IndexList, ListItemAlbum, ModalDialogAlbum },
 
   data () {
     return {
+      tracks: 0,
       albums: { items: [] },
       index_list: [],
 

@@ -1,15 +1,20 @@
 <template>
-  <content-with-heading>
-    <template slot="heading-left">
-      <p class="title is-4">{{ artist.name }}</p>
-    </template>
-    <template slot="heading-right">
-      <a class="button is-small is-dark is-rounded" @click="play">
-        <span class="icon"><i class="mdi mdi-shuffle"></i></span> <span>Shuffle</span>
-      </a>
-    </template>
-    <template slot="content">
-      <p class="heading has-text-centered-mobile">{{ artist.album_count }} albums | <a class="has-text-link" @click="open_tracks">{{ artist.track_count }} tracks</a></p>
+  <div>
+    <tabs-music></tabs-music>
+
+    <index-list :index="index_list"></index-list>
+
+    <content-with-heading>
+      <template slot="heading-left">
+        <p class="title is-4">{{ artist.name }}</p>
+      </template>
+      <template slot="heading-right">
+        <a class="button is-small is-dark is-rounded" @click="play">
+          <span class="icon"><i class="mdi mdi-shuffle"></i></span> <span>Shuffle</span>
+        </a>
+      </template>
+      <template slot="content">
+        <p class="heading has-text-centered-mobile">{{ artist.album_count }} albums | <a class="has-text-link" @click="open_tracks">{{ artist.track_count }} tracks</a></p>
       <list-item-album v-for="album in albums.items" :key="album.id" :album="album" @click="open_album(album)">
         <template slot="actions">
           <a @click="open_dialog(album)">
@@ -18,15 +23,18 @@
         </template>
       </list-item-album>
       <modal-dialog-album :show="show_details_modal" :album="selected_album" @close="show_details_modal = false" />
-    </template>
-  </content-with-heading>
+      </template>
+    </content-with-heading>
+  </div>
 </template>
 
 <script>
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
+import TabsMusic from '@/components/TabsMusic'
 import ListItemAlbum from '@/components/ListItemAlbum'
 import ModalDialogAlbum from '@/components/ModalDialogAlbum'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 
 const artistData = {
@@ -46,13 +54,12 @@ const artistData = {
 export default {
   name: 'PageArtist',
   mixins: [ LoadDataBeforeEnterMixin(artistData) ],
-  components: { ContentWithHeading, ListItemAlbum, ModalDialogAlbum },
+  components: { ContentWithHeading, TabsMusic, IndexList, ListItemAlbum, ModalDialogAlbum },
 
   data () {
     return {
       artist: {},
-      albums: {},
-
+      albums: { items: [] },
       show_details_modal: false,
       selected_album: {}
     }
