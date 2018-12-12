@@ -58,7 +58,7 @@ export default {
       position = store.getters.now_playing.position + 1
     }
     return axios.post('/api/queue/items/add?uris=' + uri + '&position=' + position).then((response) => {
-      store.dispatch('add_notification', { text: response.data.count + ' tracks appended to queue', type: 'info', timeout: 2000 })
+      store.dispatch('add_notification', { text: response.data.count + ' items added next to queue', type: 'info', timeout: 2000 })
       return Promise.resolve(response)
     })
   },

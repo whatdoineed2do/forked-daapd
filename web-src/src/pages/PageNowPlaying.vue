@@ -4,6 +4,9 @@
       <div class="container has-text-centered fd-has-margin-top">
         <h1 class="title is-4">
           {{ now_playing.title }}
+          <div class="subtitle is-6" v-show="composer_visible">
+            {{ composer() }}
+          </div>
         </h1>
         <h2 class="title is-6">
           {{ now_playing.artist }}
@@ -75,6 +78,7 @@ export default {
       item_progress_ms: 0,
       interval_id: 0,
       artwork_visible: false,
+      composer_visible: false,
 
       show_details_modal: false,
       selected_item: {}
@@ -105,7 +109,6 @@ export default {
     now_playing () {
       return this.$store.getters.now_playing
     },
-
     artwork_url: function () {
       return webapi.artwork_url_append_size_params(this.now_playing.artwork_url)
     }
@@ -128,6 +131,15 @@ export default {
 
     artwork_error: function () {
       this.artwork_visible = false
+    },
+
+    composer: function () {
+      if (this.now_playing.composer === undefined || this.now_playing.composer === null || this.now_playing.genre === undefined || this.now_playing.genre === null) {
+        this.composer_visible = false
+      } else {
+        this.composer_visible = (this.now_playing.genre.toLowerCase() === 'classical')
+      }
+      return this.now_playing.composer
     },
 
     open_dialog: function (item) {
