@@ -186,7 +186,7 @@ export default {
     if (artist) {
       var artistParams = {
         'type': 'tracks',
-        'expression': 'songartistid is "' + artist + '"'
+        'expression': 'songartistid is "' + artist + '" or songtrackartistid is "' + artist + '"'
       }
       return axios.get('/api/search', {
         params: artistParams
