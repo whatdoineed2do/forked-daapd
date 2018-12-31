@@ -206,6 +206,7 @@ struct media_file_info {
 
   char *album_artist;
 
+  int64_t songtrackartistid;  /* hash when album_artist != artist */
   int64_t songartistid;
   int64_t songalbumid;
 
@@ -368,6 +369,7 @@ struct db_media_file_info {
   char *date_released;
   char *skip_count;
   char *time_skipped;
+  char *songtrackartistid;
 };
 
 #define dbmfi_offsetof(field) offsetof(struct db_media_file_info, field)

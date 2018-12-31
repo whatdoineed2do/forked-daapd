@@ -95,7 +95,8 @@
   "   directory_id       INTEGER DEFAULT 0,"		\
   "   date_released      INTEGER DEFAULT 0,"            \
   "   skip_count         INTEGER DEFAULT 0,"            \
-  "   time_skipped       INTEGER DEFAULT 0"             \
+  "   time_skipped       INTEGER DEFAULT 0,"            \
+  "   songtrackartistid  INTEGER DEFAULT 0,"		\
   ");"
 
 #define T_PL					\
@@ -199,6 +200,7 @@
   " BEGIN"								\
   "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (1, NEW.album, NEW.songalbumid);" \
   "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (2, NEW.album_artist, NEW.songartistid);" \
+  "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (2, NEW.artist, NEW.songtrackartistid);" \
   " END;"
 
 #define TRG_GROUPS_UPDATE_FILES						\
@@ -206,6 +208,7 @@
   " BEGIN"								\
   "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (1, NEW.album, NEW.songalbumid);" \
   "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (2, NEW.album_artist, NEW.songartistid);" \
+  "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (2, NEW.artist, NEW.songtrackartistid);" \
   " END;"
 
 #define Q_PL1								\
@@ -306,6 +309,9 @@ static const struct db_init_query db_init_table_queries[] =
 #define I_SONGARTISTID				\
   "CREATE INDEX IF NOT EXISTS idx_sari ON files(songartistid);"
 
+#define I_SONGTRACKARTISTID				\
+  "CREATE INDEX IF NOT EXISTS idx_strkari ON files(songtrackartistid);"
+
 /* Used by Q_GROUP_ALBUMS */
 #define I_SONGALBUMID				\
   "CREATE INDEX IF NOT EXISTS idx_sali ON files(songalbumid, disabled, media_kind, album_sort, disc, track);"
@@ -381,6 +387,7 @@ static const struct db_init_query db_init_index_queries[] =
     { I_RESCAN,    "create rescan index" },
     { I_FNAME,     "create filename index" },
     { I_SONGARTISTID, "create songartistid index" },
+    { I_SONGTRACKARTISTID, "create songtrackartistid index" },
     { I_SONGALBUMID, "create songalbumid index" },
     { I_STATEMKINDSARI, "create state/mkind/sari index" },
     { I_STATEMKINDSALI, "create state/mkind/sali index" },

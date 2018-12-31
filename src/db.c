@@ -148,6 +148,7 @@ static const struct col_type_map mfi_cols_map[] =
     { mfi_offsetof(tv_network_name),    DB_TYPE_STRING },
     { mfi_offsetof(tv_episode_sort),    DB_TYPE_INT },
     { mfi_offsetof(tv_season_num),      DB_TYPE_INT },
+    { mfi_offsetof(songtrackartistid),  DB_TYPE_INT64 },
     { mfi_offsetof(songartistid),       DB_TYPE_INT64 },
     { mfi_offsetof(songalbumid),        DB_TYPE_INT64 },
     { mfi_offsetof(title_sort),         DB_TYPE_STRING },
@@ -254,6 +255,7 @@ static const ssize_t dbmfi_cols_map[] =
     dbmfi_offsetof(date_released),
     dbmfi_offsetof(skip_count),
     dbmfi_offsetof(time_skipped),
+    dbmfi_offsetof(songtrackartistid),
   };
 
 /* This list must be kept in sync with
@@ -970,7 +972,7 @@ fixup_tags_queue_item(struct db_queue_item *queue_item)
       queue_item->album_artist = strdup(queue_item->artist);
     }
 
-  if (!queue_item->album_artist_sort && (strcmp(queue_item->album_artist, queue_item->artist) == 0))
+  if (!queue_item->album_artist_sort && queue_item->artist_sort && (strcmp(queue_item->album_artist, queue_item->artist) == 0))
     queue_item->album_artist_sort = strdup(queue_item->artist_sort);
   else
     sort_tag_create(&queue_item->album_artist_sort, queue_item->album_artist);
@@ -1719,7 +1721,9 @@ db_build_query_group_artists(struct query_params *qp)
     return NULL;
 
   count = sqlite3_mprintf("SELECT COUNT(DISTINCT f.songartistid) FROM files f %s;", qc->where);
-  query = sqlite3_mprintf("SELECT g.id, g.persistentid, f.album_artist, f.album_artist_sort, COUNT(f.id) as track_count, COUNT(DISTINCT f.songalbumid) as album_count, f.album_artist, f.songartistid, SUM(f.song_length) FROM files f JOIN groups g ON f.songartistid = g.persistentid %s GROUP BY f.songartistid %s %s %s;", qc->where, qc->having, qc->order, qc->index);
+  query = sqlite3_mprintf("SELECT g.id, g.persistentid, f.album_artist, f.album_artist_sort, COUNT(f.id) as track_count, COUNT
+(DISTINCT f.songalbumid) as album_count, f.album_artist, f.songartistid, SUM(f.song_length) FROM files f JOIN groups g ON f.son
+gartistid = g.persistentid %s GROUP BY f.songartistid %s %s %s;", qc->where, qc->having, qc->order, qc->index);
 
   db_free_query_clause(qc);
 
@@ -2819,6 +2823,7 @@ db_file_add(struct media_file_info *mfi)
                 " contentrating, bits_per_sample, album_artist, media_kind,"    \
                 " tv_series_name, tv_episode_num_str, tv_network_name,"         \
                 " tv_episode_sort, tv_season_num, songartistid, songalbumid,"   \
+                " songtrackartistid," \
                 " title_sort, artist_sort, album_sort, composer_sort,"          \
                 " album_artist_sort, virtual_path, directory_id, date_released,"\
                 " skip_count, time_skipped"                                     \
@@ -2833,6 +2838,7 @@ db_file_add(struct media_file_info *mfi)
                 " %d, %d, TRIM(%Q), %d,"                                        \
                 " TRIM(%Q), TRIM(%Q), TRIM(%Q),"                                \
                 " %d, %d, daap_songalbumid(LOWER(TRIM(%Q)), ''), daap_songalbumid(LOWER(TRIM(%Q)), LOWER(TRIM(%Q)))," \
+                " daap_songalbumid(LOWER(TRIM(%Q)), ''),"                       \
                 " TRIM(%Q), TRIM(%Q), TRIM(%Q), TRIM(%Q),"                      \
                 " TRIM(%Q), TRIM(%Q), %d, %d,"                                  \
                 " %d, %" PRIi64 ""                                              \
@@ -2868,6 +2874,7 @@ db_file_add(struct media_file_info *mfi)
                   mfi->contentrating, mfi->bits_per_sample, mfi->album_artist, mfi->media_kind,
                   mfi->tv_series_name, mfi->tv_episode_num_str, mfi->tv_network_name,
                   mfi->tv_episode_sort, mfi->tv_season_num, mfi->album_artist, mfi->album_artist, mfi->album,
+                  strcmp(mfi->artist, mfi->album_artist) == 0 ? "" : mfi->artist,
                   mfi->title_sort, mfi->artist_sort, mfi->album_sort, mfi->composer_sort,
                   mfi->album_artist_sort, mfi->virtual_path, mfi->directory_id, mfi->date_released,
                   mfi->skip_count, (int64_t)mfi->time_skipped);
@@ -2914,6 +2921,7 @@ db_file_update(struct media_file_info *mfi)
                 " media_kind = %d, tv_series_name = TRIM(%Q), tv_episode_num_str = TRIM(%Q)," \
                 " tv_network_name = TRIM(%Q), tv_episode_sort = %d, tv_season_num = %d," \
                 " songartistid = daap_songalbumid(LOWER(TRIM(%Q)), ''), songalbumid = daap_songalbumid(LOWER(TRIM(%Q)), LOWER(TRIM(%Q)))," \
+                " songtrackartistid = daap_songalbumid(LOWER(TRIM(%Q)), '')," \
                 " title_sort = TRIM(%Q), artist_sort = TRIM(%Q), album_sort = TRIM(%Q), composer_sort = TRIM(%Q), album_artist_sort = TRIM(%Q)," \
                 " virtual_path = TRIM(%Q), directory_id = %d, date_released = %d, skip_count = %d, time_skipped = %" PRIi64 "" \
 	       " WHERE id = %d;"
@@ -2946,6 +2954,7 @@ db_file_update(struct media_file_info *mfi)
 			  mfi->media_kind, mfi->tv_series_name, mfi->tv_episode_num_str,
 			  mfi->tv_network_name, mfi->tv_episode_sort, mfi->tv_season_num,
 			  mfi->album_artist, mfi->album_artist, mfi->album,
+			  strcmp(mfi->artist, mfi->album_artist) == 0 ? "" : mfi->artist,
 			  mfi->title_sort, mfi->artist_sort, mfi->album_sort,
 			  mfi->composer_sort, mfi->album_artist_sort,
 			  mfi->virtual_path, mfi->directory_id, mfi->date_released, mfi->skip_count, (int64_t)mfi->time_skipped,
