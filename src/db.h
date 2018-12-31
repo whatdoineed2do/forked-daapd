@@ -301,6 +301,11 @@ struct db_group_info {
   char *groupalbumcount;
   char *songalbumartist;
   char *songartistid;
+
+  char *songartist;
+  char *songartist_sort;
+  char *songtrackartistid;
+
   char *song_length;
 };
 

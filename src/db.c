@@ -296,6 +296,11 @@ static const ssize_t dbgri_cols_map[] =
     dbgri_offsetof(groupalbumcount),
     dbgri_offsetof(songalbumartist),
     dbgri_offsetof(songartistid),
+
+    dbgri_offsetof(songartist),
+    dbgri_offsetof(songartist_sort),
+    dbgri_offsetof(songtrackartistid),
+
     dbgri_offsetof(song_length),
   };
 
@@ -1702,7 +1707,7 @@ db_build_query_group_albums(struct query_params *qp)
     return NULL;
 
   count = sqlite3_mprintf("SELECT COUNT(DISTINCT f.songalbumid) FROM files f %s;", qc->where);
-  query = sqlite3_mprintf("SELECT g.id, g.persistentid, f.album, f.album_sort, COUNT(f.id) as track_count, 1 as album_count, f.album_artist, f.songartistid, SUM(f.song_length) FROM files f JOIN groups g ON f.songalbumid = g.persistentid %s GROUP BY f.songalbumid %s %s %s;", qc->where, qc->having, qc->order, qc->index);
+  query = sqlite3_mprintf("SELECT g.id, g.persistentid, f.album, f.album_sort, COUNT(f.id) as track_count, 1 as album_count, f.album_artist, f.songartistid, f.artist, f.artist_sort, f.songtrackartistid, SUM(f.song_length) FROM files f JOIN groups g ON f.songalbumid = g.persistentid %s GROUP BY f.songalbumid %s %s %s;", qc->where, qc->having, qc->order, qc->index);
 
   db_free_query_clause(qc);
 
@@ -1720,10 +1725,24 @@ db_build_query_group_artists(struct query_params *qp)
   if (!qc)
     return NULL;
 
-  count = sqlite3_mprintf("SELECT COUNT(DISTINCT f.songartistid) FROM files f %s;", qc->where);
-  query = sqlite3_mprintf("SELECT g.id, g.persistentid, f.album_artist, f.album_artist_sort, COUNT(f.id) as track_count, COUNT
-(DISTINCT f.songalbumid) as album_count, f.album_artist, f.songartistid, SUM(f.song_length) FROM files f JOIN groups g ON f.son
-gartistid = g.persistentid %s GROUP BY f.songartistid %s %s %s;", qc->where, qc->having, qc->order, qc->index);
+  count = sqlite3_mprintf(
+          "SELECT COUNT(DISTINCT f.songartistid) + "
+                 "COUNT(DISTINCT(CASE WHEN f.songtrackartistid > 0 THEN f.songtrackartistid END)) "
+            "FROM files f %s;",
+                qc->where);
+  query = sqlite3_mprintf(
+          "SELECT g.id, g.persistentid, f.album_artist, f.album_artist_sort, "
+                 "COUNT(f.id) as track_count, "
+                 "COUNT(DISTINCT f.songalbumid) as album_count, "
+                 "f.album_artist, f.songartistid, "
+                 "f.artist, f.artist_sort, f.songtrackartistid, "
+                 "SUM(f.song_length) "
+            "FROM files f "
+            "JOIN groups g  ON f.songartistid = g.persistentid "
+       "LEFT JOIN groups g1 ON f.songtrackartistid = g1.persistentid "
+              "%s "
+        "GROUP BY f.songtrackartistid,f.songartistid %s %s %s;",
+                qc->where, qc->having, qc->order, qc->index);
 
   db_free_query_clause(qc);
 
@@ -1752,8 +1771,8 @@ db_build_query_group_items(struct query_params *qp)
 	break;
 
       case G_ARTISTS:
-	count = sqlite3_mprintf("SELECT COUNT(*) FROM files f %s AND f.songartistid = %" PRIi64 ";", qc->where, qp->persistentid);
-	query = sqlite3_mprintf("SELECT f.* FROM files f %s AND f.songartistid = %" PRIi64 " %s %s;", qc->where, qp->persistentid, qc->order, qc->index);
+	count = sqlite3_mprintf("SELECT COUNT(*) FROM files f %s AND (f.songartistid = %" PRIi64 " OR f.songtrackartistid = %" PRIi64 ");", qc->where, qp->persistentid, qp->persistentid);
+	query = sqlite3_mprintf("SELECT f.* FROM files f %s AND (f.songartistid = %" PRIi64 " OR f.songtrackartistid = %" PRIi64 " %s %s;", qc->where, qp->persistentid, qp->persistentid, qc->order, qc->index);
 	break;
 
       default:

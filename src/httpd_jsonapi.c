@@ -122,9 +122,20 @@ artist_to_json(struct db_group_info *dbgri)
 
   item = json_object_new_object();
 
-  safe_json_add_string(item, "id", dbgri->persistentid);
-  safe_json_add_string(item, "name", dbgri->itemname);
-  safe_json_add_string(item, "name_sort", dbgri->itemname_sort);
+  /* special handling where artist != album_artist
+   */
+  if (dbgri->songtrackartistid && strcmp(dbgri->songtrackartistid, "0") == 0)
+    {
+      safe_json_add_string(item, "id", dbgri->persistentid);
+      safe_json_add_string(item, "name", dbgri->itemname);
+      safe_json_add_string(item, "name_sort", dbgri->itemname_sort);
+    }
+  else
+    {
+      safe_json_add_string(item, "id", dbgri->songtrackartistid);
+      safe_json_add_string(item, "name", dbgri->songartist);
+      safe_json_add_string(item, "name_sort", dbgri->songartist_sort);
+    }
   safe_json_add_int_from_string(item, "album_count", dbgri->groupalbumcount);
   safe_json_add_int_from_string(item, "track_count", dbgri->itemcount);
   safe_json_add_int_from_string(item, "length_ms", dbgri->song_length);
@@ -368,7 +379,7 @@ fetch_artist(const char *artist_id)
 
   query_params.type = Q_GROUP_ARTISTS;
   query_params.sort = S_ARTIST;
-  query_params.filter = db_mprintf("(f.songartistid = %s)", artist_id);
+  query_params.filter = db_mprintf("(f.songartistid = %s OR f.songtrackartistid = %s)", artist_id, artist_id);
 
   ret = db_query_start(&query_params);
   if (ret < 0)
@@ -2224,7 +2235,7 @@ jsonapi_reply_library_artist_albums(struct httpd_request *hreq)
 
   query_params.type = Q_GROUP_ALBUMS;
   query_params.sort = S_ALBUM;
-  query_params.filter = db_mprintf("(f.songartistid = %q)", artist_id);
+  query_params.filter = db_mprintf("(f.songartistid = %q OR f.songtrackartistid = %q)", artist_id, artist_id);
 
   ret = fetch_albums(&query_params, items, &total);
   free(query_params.filter);
