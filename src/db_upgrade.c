@@ -1047,6 +1047,11 @@ static const struct db_upgrade_query db_upgrade_v2000_queries[] =
 #define U_V2001_DROP_TRG_GROUPS_UPDATE \
   "DROP TRIGGER IF EXISTS trg_groups_update;"
 
+#define U_V2001_RETROFIT_SONGTRACKARTISTID \
+  "UPDATE files " \
+     "SET songtrackartistid = daap_songalbumid(LOWER(artist), '') " \
+   "WHERE artist != album_artist COLLATE RTRIM;"
+
 #define U_V2001_SCVER_MINOR \
   "UPDATE admin SET value = '01' WHERE key = 'schema_version_minor';"
 
@@ -1057,6 +1062,8 @@ static const struct db_upgrade_query db_upgrade_v2001_queries[] =
     { U_V2001_DROP_TRG_FILES_INSERT_SONGIDS, "drop file tbl index for songtrackartistid column" },
     { U_V2001_DROP_TRG_FILES_UPDATE_SONGIDS, "drop file tbl trigger, new file" },
     { U_V2001_DROP_TRG_GROUPS_UPDATE, "drop file tbl trigger, upd file" },
+
+    { U_V2001_RETROFIT_SONGTRACKARTISTID, "retrofit songtrackartistid for existing data" },
 
     { U_V2001_SCVER_MINOR,    "set schema_version_minor to 01" }
   };
