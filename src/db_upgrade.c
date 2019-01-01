@@ -1038,36 +1038,14 @@ static const struct db_upgrade_query db_upgrade_v2000_queries[] =
 #define U_V2001_INDEX_FILES_SONGTRACKARTISTID \
   "CREATE INDEX IF NOT EXISTS idx_strkari ON files(songtrackartistid);"
 
-#define U_V2001_TRG_FILES_INSERT_SONGIDS \
-  "DROP TRIGGER trg_files_insert_songids;" \
-  "CREATE TRIGGER trg_files_insert_songids AFTER INSERT ON files FOR EACH ROW"				\
-  " BEGIN"												\
-  "   UPDATE files SET songartistid = daap_songalbumid(LOWER(NEW.album_artist), ''), "			\
-  "     songalbumid = daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album))"			\
-  "     songtrackartistid = CASE WHEN NEW.album_artist == NEW.album THEN 0 ELSE daap_songalbumid(LOWER(NEW.artist), '') END" \
-  "   WHERE id = NEW.id;"										\
-  " END;"
+#define U_V2001_DROP_TRG_FILES_INSERT_SONGIDS \
+  "DROP TRIGGER IF EXISTS trg_files_insert_songids;"
 
-#define U_V2001_TRG_FILES_UPDATE_SONGIDS \
-  "DROP TRIGGER trg_files_update_songids;" \
-  "CREATE TRIGGER trg_files_update_songids AFTER UPDATE OF album_artist, album ON files FOR EACH ROW"	\
-  " BEGIN"												\
-  "   UPDATE files SET songartistid = daap_songalbumid(LOWER(NEW.album_artist), ''), "			\
-  "     songalbumid = daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album))"			\
-  "     songtrackartistid = CASE WHEN NEW.album_artist == NEW.album THEN 0 ELSE daap_songalbumid(LOWER(NEW.artist), '') END" \
-  "   WHERE id = NEW.id;"										\
-  " END;"
+#define U_V2001_DROP_TRG_FILES_UPDATE_SONGIDS \
+  "DROP TRIGGER IF EXISTS trg_files_update_songids;"
 
-#define U_V2001_TRG_GROUPS_UPDATE \
-  "DROP TRIGGER trg_groups_update;" \
-  "CREATE TRIGGER trg_groups_update AFTER UPDATE OF songartistid, songalbumid, songtrackartistid ON files FOR EACH ROW"	\
-  " WHEN (NEW.songartistid != 0 AND NEW.songalbumid != 0)"						\
-  " BEGIN"												\
-  "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (1, NEW.album, NEW.songalbumid);"	\
-  "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (2, NEW.album_artist, NEW.songartistid);"	\
-  "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (2, NEW.artist, NEW.songtrackartistid);" \
-  " END;"
-
+#define U_V2001_DROP_TRG_GROUPS_UPDATE \
+  "DROP TRIGGER IF EXISTS trg_groups_update;"
 
 #define U_V2001_SCVER_MINOR \
   "UPDATE admin SET value = '01' WHERE key = 'schema_version_minor';"
@@ -1075,11 +1053,12 @@ static const struct db_upgrade_query db_upgrade_v2000_queries[] =
 static const struct db_upgrade_query db_upgrade_v2001_queries[] =
   {
     { U_V2001_ALTER_FILES_ADD_SONGTRACKARTISTID, "alter table file add songtrackartistid columns" },
-    { U_V2001_TRG_FILES_INSERT_SONGIDS, "add file tbl index for songtrackartistid column" },
-    { U_V2001_TRG_FILES_UPDATE_SONGIDS, "update file tbl trigger, new file" },
-    { U_V2001_TRG_GROUPS_UPDATE, "update file tbl trigger, upd file" },
 
-    { U_V2001_SCVER_MINOR,    "set schema_version_minor to 01" },
+    { U_V2001_DROP_TRG_FILES_INSERT_SONGIDS, "drop file tbl index for songtrackartistid column" },
+    { U_V2001_DROP_TRG_FILES_UPDATE_SONGIDS, "drop file tbl trigger, new file" },
+    { U_V2001_DROP_TRG_GROUPS_UPDATE, "drop file tbl trigger, upd file" },
+
+    { U_V2001_SCVER_MINOR,    "set schema_version_minor to 01" }
   };
 
 
