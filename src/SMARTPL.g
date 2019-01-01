@@ -85,6 +85,7 @@ STRTAG		:	'artist'
 			|	'artist_id'
 			|	'album_id'
 			|	'songartistid'
+			|	'songtrackartistid'
 			;
 
 INTTAG		:	'play_count'
