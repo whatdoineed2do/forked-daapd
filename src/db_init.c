@@ -409,7 +409,7 @@ static const struct db_init_query db_init_index_queries[] =
   " BEGIN"												\
   "   UPDATE files SET songartistid = daap_songalbumid(LOWER(NEW.album_artist), ''), "			\
   "     songalbumid = daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album)),"			\
-  "     songtrackartistid = CASE WHEN NEW.album_artist == NEW.album THEN 0 ELSE daap_songalbumid(LOWER(NEW.artist), '') END" \
+  "     songtrackartistid = CASE WHEN NEW.album_artist == NEW.artist THEN 0 ELSE daap_songalbumid(LOWER(NEW.artist), '') END" \
   "   WHERE id = NEW.id;"										\
   " END;"
 
@@ -418,7 +418,7 @@ static const struct db_init_query db_init_index_queries[] =
   " BEGIN"												\
   "   UPDATE files SET songartistid = daap_songalbumid(LOWER(NEW.album_artist), ''), "			\
   "     songalbumid = daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album)),"			\
-  "     songtrackartistid = CASE WHEN NEW.album_artist == NEW.album THEN 0 ELSE daap_songalbumid(LOWER(NEW.artist), '') END" \
+  "     songtrackartistid = CASE WHEN NEW.album_artist == NEW.artist THEN 0 ELSE daap_songalbumid(LOWER(NEW.artist), '') END" \
   "   WHERE id = NEW.id;"										\
   " END;"
 
