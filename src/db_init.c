@@ -99,6 +99,9 @@
   "   songtrackartistid  INTEGER DEFAULT 0,"		\
   ");"
 
+#define T_TMP_SONGIDS					\
+  "CREATE TABLE IF NOT EXISTS tmp_songids AS SELECT * FROM files WHERE id=0"
+
 #define T_PL					\
   "CREATE TABLE IF NOT EXISTS playlists ("		\
   "   id             INTEGER PRIMARY KEY NOT NULL,"	\
@@ -256,6 +259,7 @@ static const struct db_init_query db_init_table_queries[] =
   {
     { T_ADMIN,     "create table admin" },
     { T_FILES,     "create table files" },
+    { T_TMP_SONGIDS, "create table (temp) songids" },
     { T_PL,        "create table playlists" },
     { T_PLITEMS,   "create table playlistitems" },
     { T_GROUPS,    "create table groups" },
@@ -411,6 +415,10 @@ static const struct db_init_query db_init_index_queries[] =
   "     songalbumid = daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album)),"			\
   "     songtrackartistid = CASE WHEN NEW.album_artist == NEW.artist THEN 0 ELSE daap_songalbumid(LOWER(NEW.artist), '') END" \
   "   WHERE id = NEW.id;"										\
+  "   INSERT INTO tmp_songids SELECT * FROM files WHERE id = NEW.id AND songtrackartistid != 0;"	\
+  "   UPDATE      tmp_songids SET id = NULL, songartistid = songtrackartistid, songtrackartistid = 0 WHERE id = NEW.id;" \
+  "   INSERT INTO files SELECT * FROM tmp_songids;"							\
+  "   DELETE FROM tmp_songids;"										\
   " END;"
 
 #define TRG_FILES_UPDATE_SONGIDS									\
@@ -420,6 +428,10 @@ static const struct db_init_query db_init_index_queries[] =
   "     songalbumid = daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album)),"			\
   "     songtrackartistid = CASE WHEN NEW.album_artist == NEW.artist THEN 0 ELSE daap_songalbumid(LOWER(NEW.artist), '') END" \
   "   WHERE id = NEW.id;"										\
+  "   INSERT INTO tmp_songids SELECT * FROM files WHERE id = NEW.id AND songtrackartistid != 0;"	\
+  "   UPDATE      tmp_songids SET id = NULL, songartistid = songtrackartistid, songtrackartistid = 0 WHERE id = NEW.id;" \
+  "   INSERT INTO files SELECT * FROM tmp_songids;"							\
+  "   DELETE FROM tmp_songids;"										\
   " END;"
 
 #define TRG_GROUPS_UPDATE										\

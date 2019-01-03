@@ -987,6 +987,9 @@ static const struct db_upgrade_query db_upgrade_v2000_queries[] =
 #define U_V2001_DROP_TRG_GROUPS_UPDATE \
   "DROP TRIGGER IF EXISTS trg_groups_update;"
 
+#define U_V2001_ADD_TABLE_TMP_SONGIDS		\
+  "CREATE TABLE IF NOT EXISTS tmp_songids AS SELECT * FROM files WHERE id=0"
+
 #define U_V2001_RETROFIT_SONGTRACKARTISTID \
   "UPDATE files " \
      "SET songtrackartistid = daap_songalbumid(LOWER(artist), '') " \
@@ -998,6 +1001,7 @@ static const struct db_upgrade_query db_upgrade_v2000_queries[] =
 static const struct db_upgrade_query db_upgrade_v2001_queries[] =
   {
     { U_V2001_ALTER_FILES_ADD_SONGTRACKARTISTID, "alter table file add songtrackartistid columns" },
+    { U_V2001_ADD_TABLE_TMP_SONGIDS, "add table tmp_songids" },
 
     { U_V2001_DROP_TRG_FILES_INSERT_SONGIDS, "drop file tbl index for songtrackartistid column" },
     { U_V2001_DROP_TRG_FILES_UPDATE_SONGIDS, "drop file tbl trigger, new file" },
