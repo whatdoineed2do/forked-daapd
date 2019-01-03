@@ -122,20 +122,9 @@ artist_to_json(struct db_group_info *dbgri)
 
   item = json_object_new_object();
 
-  /* special handling where artist != album_artist
-   */
-  if (dbgri->songtrackartistid && strcmp(dbgri->songtrackartistid, "0") == 0)
-    {
-      safe_json_add_string(item, "id", dbgri->persistentid);
-      safe_json_add_string(item, "name", dbgri->itemname);
-      safe_json_add_string(item, "name_sort", dbgri->itemname_sort);
-    }
-  else
-    {
-      safe_json_add_string(item, "id", dbgri->songtrackartistid);
-      safe_json_add_string(item, "name", dbgri->songartist);
-      safe_json_add_string(item, "name_sort", dbgri->songartist_sort);
-    }
+  safe_json_add_string(item, "id", dbgri->persistentid);
+  safe_json_add_string(item, "name", dbgri->itemname);
+  safe_json_add_string(item, "name_sort", dbgri->itemname_sort);
   safe_json_add_int_from_string(item, "album_count", dbgri->groupalbumcount);
   safe_json_add_int_from_string(item, "track_count", dbgri->itemcount);
   safe_json_add_int_from_string(item, "length_ms", dbgri->song_length);
