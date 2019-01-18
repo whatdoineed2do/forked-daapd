@@ -95,7 +95,8 @@
   "   artist_sort        VARCHAR(1024) DEFAULT NULL COLLATE DAAP,"	\
   "   album_sort         VARCHAR(1024) DEFAULT NULL COLLATE DAAP,"	\
   "   album_artist_sort  VARCHAR(1024) DEFAULT NULL COLLATE DAAP,"	\
-  "   composer_sort      VARCHAR(1024) DEFAULT NULL COLLATE DAAP"	\
+  "   composer_sort      VARCHAR(1024) DEFAULT NULL COLLATE DAAP,"	\
+  "   compilationid      VARCHAR(64) DEFAULT NULL"	\
   ");"
 
 #define T_PL					\
@@ -404,15 +405,15 @@ static const struct db_init_query db_init_index_queries[] =
   "CREATE TRIGGER trg_files_insert_songids AFTER INSERT ON files FOR EACH ROW"				\
   " BEGIN"												\
   "   UPDATE files SET songartistid = daap_songalbumid(LOWER(NEW.album_artist), ''), "			\
-  "     songalbumid = daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album))"			\
+  "     songalbumid = CASE WHEN NEW.compilationid is NULL THEN daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album)) ELSE daap_songalbumid(LOWER(NEW.compilationid), '') END" \
   "   WHERE id = NEW.id;"										\
   " END;"
 
 #define TRG_FILES_UPDATE_SONGIDS									\
-  "CREATE TRIGGER trg_files_update_songids AFTER UPDATE OF album_artist, album ON files FOR EACH ROW"	\
+  "CREATE TRIGGER trg_files_update_songids AFTER UPDATE OF album_artist, album, compilationid ON files FOR EACH ROW"	\
   " BEGIN"												\
   "   UPDATE files SET songartistid = daap_songalbumid(LOWER(NEW.album_artist), ''), "			\
-  "     songalbumid = daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album))"			\
+  "     songalbumid = CASE WHEN NEW.compilationid is NULL THEN daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album)) ELSE daap_songalbumid(LOWER(NEW.compilationid), '') END" \
   "   WHERE id = NEW.id;"										\
   " END;"
 
