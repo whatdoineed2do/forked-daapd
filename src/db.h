@@ -176,6 +176,7 @@ struct media_file_info {
 
   uint32_t bpm;          /* TBPM */
   uint32_t compilation;
+  char *compilationid;
   uint32_t artwork;
   uint32_t rating;
 
@@ -283,6 +284,7 @@ struct group_info {
   char *itemname;        /* album or album_artist (minm) */
   char *itemname_sort;   /* album_sort or album_artist_sort (~mshc) */
   uint32_t itemcount;    /* number of items (mimc) */
+  uint32_t groupartistcount; /* number of artists, 1 unless for compilation */
   uint32_t groupalbumcount; /* number of albums (agac) */
   char *songalbumartist; /* song album artist (asaa) */
   uint64_t songartistid; /* song artist id (asri) */
@@ -297,6 +299,7 @@ struct db_group_info {
   char *itemname;
   char *itemname_sort;
   char *itemcount;
+  char *groupartistcount;
   char *groupalbumcount;
   char *songalbumartist;
   char *songartistid;
@@ -369,6 +372,7 @@ struct db_media_file_info {
   char *album_artist_sort;
   char *composer_sort;
   char *songtrackartistid;
+  char *compilationid;
 };
 
 #define dbmfi_offsetof(field) offsetof(struct db_media_file_info, field)
