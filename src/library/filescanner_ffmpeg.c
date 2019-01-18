@@ -228,6 +228,21 @@ static const struct metadata_map md_map_id3[] =
     { NULL,                  0, 0,                                   NULL }
   };
 
+/* these tags are used to determine if files belong to a common compilation;
+ * primaraily we expect albums to be tagged by something like MusicBrainz but a
+ * user can put unique values into these tags if they wish
+ *
+ * https://picard.musicbrainz.org/docs/tags
+ */
+static const struct metadata_map md_map_compilation[] =
+  {
+    { "MusicBrainz Album Id",         0, mfi_offsetof(compilationid), NULL },
+    { "MusicBrainz Release Group Id", 0, mfi_offsetof(compilationid), NULL },
+    { "CATALOGNUMBER",                0, mfi_offsetof(compilationid), NULL },
+    { "BARCODE",                      0, mfi_offsetof(compilationid), NULL },
+
+    { NULL,                           0, 0,                           NULL }
+  };
 
 static int
 extract_metadata_core(struct media_file_info *mfi, AVDictionary *md, const struct metadata_map *md_map)
@@ -678,6 +693,9 @@ scan_metadata_ffmpeg(const char *file, struct media_file_info *mfi)
 
       DPRINTF(E_DBG, L_SCAN, "Picked up %d tags with extra md_map\n", ret);
     }
+
+  ret = extract_metadata(mfi, ctx, audio_stream, video_stream, md_map_compilation);
+  mdcount += ret;
 
   ret = extract_metadata(mfi, ctx, audio_stream, video_stream, md_map_generic);
   mdcount += ret;
