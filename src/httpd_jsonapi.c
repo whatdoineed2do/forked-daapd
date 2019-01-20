@@ -730,6 +730,8 @@ fetch_artist(bool *notfound, const char *artist_id)
   json_object_object_add(reply, "id", json_object_new_string(artist_id));
   json_object_object_add(reply, "name", json_object_new_string(various_artists ? "Various Artists" : artist_name));
   json_object_object_add(reply, "name_sort", json_object_new_string(various_artists ? "Various Artists" : artist_name_sort));
+  json_object_object_add(reply, "artist_id", json_object_new_string(artist_id));
+  json_object_object_add(reply, "artist", json_object_new_string(various_artists ? "Various Artists" : artist_name));
   json_object_object_add(reply, "total", json_object_new_int(total));
 
  error:
