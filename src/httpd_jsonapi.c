@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "httpd_jsonapi.h"
 #include "conffile.h"
@@ -171,14 +172,17 @@ album_to_json(struct db_group_info *dbgri)
   char uri[100];
   char artwork_url[100];
   int ret;
+  int artist_count;
 
+  artist_count = dbgri->groupartistcount ? atol(dbgri->groupartistcount) : 0;
   item = json_object_new_object();
 
   safe_json_add_string(item, "id", dbgri->persistentid);
   safe_json_add_string(item, "name", dbgri->itemname);
   safe_json_add_string(item, "name_sort", dbgri->itemname_sort);
-  safe_json_add_string(item, "artist", dbgri->songalbumartist);
+  safe_json_add_string(item, "artist", artist_count > 1 ? "Various Artists" : dbgri->songalbumartist);
   safe_json_add_string(item, "artist_id", dbgri->songartistid);
+  json_object_object_add(item, "artist_count", json_object_new_int(artist_count));
   safe_json_add_int_from_string(item, "track_count", dbgri->itemcount);
   safe_json_add_int_from_string(item, "length_ms", dbgri->song_length);
 
@@ -283,7 +287,7 @@ playlist_to_json(struct db_playlist_info *dbpli)
 }
 
 static json_object *
-genre_to_json(const char *genre)
+genre_to_json(const struct db_genre_info *genre)
 {
   json_object *item;
 
@@ -293,7 +297,28 @@ genre_to_json(const char *genre)
     }
 
   item = json_object_new_object();
-  safe_json_add_string(item, "name", genre);
+  safe_json_add_string(item, "name", genre->name);
+  json_object_object_add(item, "album_count", json_object_new_int(genre->album_count));
+  json_object_object_add(item, "artist_count", json_object_new_int(genre->artist_count));
+  json_object_object_add(item, "track_count", json_object_new_int(genre->track_count));
+
+  return item;
+}
+    
+static json_object *
+composer_to_json(const struct db_composer_info *composer)
+{
+  json_object *item;
+
+  if (composer == NULL)
+    {
+      return NULL;
+    }
+
+  item = json_object_new_object();
+  safe_json_add_string(item, "name", composer->name);
+  json_object_object_add(item, "album_count", json_object_new_int(composer->album_count));
+  json_object_object_add(item, "track_count", json_object_new_int(composer->track_count));
 
   return item;
 }
@@ -389,31 +414,78 @@ static json_object *
 fetch_artist(const char *artist_id)
 {
   struct query_params query_params;
-  json_object *artist;
+  json_object *reply = NULL, *items = NULL, *item = NULL;
   struct db_group_info dbgri;
   int ret = 0;
+  int total = 0;
+  char *artist_name = NULL;
+  char *artist_name_sort = NULL;
+  bool various_artists = false;
 
   memset(&query_params, 0, sizeof(struct query_params));
-  artist = NULL;
 
   query_params.type = Q_GROUP_ARTISTS;
   query_params.sort = S_ARTIST;
-  query_params.filter = db_mprintf("(f.songartistid = %s OR f.songtrackartistid = %q)", artist_id, artist_id);
+  query_params.filter = db_mprintf("(f.songartistid in (%s) OR f.songtrackartistid in (%s))", artist_id, artist_id);
 
   ret = db_query_start(&query_params);
   if (ret < 0)
     goto error;
 
-  if ((ret = db_query_fetch_group(&query_params, &dbgri)) == 0)
+  reply = json_object_new_object();
+  items = json_object_new_array();
+  json_object_object_add(reply, "items", items);
+
+  /* we can have multiple artists comes back (if artist_id is list of artists
+   * for compilation)
+   */
+  while ((ret = db_query_fetch_group(&query_params, &dbgri)) == 0)
     {
-      artist = artist_to_json(&dbgri);
+      item = artist_to_json(&dbgri);
+      if (!item)
+	{
+	  ret = -1;
+	  goto error;
+	}
+
+      json_object_array_add(items, item);
+
+      // make sure we set the artist name to the matching one in db
+      if (artist_name == NULL && strcmp(artist_id, dbgri.persistentid) == 0)
+        {
+	  artist_name = strdup(dbgri.itemname);
+	  artist_name_sort = strdup(dbgri.itemname_sort);
+	}
+
+      if (!various_artists && atol(dbgri.groupartistcount) > 1)
+	various_artists = true;
+
+      total += atol(dbgri.groupartistcount);
     }
+
+  // if we asked for multiple artists in artist_id we wont have matched
+  if (artist_name == NULL)
+    various_artists = true;
+
+  if (total == 0)
+    {
+      jparse_free(reply);
+      reply = NULL;
+      goto error;
+    }
+
+  json_object_object_add(reply, "id", json_object_new_string(artist_id));
+  json_object_object_add(reply, "name", json_object_new_string(various_artists ? "Various Artists" : artist_name));
+  json_object_object_add(reply, "name_sort", json_object_new_string(various_artists ? "Various Artists" : artist_name_sort));
+  json_object_object_add(reply, "total", json_object_new_int(total));
 
  error:
   db_query_end(&query_params);
   free(query_params.filter);
+  free(artist_name);
+  free(artist_name_sort);
 
-  return artist;
+  return reply;
 }
 
 static int
@@ -551,16 +623,15 @@ fetch_genres(struct query_params *query_params, json_object *items, int *total)
 {
   json_object *item;
   int ret;
-  char *genre;
-  char *sort_item;
+  struct db_genre_info genre;
 
   ret = db_query_start(query_params);
   if (ret < 0)
     goto error;
 
-  while (((ret = db_query_fetch_string_sort(query_params, &genre, &sort_item)) == 0) && (genre))
+  while (((ret = db_query_fetch_genre(query_params, &genre)) == 0) && genre.name)
     {
-      item = genre_to_json(genre);
+      item = genre_to_json(&genre);
       if (!item)
 	{
 	  ret = -1;
@@ -568,6 +639,40 @@ fetch_genres(struct query_params *query_params, json_object *items, int *total)
 	}
 
       json_object_array_add(items, item);
+      free_gi(&genre, 1);
+    }
+
+  if (total)
+    *total = query_params->results;
+
+ error:
+  db_query_end(query_params);
+
+  return ret;
+}
+    
+static int
+fetch_composers(struct query_params *query_params, json_object *items, int *total)
+{
+  json_object *item;
+  int ret;
+  struct db_composer_info composer;
+
+  ret = db_query_start(query_params);
+  if (ret < 0)
+    goto error;
+
+  while (((ret = db_query_fetch_composer(query_params, &composer)) == 0) && composer.name)
+    {
+      item = composer_to_json(&composer);
+      if (!item)
+	{
+	  ret = -1;
+	  goto error;
+	}
+
+      json_object_array_add(items, item);
+      free_ci(&composer, 1);
     }
 
   if (total)
@@ -663,11 +768,16 @@ jsonapi_reply_config(struct httpd_request *hreq)
   int websocket_port;
   char **buildoptions;
   cfg_t *lib;
-  int ndirs;
+  int n;
   char *path;
   char *deref;
   json_object *directories;
+  json_object *show_composer;
   int i;
+  char *ptr;
+  char *l;
+  char *buf;
+  int  bufsz;
 
   CHECK_NULL(L_WEB, jreply = json_object_new_object());
 
@@ -699,9 +809,9 @@ jsonapi_reply_config(struct httpd_request *hreq)
 
   // Library directories
   lib = cfg_getsec(cfg, "library");
-  ndirs = cfg_size(lib, "directories");
+  n = cfg_size(lib, "directories");
   directories = json_object_new_array();
-  for (i = 0; i < ndirs; i++)
+  for (i = 0; i < n; i++)
     {
       path = cfg_getnstr(lib, "directories", i);
 
@@ -723,9 +833,34 @@ jsonapi_reply_config(struct httpd_request *hreq)
   json_object_object_add(jreply, "allow_modifying_stored_playlists", json_object_new_boolean(allow_modifying_stored_playlists));
   safe_json_add_string(jreply, "default_playlist_directory", default_playlist_directory);
 
+  n = cfg_size(lib, "show_composer");
+  show_composer = json_object_new_array();
+  bufsz = 32;
+  buf = malloc(bufsz+1);
+  memset(buf, 0, bufsz+1);
+  for (i = 0; i < n; i++)
+    {
+      ptr = cfg_getnstr(lib, "show_composer", i);
+      if (strlen(ptr) > bufsz)
+        {
+	  bufsz = strlen(ptr);
+	  free(buf);
+	  buf = malloc(bufsz+1);
+	  buf[bufsz] = '\0';
+        }
+
+      l = buf;
+      while (*ptr)
+        *l++ = tolower(*ptr++);
+
+      json_object_array_add(show_composer, json_object_new_string(buf));
+    }
+  json_object_object_add(jreply, "show_composer", show_composer);
+
   CHECK_ERRNO(L_WEB, evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(jreply)));
 
   jparse_free(jreply);
+  free(buf);
 
   return HTTP_OK;
 }
@@ -1612,7 +1747,8 @@ static int
 jsonapi_reply_player(struct httpd_request *hreq)
 {
   struct player_status status;
-  struct db_queue_item *queue_item;
+  struct db_queue_item *queue_item = NULL;
+  struct media_file_info *mfi = NULL;
   json_object *reply;
 
   player_get_status(&status);
@@ -1655,7 +1791,12 @@ jsonapi_reply_player(struct httpd_request *hreq)
 
   if (status.item_id)
     {
+      queue_item = db_queue_fetch_byitemid(status.item_id);
+      if (queue_item)
+	mfi = db_file_fetch_byid(queue_item->file_id);
+
       json_object_object_add(reply, "item_id", json_object_new_int(status.item_id));
+      json_object_object_add(reply, "item_rating", json_object_new_int(mfi ? mfi->rating : 0));
       json_object_object_add(reply, "item_length_ms", json_object_new_int(status.len_ms));
       json_object_object_add(reply, "item_progress_ms", json_object_new_int(status.pos_ms));
       json_object_object_add(reply, "artwork_url", json_object_new_string("/artwork/nowplaying"));
@@ -1666,14 +1807,17 @@ jsonapi_reply_player(struct httpd_request *hreq)
 
       if (queue_item)
 	{
+	  mfi = db_file_fetch_byid(queue_item->file_id);
+
 	  json_object_object_add(reply, "item_id", json_object_new_int(queue_item->id));
+	  json_object_object_add(reply, "item_rating", json_object_new_int(mfi ? mfi->rating : 0));
 	  json_object_object_add(reply, "item_length_ms", json_object_new_int(queue_item->song_length));
 	  json_object_object_add(reply, "item_progress_ms", json_object_new_int(0));
-	  free_queue_item(queue_item, 0);
 	}
       else
 	{
 	  json_object_object_add(reply, "item_id", json_object_new_int(0));
+	  json_object_object_add(reply, "item_rating", json_object_new_int(0));
 	  json_object_object_add(reply, "item_length_ms", json_object_new_int(0));
 	  json_object_object_add(reply, "item_progress_ms", json_object_new_int(0));
 	}
@@ -1687,6 +1831,8 @@ jsonapi_reply_player(struct httpd_request *hreq)
 
   CHECK_ERRNO(L_WEB, evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(reply)));
 
+  free_queue_item(queue_item, 0);
+  free_mfi(mfi, 0);
   jparse_free(reply);
 
   return HTTP_OK;
@@ -2542,7 +2688,7 @@ jsonapi_reply_library_artist_albums(struct httpd_request *hreq)
 
   query_params.type = Q_GROUP_ALBUMS;
   query_params.sort = S_ALBUM;
-  query_params.filter = db_mprintf("(f.songartistid = %q OR f.songtrackartistid = %q)", artist_id, artist_id);
+  query_params.filter = db_mprintf("(f.songartistid in (%s) OR f.songtrackartistid in (%s))", artist_id, artist_id);
 
   ret = fetch_albums(&query_params, items, &total);
   free(query_params.filter);
@@ -2596,7 +2742,7 @@ jsonapi_reply_library_artist_tracks(struct httpd_request *hreq)
 
   query_params.type = Q_ITEMS;
   query_params.sort = S_NAME;
-  query_params.filter = db_mprintf("(f.songartistid = %q OR f.songtrackartistid = %q)", artist_id, artist_id);
+  query_params.filter = db_mprintf("(f.songartistid in (%s) OR f.songtrackartistid in (%s))", artist_id, artist_id);
 
   ret = fetch_tracks(&query_params, items, &total);
   free(query_params.filter);
@@ -3118,6 +3264,94 @@ jsonapi_reply_library_genres(struct httpd_request *hreq)
     query_params.filter = db_mprintf("(f.media_kind = %d)", media_kind);
 
   ret = fetch_genres(&query_params, items, NULL);
+  if (ret < 0)
+    goto error;
+  else
+    total = json_object_array_length(items);
+
+  json_object_object_add(reply, "total", json_object_new_int(total));
+  json_object_object_add(reply, "offset", json_object_new_int(query_params.offset));
+  json_object_object_add(reply, "limit", json_object_new_int(query_params.limit));
+
+  ret = evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(reply));
+  if (ret < 0)
+    DPRINTF(E_LOG, L_WEB, "browse: Couldn't add genres to response buffer.\n");
+
+ error:
+  jparse_free(reply);
+  free_query_params(&query_params, 1);
+
+  if (ret < 0)
+    return HTTP_INTERNAL;
+
+  return HTTP_OK;
+}
+
+static int
+jsonapi_reply_library_composers(struct httpd_request *hreq)
+{
+  time_t db_update;
+  struct query_params query_params;
+  const char *param;
+  const char *genre_param;
+  char *tmp;
+  enum media_kind media_kind;
+  json_object *reply;
+  json_object *items;
+  int total;
+  int ret;
+
+
+  db_update = (time_t) db_admin_getint64(DB_ADMIN_DB_UPDATE);
+  if (db_update && httpd_request_not_modified_since(hreq->req, &db_update))
+    return HTTP_NOTMODIFIED;
+
+  media_kind = 0;
+  param = evhttp_find_header(hreq->query, "media_kind");
+  if (param)
+    {
+      media_kind = db_media_kind_enum(param);
+      if (!media_kind)
+	{
+	  DPRINTF(E_LOG, L_WEB, "Invalid media kind '%s'\n", param);
+	  return HTTP_BADREQUEST;
+	}
+    }
+
+  genre_param = evhttp_find_header(hreq->query, "genre");
+
+  reply = json_object_new_object();
+  items = json_object_new_array();
+  json_object_object_add(reply, "items", items);
+
+  memset(&query_params, 0, sizeof(struct query_params));
+
+  ret = query_params_limit_set(&query_params, hreq);
+  if (ret < 0)
+    goto error;
+
+  query_params.type = Q_BROWSE_COMPOSERS;
+  query_params.sort = S_COMPOSER;
+  query_params.idx_type = I_NONE;
+
+  if (media_kind)
+    query_params.filter = db_mprintf("(f.media_kind = %d)", media_kind);
+
+  if (genre_param)
+    {
+      if (query_params.filter == NULL)
+        {
+	  query_params.filter = db_mprintf("(f.genre = '%s')", genre_param);
+        }
+      else 
+        {
+	  tmp = query_params.filter;
+	  query_params.filter = db_mprintf("(%s AND f.genre = '%s')", tmp, genre_param);
+	  free(tmp);
+        }
+    }
+
+  ret = fetch_composers(&query_params, items, NULL);
   if (ret < 0)
     goto error;
   else
@@ -3733,15 +3967,16 @@ static struct httpd_uri_map adm_handlers[] =
 //    { EVHTTP_REQ_POST,   "^/api/library/playlists/[[:digit:]]+/tracks$", jsonapi_reply_library_playlists_tracks },
 //    { EVHTTP_REQ_DELETE, "^/api/library/playlists/[[:digit:]]+$",        jsonapi_reply_library_playlist_tracks },
     { EVHTTP_REQ_GET,    "^/api/library/artists$",                       jsonapi_reply_library_artists },
-    { EVHTTP_REQ_GET,    "^/api/library/artists/[[:digit:]]+$",          jsonapi_reply_library_artist },
-    { EVHTTP_REQ_GET,    "^/api/library/artists/[[:digit:]]+/albums$",   jsonapi_reply_library_artist_albums },
-    { EVHTTP_REQ_GET,    "^/api/library/artists/[[:digit:]]+/tracks$",	 jsonapi_reply_library_artist_tracks },
+    { EVHTTP_REQ_GET,    "^/api/library/artists/[[:digit:]]+(,[[:digit:]]+)*$", jsonapi_reply_library_artist },
+    { EVHTTP_REQ_GET,    "^/api/library/artists/[[:digit:]]+(,[[:digit:]]+)*/albums$", jsonapi_reply_library_artist_albums },
+    { EVHTTP_REQ_GET,    "^/api/library/artists/[[:digit:]]+(,[[:digit:]]+)*/tracks$", jsonapi_reply_library_artist_tracks },
     { EVHTTP_REQ_GET,    "^/api/library/albums$",                        jsonapi_reply_library_albums },
     { EVHTTP_REQ_GET,    "^/api/library/albums/[[:digit:]]+$",           jsonapi_reply_library_album },
     { EVHTTP_REQ_GET,    "^/api/library/albums/[[:digit:]]+/tracks$",    jsonapi_reply_library_album_tracks },
     { EVHTTP_REQ_GET,    "^/api/library/tracks/[[:digit:]]+$",           jsonapi_reply_library_tracks_get_byid },
     { EVHTTP_REQ_PUT,    "^/api/library/tracks/[[:digit:]]+$",           jsonapi_reply_library_tracks_put_byid },
-    { EVHTTP_REQ_GET,    "^/api/library/genres$",                        jsonapi_reply_library_genres},
+    { EVHTTP_REQ_GET,    "^/api/library/genres$",                        jsonapi_reply_library_genres },
+    { EVHTTP_REQ_GET,    "^/api/library/composers$",                     jsonapi_reply_library_composers },
     { EVHTTP_REQ_GET,    "^/api/library/count$",                         jsonapi_reply_library_count },
     { EVHTTP_REQ_GET,    "^/api/library/files$",                         jsonapi_reply_library_files },
 
