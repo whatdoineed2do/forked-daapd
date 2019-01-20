@@ -6,7 +6,7 @@
 
     <content-with-heading>
       <template slot="heading-left">
-        <p class="title is-4">{{ artist.name }}</p>
+        <p class="title is-4">{{ album_artist }}</p>
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
@@ -19,7 +19,7 @@
         </div>
       </template>
       <template slot="content">
-        <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artist">{{ artist.album_count }} albums</a> | {{ artist.track_count }} tracks</p>
+        <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artist">{{ album_count }} albums</a> | {{ track_count }} tracks</p>
         <list-item-track v-for="(track, index) in tracks.items" :key="track.id" :track="track" @click="play_track(index)">
           <template slot="actions">
             <a @click="open_dialog(track)">
@@ -53,7 +53,9 @@ const tracksData = {
   },
 
   set: function (vm, response) {
-    vm.artist = response[0].data
+    vm.album_artist = response[0].data.artist
+    vm.artist_id = response[0].data.artist_id
+    vm.artist = response[0].data.items
     vm.tracks = response[1].data
   }
 }
@@ -65,6 +67,8 @@ export default {
 
   data () {
     return {
+      album_artist: '',
+      artist_id: '',
       artist: {},
       tracks: { items: [] },
 
@@ -76,6 +80,14 @@ export default {
   },
 
   computed: {
+    track_count () {
+      return this.tracks.items.length
+    },
+
+    album_count () {
+      return new Set(this.tracks.items.map(track => track.album_id)).size
+    },
+
     index_list () {
       return [...new Set(this.tracks.items
         .map(track => track.title_sort.charAt(0).toUpperCase()))]
@@ -85,7 +97,7 @@ export default {
   methods: {
     open_artist: function () {
       this.show_details_modal = false
-      this.$router.push({ path: '/music/artists/' + this.artist.id })
+      this.$router.push({ path: '/music/artists/' + this.artist_id })
     },
 
     play: function () {
