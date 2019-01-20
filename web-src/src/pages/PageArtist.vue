@@ -6,7 +6,7 @@
 
     <content-with-heading>
       <template slot="heading-left">
-        <p class="title is-4">{{ artist.name }}</p>
+        <p class="title is-4">{{ name }}</p>
       </template>
       <template slot="heading-right">
         <a class="button is-small is-light is-rounded" @click="show_artist_details_modal = true">
@@ -17,7 +17,9 @@
         </a>
       </template>
       <template slot="content">
-        <p class="heading has-text-centered-mobile">{{ artist.album_count }} albums | <a class="has-text-link" @click="open_tracks">{{ artist.track_count }} tracks</a></p>
+        <p class="heading has-text-centered-mobile">{{ albums.total }} albums | <a class="has-text-link" @click="open_tracks">{{ track_count }} tracks</a></p>
+        <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_toptracks">top tracks</a></p>
+
       <list-item-album v-for="album in albums.items" :key="album.id" :album="album" @click="open_album(album)">
         <template slot="actions">
           <a @click="open_dialog(album)">
@@ -26,7 +28,7 @@
         </template>
       </list-item-album>
       <modal-dialog-album :show="show_details_modal" :album="selected_album" @close="show_details_modal = false" />
-      <modal-dialog-artist :show="show_artist_details_modal" :artist="artist" @close="show_artist_details_modal = false" />
+      <modal-dialog-artist :show="show_artist_details_modal" :artist="consolidated_artist" @close="show_artist_details_modal = false" />
       </template>
     </content-with-heading>
   </div>
@@ -51,8 +53,18 @@ const artistData = {
   },
 
   set: function (vm, response) {
-    vm.artist = response[0].data
+    vm.name = response[0].data.name
+    vm.id = response[0].data.id
+    vm.artist = response[0].data.items
     vm.albums = response[1].data
+
+    vm.consolidated_artist = {
+      'id': vm.id,
+      'name': vm.name,
+      'album_count': vm.albums.items.length,
+      'track_count': vm.track_count,
+      'uri': vm.albums.items.map(a => a.uri).join(',')
+    }
   }
 }
 
@@ -63,8 +75,12 @@ export default {
 
   data () {
     return {
-      artist: {},
+      name: '',
+      id: '',
+      consolidated_artist: {},
+      artist: [], // can be multiple entries if compilation album
       albums: { items: [] },
+
       show_details_modal: false,
       selected_album: {},
 
@@ -76,12 +92,25 @@ export default {
     index_list () {
       return [...new Set(this.albums.items
         .map(album => album.name_sort.charAt(0).toUpperCase()))]
+    },
+
+    track_count () {
+      var n = 0
+      return this.albums.items.reduce((acc, item) => {
+        acc += item.track_count
+        return acc
+      }, n)
     }
   },
 
   methods: {
+    open_toptracks: function () {
+      this.show_details_modal = false
+      this.$router.push({ name: 'TopArtistTracks', params: { condition: 'songartistid in "' + this.id + '" and media_kind is music', id: this.name } })
+    },
+
     open_tracks: function () {
-      this.$router.push({ path: '/music/artists/' + this.artist.id + '/tracks' })
+      this.$router.push({ path: '/music/artists/' + this.id + '/tracks' })
     },
 
     play: function () {
