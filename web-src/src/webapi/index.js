@@ -311,6 +311,7 @@ export default {
         params: artistParams
       })
     }
+    // return axios.get('/api/library/artists/' + artist + '/tracks')
   },
 
   library_podcasts_new_episodes () {
