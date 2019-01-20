@@ -4,11 +4,12 @@
 
     <index-list :index="index_list"></index-list>
 
-    <content-with-heading>
-      <template slot="heading-left">
-        <p class="title is-4">{{ artist.name }}</p>
-      </template>
-      <template slot="heading-right">
+  <content-with-heading>
+    <template slot="heading-left">
+      <p class="title is-4">{{ name }}</p>
+    </template>
+    <template slot="heading-right">
+      <div class="buttons is-centered">
         <a class="button is-small is-light is-rounded" @click="show_artist_details_modal = true">
           <span class="icon"><i class="mdi mdi-dots-horizontal mdi-18px"></i></span>
         </a>
@@ -18,7 +19,6 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile">{{ albums.total }} albums | <a class="has-text-link" @click="open_tracks">{{ track_count }} tracks</a></p>
-
       <list-item-album v-for="album in albums.items" :key="album.id" :album="album" @click="open_album(album)">
         <template slot="actions">
           <a @click="open_dialog(album)">
