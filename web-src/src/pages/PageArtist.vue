@@ -18,7 +18,6 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile">{{ albums.total }} albums | <a class="has-text-link" @click="open_tracks">{{ track_count }} tracks</a></p>
-
       <list-item-album v-for="album in albums.items" :key="album.id" :album="album" @click="open_album(album)">
         <template slot="actions">
           <a @click="open_dialog(album)">
