@@ -24,6 +24,7 @@
       <template slot="content">
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artist">{{ artist.album_count }} albums</a> | {{ artist.track_count }} tracks</p>
         <list-tracks :tracks="tracks.items" :uris="track_uris"></list-tracks>
+        <modal-dialog-track :show="show_details_modal" :track="selected_track" @close="show_details_modal = false" />
         <modal-dialog-artist :show="show_artist_details_modal" :artist="artist" @close="show_artist_details_modal = false" />
       </template>
     </content-with-heading>
@@ -35,6 +36,7 @@ import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import IndexButtonList from '@/components/IndexButtonList'
 import ListTracks from '@/components/ListTracks'
+import ModalDialogTrack from '@/components/ModalDialogTrack'
 import ModalDialogArtist from '@/components/ModalDialogArtist'
 import TabsMusic from '@/components/TabsMusic'
 import IndexList from '@/components/IndexList'
@@ -59,7 +61,7 @@ const tracksData = {
 export default {
   name: 'PageArtistTracks',
   mixins: [LoadDataBeforeEnterMixin(tracksData)],
-  components: { ContentWithHeading, ListTracks, IndexButtonList, ModalDialogArtist, IndexList, TabsMusic },
+  components: { ContentWithHeading, ListTracks, IndexButtonList, ModalDialogArtist, ModalDialogTrack, IndexList, TabsMusic },
 
   data () {
     return {
@@ -68,19 +70,14 @@ export default {
       artist: {},
       tracks: { items: [] },
 
+      show_details_modal: false,
+      selected_track: {},
+
       show_artist_details_modal: false
     }
   },
 
   computed: {
-    track_count () {
-      return this.tracks.items.length
-    },
-
-    album_count () {
-      return new Set(this.tracks.items.map(track => track.album_id)).size
-    },
-
     index_list () {
       return [...new Set(this.tracks.items
         .map(track => track.title_sort.charAt(0).toUpperCase()))]
