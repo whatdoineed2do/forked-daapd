@@ -14,7 +14,7 @@
         </div>
       </template>
     <template slot="heading-left">
-      <p class="title is-4">{{ artist.name }}</p>
+      <p class="title is-4">{{ album_artist }}</p>
     </template>
     <template slot="heading-right">
       <div class="buttons is-centered">
@@ -27,8 +27,9 @@
       </div>
     </template>
     <template slot="content">
-      <p class="heading has-text-centered-mobile">{{ artist.album_count }} albums | <a class="has-text-link" @click="open_tracks">{{ track_count }} tracks</a></p>
+      <p class="heading has-text-centered-mobile">{{ albums.total }} albums | <a class="has-text-link" @click="open_tracks">{{ track_count }} tracks</a></p>
       <list-albums :albums="albums_list"></list-albums>
+      <modal-dialog-album :show="show_details_modal" :album="selected_album" @close="show_details_modal = false" />
       <modal-dialog-artist :show="show_artist_details_modal" :artist="artist" @close="show_artist_details_modal = false" />
     </template>
   </content-with-heading>
@@ -40,6 +41,7 @@ import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import ListAlbums from '@/components/ListAlbums'
 import TabsMusic from '@/components/TabsMusic'
+import ModalDialogAlbum from '@/components/ModalDialogAlbum'
 import ModalDialogArtist from '@/components/ModalDialogArtist'
 import DropdownMenu from '@/components/DropdownMenu'
 import IndexList from '@/components/IndexList'
@@ -68,13 +70,16 @@ const artistData = {
       track_count: vm.track_count,
       uri: vm.albums.items.map(a => a.uri).join(',')
     }
+
+    vm.name = response[0].data.name
+    vm.id = response[0].data.id
   }
 }
 
 export default {
   name: 'PageArtist',
   mixins: [LoadDataBeforeEnterMixin(artistData)],
-  components: { ContentWithHeading, ListAlbums, ModalDialogArtist, DropdownMenu, TabsMusic, IndexList },
+  components: { ContentWithHeading, ListAlbums, ModalDialogArtist, DropdownMenu, TabsMusic, IndexList, ModalDialogAlbum },
 
   data () {
     return {
@@ -83,6 +88,9 @@ export default {
       consolidated_artist: {},
       artist: [], // can be multiple entries if compilation album
       albums: { items: [] },
+
+      show_details_modal: false,
+      selected_album: {},
 
       sort_options: ['Name', 'Release date'],
       show_artist_details_modal: false
