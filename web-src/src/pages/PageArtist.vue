@@ -6,7 +6,7 @@
 
     <content-with-heading>
       <template slot="heading-left">
-        <p class="title is-4">{{ artist.name }}</p>
+        <p class="title is-4">{{ name }}</p>
       </template>
       <template slot="heading-right">
         <a class="button is-small is-light is-rounded" @click="show_artist_details_modal = true">
