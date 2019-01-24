@@ -302,6 +302,7 @@ track_to_json(struct db_media_file_info *dbmfi)
   safe_json_add_string(item, "title_sort", dbmfi->title_sort);
   safe_json_add_string(item, "artist", dbmfi->artist);
   safe_json_add_string(item, "artist_sort", dbmfi->artist_sort);
+  safe_json_add_string(item, "artist_id", dbmfi->songtrackartistid);
   safe_json_add_string(item, "album", dbmfi->album);
   safe_json_add_string(item, "album_sort", dbmfi->album_sort);
   safe_json_add_string(item, "album_id", dbmfi->songalbumid);
@@ -540,7 +541,7 @@ fetch_artist(bool *notfound, const char *artist_id)
 
   query_params.type = Q_GROUP_ARTISTS;
   query_params.sort = S_ARTIST;
-  query_params.filter = db_mprintf("(f.songartistid in (%s))", artist_id);
+  query_params.filter = db_mprintf("(f.songartistid in (%s) OR f.songtrackartistid in (%s))", artist_id, artist_id);
 
   ret = db_query_start(&query_params);
   if (ret < 0)
@@ -3063,7 +3064,7 @@ jsonapi_reply_library_artist_albums(struct httpd_request *hreq)
 
   query_params.type = Q_GROUP_ALBUMS;
   query_params.sort = S_ALBUM;
-  query_params.filter = db_mprintf("(f.songartistid in (%s))", artist_id);
+  query_params.filter = db_mprintf("(f.songartistid in (%s) OR f.songtrackartistid in (%s))", artist_id, artist_id);
 
   ret = fetch_albums(&query_params, items, &total);
   free(query_params.filter);
@@ -3115,7 +3116,7 @@ jsonapi_reply_library_artist_tracks(struct httpd_request *hreq)
 
   query_params.type = Q_ITEMS;
   query_params.sort = S_NAME;
-  query_params.filter = db_mprintf("(f.songartistid in (%s))", artist_id);
+  query_params.filter = db_mprintf("(f.songartistid in (%s) OR f.songtrackartistid in (%s))", artist_id, artist_id);
 
   ret = fetch_tracks(&query_params, items, &total);
   free(query_params.filter);
