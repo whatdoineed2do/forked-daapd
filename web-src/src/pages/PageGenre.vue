@@ -45,10 +45,11 @@ const genreData = {
   set: function (vm, response) {
     vm.name = vm.$route.params.genre
     vm.genre_albums = response.data.albums
-    var i
-    for (i = 0; i < vm.genre_albums.items.length; i++) {
-      vm.tracks += vm.genre_albums.items[i].track_count
-    }
+    var n = 0
+    vm.tracks = vm.genre_albums.items.reduce((acc, item) => {
+      acc += item.track_count
+      return acc
+    }, n)
   }
 }
 

@@ -52,10 +52,11 @@ const artistsData = {
 
   set: function (vm, response) {
     vm.artists = response.data
-    var i
-    for (i = 0; i < vm.artists.items.length; i++) {
-      vm.albums += vm.artists.items[i].album_count
-    }
+    var n = 0
+    vm.albums = vm.artists.items.reduce((acc, item) => {
+      acc += item.album_count
+      return acc
+    }, n)
   }
 }
 
