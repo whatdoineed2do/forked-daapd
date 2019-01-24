@@ -52,10 +52,11 @@ const albumsData = {
 
   set: function (vm, response) {
     vm.albums = response.data
-    var i
-    for (i = 0; i < vm.albums.items.length; i++) {
-      vm.tracks += vm.albums.items[i].track_count
-    }
+    vm.tracks = vm.albums.items.reduce((acc, item) => {
+      acc += item.track_count
+      return acc
+    }, 0)
+
     vm.index_list = [...new Set(vm.albums.items
       .filter(album => !vm.$store.state.hide_singles || album.track_count > 2)
       .map(album => album.name_sort.charAt(0).toUpperCase()))]
