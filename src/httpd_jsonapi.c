@@ -206,6 +206,7 @@ track_to_json(struct db_media_file_info *dbmfi)
   safe_json_add_string(item, "title_sort", dbmfi->title_sort);
   safe_json_add_string(item, "artist", dbmfi->artist);
   safe_json_add_string(item, "artist_sort", dbmfi->artist_sort);
+  safe_json_add_string(item, "artist_id", dbmfi->songtrackartistid);
   safe_json_add_string(item, "album", dbmfi->album);
   safe_json_add_string(item, "album_sort", dbmfi->album_sort);
   safe_json_add_string(item, "album_id", dbmfi->songalbumid);
@@ -413,7 +414,7 @@ fetch_artist(const char *artist_id)
 
   query_params.type = Q_GROUP_ARTISTS;
   query_params.sort = S_ARTIST;
-  query_params.filter = db_mprintf("(f.songartistid in (%s))", artist_id);
+  query_params.filter = db_mprintf("(f.songartistid in (%s) OR f.songtrackartistid in (%s))", artist_id, artist_id);
 
   ret = db_query_start(&query_params);
   if (ret < 0)
@@ -440,9 +441,9 @@ fetch_artist(const char *artist_id)
       // make sure we set the artist name to the matching one in db
       if (artist_name == NULL && strcmp(artist_id, dbgri.persistentid) == 0)
         {
-          artist_name = strdup(dbgri.itemname);
-          artist_name_sort = strdup(dbgri.itemname_sort);
-        }
+	  artist_name = strdup(dbgri.itemname);
+	  artist_name_sort = strdup(dbgri.itemname_sort);
+	}
 
       if (!various_artists && atol(dbgri.groupartistcount) > 1)
 	various_artists = true;
@@ -563,7 +564,6 @@ fetch_playlists(struct query_params *query_params, json_object *items, int *tota
 	}
 
       json_object_array_add(items, item);
-      free_gi(&genre, 1);
     }
 
   if (total)
@@ -627,6 +627,7 @@ fetch_genres(struct query_params *query_params, json_object *items, int *total)
 	}
 
       json_object_array_add(items, item);
+      free_gi(&genre, 1);
     }
 
   if (total)
@@ -1624,18 +1625,19 @@ static int
 jsonapi_reply_player_next(struct httpd_request *hreq)
 {
   int ret;
+  struct player_status status;
 
   ret = player_playback_next();
   if (ret < 0)
     {
-      struct player_status status;
-      player_get_status(&status);
-      if (status.status == PLAY_STOPPED)
-        return HTTP_NOCONTENT;
-
       DPRINTF(E_LOG, L_WEB, "Error switching to next item.\n");
       return HTTP_INTERNAL;
     }
+
+  player_get_status(&status);
+  if (status.status == PLAY_STOPPED)
+    // in the non-playing state, we just move the playhead
+    return HTTP_NOCONTENT;
 
   ret = player_playback_start();
   if (ret < 0)
@@ -1651,18 +1653,19 @@ static int
 jsonapi_reply_player_previous(struct httpd_request *hreq)
 {
   int ret;
+  struct player_status status;
 
   ret = player_playback_prev();
   if (ret < 0)
     {
-      struct player_status status;
-      player_get_status(&status);
-      if (status.status == PLAY_STOPPED)
-        return HTTP_NOCONTENT;
-
       DPRINTF(E_LOG, L_WEB, "Error switching to previous item.\n");
       return HTTP_INTERNAL;
     }
+
+  player_get_status(&status);
+  if (status.status == PLAY_STOPPED)
+    // in the non-playing state, we just move the playhead
+    return HTTP_NOCONTENT;
 
   ret = player_playback_start();
   if (ret < 0)
@@ -1817,6 +1820,7 @@ queue_item_to_json(struct db_queue_item *queue_item, char shuffle)
   safe_json_add_string(item, "title", queue_item->title);
   safe_json_add_string(item, "artist", queue_item->artist);
   safe_json_add_string(item, "artist_sort", queue_item->artist_sort);
+  safe_json_add_string_from_int64(item, "track_artist_id", queue_item->songtrackartistid);
   safe_json_add_string(item, "album", queue_item->album);
   safe_json_add_string(item, "album_sort", queue_item->album_sort);
   safe_json_add_string_from_int64(item, "album_id", queue_item->songalbumid);
@@ -1874,7 +1878,7 @@ queue_tracks_add_artist(const char *id, int pos)
   query_params.type = Q_ITEMS;
   query_params.sort = S_ALBUM;
   query_params.idx_type = I_NONE;
-  query_params.filter = db_mprintf("(f.songartistid = %q)", id);
+  query_params.filter = db_mprintf("(f.songartistid = %q OR f.songtrackartistid = %q)", id, id);
 
   player_get_status(&status);
 
@@ -2629,7 +2633,7 @@ jsonapi_reply_library_artist_albums(struct httpd_request *hreq)
 
   query_params.type = Q_GROUP_ALBUMS;
   query_params.sort = S_ALBUM;
-  query_params.filter = db_mprintf("(f.songartistid in (%s))", artist_id);
+  query_params.filter = db_mprintf("(f.songartistid in (%s) OR f.songtrackartistid in (%s))", artist_id, artist_id);
 
   ret = fetch_albums(&query_params, items, &total);
   free(query_params.filter);
@@ -2683,7 +2687,7 @@ jsonapi_reply_library_artist_tracks(struct httpd_request *hreq)
 
   query_params.type = Q_ITEMS;
   query_params.sort = S_NAME;
-  query_params.filter = db_mprintf("(f.songartistid in (%s))", artist_id);
+  query_params.filter = db_mprintf("(f.songartistid in (%s) OR f.songtrackartistid in (%s))", artist_id, artist_id);
 
   ret = fetch_tracks(&query_params, items, &total);
   free(query_params.filter);
