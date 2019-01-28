@@ -204,6 +204,11 @@ library {
 	# playlist directory. forked-dapd creates new playlists in this directory if only
 	# a playlist name is provided (requires "allow_modify_stored_playlists" set to true).
 #	default_playlist_directory = ""
+
+	# which genres to display composer on webui's Now Playing screen
+	# empty list to disable or "*" to display all
+	# entries are case insensitive
+	show_composer = { }
 }
 
 # Local audio output
