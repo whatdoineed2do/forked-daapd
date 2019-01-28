@@ -150,7 +150,11 @@ export default {
       if (this.now_playing.composer === undefined || this.now_playing.composer === null || this.now_playing.genre === undefined || this.now_playing.genre === null) {
         this.composer_visible = false
       } else {
-        this.composer_visible = (this.now_playing.genre.toLowerCase() === 'classical')
+        if (this.$store.state.config.show_composer.includes('*')) {
+          this.composer_visible = true
+        } else {
+          this.composer_visible = (this.$store.state.config.show_composer.includes(this.now_playing.genre.toLowerCase()))
+        }
       }
       return this.now_playing.composer
     },
