@@ -1871,6 +1871,7 @@ GET /api/config
 | version         | string   | forked-daapd server version               |
 | websocket_port  | integer  | Port number for the [websocket](#push-notifications) (or `0` if websocket is disabled) |
 | buildoptions    | array    | Array of strings indicating which features are supported by the forked-daapd server |
+| show_composer   | array    | Array of genres (in lowercase) that indicating which genres should display composer if available|
 
 
 **Example**
@@ -1892,6 +1893,10 @@ curl -X GET "http://localhost:3689/api/config"
     "Device verification",
     "Websockets",
     "ALSA"
+  ],
+  "show_composer": [
+    "classical",
+    "soundtrack"
   ]
 }
 ```
