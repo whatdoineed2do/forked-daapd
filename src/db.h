@@ -215,6 +215,7 @@ struct media_file_info {
   uint32_t tv_season_num;
 
   int64_t songartistid;
+  int64_t songtrackartistid;
   int64_t songalbumid;
 
   char *title_sort;
@@ -370,6 +371,7 @@ struct db_media_file_info {
   char *album_sort;
   char *album_artist_sort;
   char *composer_sort;
+  char *songtrackartistid;
   char *channels;
 };
 
