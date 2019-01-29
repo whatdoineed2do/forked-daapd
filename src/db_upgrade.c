@@ -974,6 +974,7 @@ static const struct db_upgrade_query db_upgrade_v2000_queries[] =
 
 #define U_V2001_ALTER_QUEUE_ADD_SONGARTISTID \
   "ALTER TABLE queue ADD COLUMN songartistid INTEGER NOT NULL default 0;"
+
 #define U_V2001_SCVER_MINOR \
   "UPDATE admin SET value = '01' WHERE key = 'schema_version_minor';"
 
@@ -983,16 +984,23 @@ static const struct db_upgrade_query db_upgrade_v2001_queries[] =
     { U_V2001_SCVER_MINOR,    "set schema_version_minor to 01" },
   };
 
-#define U_V2002_ALTER_FILES_ADD_SONGCOMPILATIONID \
-  "ALTER TABLE files ADD COLUMN compilationid VARCHAR(64) DEFAULT NULL;"
+#define U_V2002_ALTER_FILES_ADD_SONGTRACKARTISTID \
+  "ALTER TABLE files ADD COLUMN songtrackartistid  INTEGER DEFAULT 0;"
 
-#define U_V2002_DROP_TRG_FILES_INSERT_SONGIDS \
+#define U_V2002_ALTER_QUEUE_ADD_SONGTRACKARTISTID \
+  "ALTER TABLE queue ADD COLUMN songtrackartistid INTEGER NOT NULL default 0;"
+
+#define U_V2002_UPDATE_FILES_SONGTRACKARTISTID \
+  "UPDATE files SET songtrackartistid = daap_songalbumid(LOWER(artist), '');"
+
+#define U_V2002_UPDATE_GROUPS_SONGTRACKARTISTID \
+  "INSERT OR IGNORE INTO groups SELECT NULL as id, 2 as type, f.artist as name,f.songtrackartistid as persistentid from files f where f.songtrackartistid != f.songartistid;"
+
+#define U_V2002_DROP_TRG1				\
   "DROP TRIGGER IF EXISTS trg_files_insert_songids;"
-
-#define U_V2002_DROP_TRG_FILES_UPDATE_SONGIDS \
+#define U_V2002_DROP_TRG2				\
   "DROP TRIGGER IF EXISTS trg_files_update_songids;"
-
-#define U_V2002_DROP_TRG_GROUPS_UPDATE \
+#define U_V2002_DROP_TRG3				\
   "DROP TRIGGER IF EXISTS trg_groups_update;"
 
 #define U_V2002_SCVER_MINOR \
@@ -1000,15 +1008,43 @@ static const struct db_upgrade_query db_upgrade_v2001_queries[] =
 
 static const struct db_upgrade_query db_upgrade_v2002_queries[] =
   {
-    { U_V2002_ALTER_FILES_ADD_SONGCOMPILATIONID, "alter table file add compilationid column" },
+    { U_V2002_ALTER_FILES_ADD_SONGTRACKARTISTID, "add column songtrackartistid to files tbl" },
+    { U_V2002_ALTER_QUEUE_ADD_SONGTRACKARTISTID, "add column songtrackartistid to queue tbl" },
+    { U_V2002_UPDATE_FILES_SONGTRACKARTISTID, "insert songtrackartistid" },
+    { U_V2002_UPDATE_GROUPS_SONGTRACKARTISTID, "insert missing artist to groups" },
 
-    { U_V2002_DROP_TRG_FILES_INSERT_SONGIDS, "drop file tbl trigger, new file" },
-    { U_V2002_DROP_TRG_FILES_UPDATE_SONGIDS, "drop file tbl trigger, upd file" },
-    { U_V2002_DROP_TRG_GROUPS_UPDATE, "drop file tbl trigger, upd grp" },
+    { U_V2002_DROP_TRG1,      "drop trigger trg_files_insert_songids" },
+    { U_V2002_DROP_TRG2,      "drop trigger trg_files_update_songids" },
+    { U_V2002_DROP_TRG3,      "drop trigger trg_groups_update" },
 
-    { U_V2002_SCVER_MINOR,    "set schema_version_minor to 02" }
+    { U_V2002_SCVER_MINOR,    "set schema_version_minor to 02" },
   };
 
+#define U_V2003_ALTER_FILES_ADD_SONGCOMPILATIONID \
+  "ALTER TABLE files ADD COLUMN compilationid VARCHAR(64) DEFAULT NULL;"
+
+#define U_V2003_DROP_TRG_FILES_INSERT_SONGIDS \
+  "DROP TRIGGER IF EXISTS trg_files_insert_songids;"
+
+#define U_V2003_DROP_TRG_FILES_UPDATE_SONGIDS \
+  "DROP TRIGGER IF EXISTS trg_files_update_songids;"
+
+#define U_V2003_DROP_TRG_GROUPS_UPDATE \
+  "DROP TRIGGER IF EXISTS trg_groups_update;"
+
+#define U_V2003_SCVER_MINOR \
+  "UPDATE admin SET value = '03' WHERE key = 'schema_version_minor';"
+
+static const struct db_upgrade_query db_upgrade_v2003_queries[] =
+  {
+    { U_V2003_ALTER_FILES_ADD_SONGCOMPILATIONID, "alter table file add compilationid column" },
+
+    { U_V2003_DROP_TRG_FILES_INSERT_SONGIDS, "drop file tbl trigger, new file" },
+    { U_V2003_DROP_TRG_FILES_UPDATE_SONGIDS, "drop file tbl trigger, upd file" },
+    { U_V2003_DROP_TRG_GROUPS_UPDATE, "drop file tbl trigger, upd grp" },
+
+    { U_V2003_SCVER_MINOR,    "set schema_version_minor to 03" }
+  };
 
 int
 db_upgrade(sqlite3 *hdl, int db_ver)
@@ -1140,8 +1176,6 @@ db_upgrade(sqlite3 *hdl, int db_ver)
 	return -1;
 
       ret = db_generic_upgrade(hdl, db_upgrade_v2000_queries, ARRAY_SIZE(db_upgrade_v2000_queries));
-      if (ret < 0)
-	return -1;
 
       /* FALLTHROUGH */
 
@@ -1154,6 +1188,13 @@ db_upgrade(sqlite3 *hdl, int db_ver)
 
     case 2001:
       ret = db_generic_upgrade(hdl, db_upgrade_v2002_queries, ARRAY_SIZE(db_upgrade_v2002_queries));
+      if (ret < 0)
+	return -1;
+
+      /* FALLTHROUGH */
+
+    case 2002:
+      ret = db_generic_upgrade(hdl, db_upgrade_v2003_queries, ARRAY_SIZE(db_upgrade_v2003_queries));
       if (ret < 0)
 	return -1;
 
