@@ -974,6 +974,7 @@ static const struct db_upgrade_query db_upgrade_v2000_queries[] =
 
 #define U_V2001_ALTER_QUEUE_ADD_SONGARTISTID \
   "ALTER TABLE queue ADD COLUMN songartistid INTEGER NOT NULL default 0;"
+
 #define U_V2001_SCVER_MINOR \
   "UPDATE admin SET value = '01' WHERE key = 'schema_version_minor';"
 
@@ -983,6 +984,37 @@ static const struct db_upgrade_query db_upgrade_v2001_queries[] =
     { U_V2001_SCVER_MINOR,    "set schema_version_minor to 01" },
   };
 
+#define U_V2002_ALTER_FILES_ADD_SONGTRACKARTISTID \
+  "ALTER TABLE files ADD COLUMN songtrackartistid  INTEGER DEFAULT 0;"
+
+#define U_V2002_UPDATE_FILES_SONGTRACKARTISTID \
+  "UPDATE files SET songtrackartistid = daap_songalbumid(LOWER(artist), '');"
+
+#define U_V2002_UPDATE_GROUPS_SONGTRACKARTISTID \
+  "INSERT OR IGNORE INTO groups SELECT NULL as id, 2 as type, f.artist as name,f.songtrackartistid as persistentid from files f where f.songtrackartistid != f.songartistid;"
+
+#define U_V2002_DROP_TRG1				\
+  "DROP TRIGGER IF EXISTS trg_files_insert_songids;"
+#define U_V2002_DROP_TRG2				\
+  "DROP TRIGGER IF EXISTS trg_files_update_songids;"
+#define U_V2002_DROP_TRG3				\
+  "DROP TRIGGER IF EXISTS trg_groups_update;"
+
+#define U_V2002_SCVER_MINOR \
+  "UPDATE admin SET value = '02' WHERE key = 'schema_version_minor';"
+
+static const struct db_upgrade_query db_upgrade_v2002_queries[] =
+  {
+    { U_V2002_ALTER_FILES_ADD_SONGTRACKARTISTID, "add column songtrackartistid" },
+    { U_V2002_UPDATE_FILES_SONGTRACKARTISTID, "insert songtrackartistid" },
+    { U_V2002_UPDATE_GROUPS_SONGTRACKARTISTID, "insert missing artist to groups" },
+
+    { U_V2002_DROP_TRG1,      "drop trigger trg_files_insert_songids" },
+    { U_V2002_DROP_TRG2,      "drop trigger trg_files_update_songids" },
+    { U_V2002_DROP_TRG3,      "drop trigger trg_groups_update" },
+
+    { U_V2002_SCVER_MINOR,    "set schema_version_minor to 02" },
+  };
 
 int
 db_upgrade(sqlite3 *hdl, int db_ver)
@@ -1121,6 +1153,13 @@ db_upgrade(sqlite3 *hdl, int db_ver)
 
     case 2000:
       ret = db_generic_upgrade(hdl, db_upgrade_v2001_queries, ARRAY_SIZE(db_upgrade_v2001_queries));
+      if (ret < 0)
+	return -1;
+
+      /* FALLTHROUGH */
+
+    case 2001:
+      ret = db_generic_upgrade(hdl, db_upgrade_v2002_queries, ARRAY_SIZE(db_upgrade_v2002_queries));
       if (ret < 0)
 	return -1;
 
