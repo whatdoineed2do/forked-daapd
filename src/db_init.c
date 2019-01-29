@@ -95,7 +95,8 @@
   "   artist_sort        VARCHAR(1024) DEFAULT NULL COLLATE DAAP,"	\
   "   album_sort         VARCHAR(1024) DEFAULT NULL COLLATE DAAP,"	\
   "   album_artist_sort  VARCHAR(1024) DEFAULT NULL COLLATE DAAP,"	\
-  "   composer_sort      VARCHAR(1024) DEFAULT NULL COLLATE DAAP"	\
+  "   composer_sort      VARCHAR(1024) DEFAULT NULL COLLATE DAAP,"	\
+  "   songtrackartistid  INTEGER DEFAULT 0"		\
   ");"
 
 #define T_PL					\
@@ -291,6 +292,9 @@ static const struct db_init_query db_init_table_queries[] =
 #define I_SONGARTISTID				\
   "CREATE INDEX IF NOT EXISTS idx_sari ON files(songartistid);"
 
+#define I_SONGTRACKARTISTID				\
+  "CREATE INDEX IF NOT EXISTS idx_stari ON files(songtrackartistid);"
+
 /* Used by Q_GROUP_ALBUMS */
 #define I_SONGALBUMID				\
   "CREATE INDEX IF NOT EXISTS idx_sali ON files(songalbumid, disabled, media_kind, album_sort, disc, track);"
@@ -366,6 +370,7 @@ static const struct db_init_query db_init_index_queries[] =
     { I_RESCAN,    "create rescan index" },
     { I_FNAME,     "create filename index" },
     { I_SONGARTISTID, "create songartistid index" },
+    { I_SONGTRACKARTISTID, "create songtrackartistid index" },
     { I_SONGALBUMID, "create songalbumid index" },
     { I_STATEMKINDSARI, "create state/mkind/sari index" },
     { I_STATEMKINDSALI, "create state/mkind/sali index" },
@@ -403,23 +408,26 @@ static const struct db_init_query db_init_index_queries[] =
   "CREATE TRIGGER trg_files_insert_songids AFTER INSERT ON files FOR EACH ROW"				\
   " BEGIN"												\
   "   UPDATE files SET songartistid = daap_songalbumid(LOWER(NEW.album_artist), ''), "			\
+  "     songtrackartistid = daap_songalbumid(LOWER(NEW.artist), ''),"					\
   "     songalbumid = daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album))"			\
   "   WHERE id = NEW.id;"										\
   " END;"
 
 #define TRG_FILES_UPDATE_SONGIDS									\
-  "CREATE TRIGGER trg_files_update_songids AFTER UPDATE OF album_artist, album ON files FOR EACH ROW"	\
+  "CREATE TRIGGER trg_files_update_songids AFTER UPDATE OF album_artist, artist, album ON files FOR EACH ROW"	\
   " BEGIN"												\
   "   UPDATE files SET songartistid = daap_songalbumid(LOWER(NEW.album_artist), ''), "			\
+  "     songtrackartistid = daap_songalbumid(LOWER(NEW.artist), ''),"					\
   "     songalbumid = daap_songalbumid(LOWER(NEW.album_artist), LOWER(NEW.album))"			\
   "   WHERE id = NEW.id;"										\
   " END;"
 
 #define TRG_GROUPS_UPDATE										\
-  "CREATE TRIGGER trg_groups_update AFTER UPDATE OF songartistid, songalbumid ON files FOR EACH ROW"	\
-  " WHEN (NEW.songartistid != 0 AND NEW.songalbumid != 0)"						\
+  "CREATE TRIGGER trg_groups_update AFTER UPDATE OF songartistid, songtrackartistid, songalbumid ON files FOR EACH ROW"	\
+  " WHEN (NEW.songartistid != 0 AND NEW.songtrackartistid != 0 AND NEW.songalbumid != 0)"						\
   " BEGIN"												\
   "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (1, NEW.album, NEW.songalbumid);"	\
+  "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (2, NEW.artist, NEW.songtrackartistid);"	\
   "   INSERT OR IGNORE INTO groups (type, name, persistentid) VALUES (2, NEW.album_artist, NEW.songartistid);"	\
   " END;"
 

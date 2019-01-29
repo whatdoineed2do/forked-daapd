@@ -207,6 +207,7 @@ static const struct col_type_map mfi_cols_map[] =
     { "album_sort",         mfi_offsetof(album_sort),         DB_TYPE_STRING, DB_FIXUP_ALBUM_SORT },
     { "album_artist_sort",  mfi_offsetof(album_artist_sort),  DB_TYPE_STRING, DB_FIXUP_ALBUM_ARTIST_SORT },
     { "composer_sort",      mfi_offsetof(composer_sort),      DB_TYPE_STRING, DB_FIXUP_COMPOSER_SORT },
+    { "songtrackartistid",  mfi_offsetof(songtrackartistid),  DB_TYPE_INT64,  DB_FIXUP_STANDARD, DB_FLAG_AUTO },
   };
 
 /* This list must be kept in sync with
@@ -334,6 +335,7 @@ static const ssize_t dbmfi_cols_map[] =
     dbmfi_offsetof(album_sort),
     dbmfi_offsetof(album_artist_sort),
     dbmfi_offsetof(composer_sort),
+    dbmfi_offsetof(songtrackartistid),
   };
 
 /* This list must be kept in sync with
@@ -3802,7 +3804,7 @@ int
 db_groups_cleanup()
 {
 #define Q_TMPL_ALBUM "DELETE FROM groups WHERE type = 1 AND NOT persistentid IN (SELECT songalbumid from files WHERE disabled = 0);"
-#define Q_TMPL_ARTIST "DELETE FROM groups WHERE type = 2 AND NOT persistentid IN (SELECT songartistid from files WHERE disabled = 0);"
+#define Q_TMPL_ARTIST "DELETE FROM groups WHERE type = 2 AND NOT persistentid IN (SELECT songartistid as id from files WHERE disabled = 0 UNION SELECT songtrackartistid as id from files WHERE disabled = 0);"
   int ret;
 
   db_transaction_begin();
