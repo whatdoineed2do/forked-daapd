@@ -176,8 +176,8 @@ struct media_file_info {
 
   uint32_t bpm;          /* TBPM */
   uint32_t compilation;
-  uint32_t artwork;
   char *compilationid;
+  uint32_t artwork;
   uint32_t rating;
 
   uint32_t play_count;
@@ -215,6 +215,7 @@ struct media_file_info {
   uint32_t tv_season_num;
 
   int64_t songartistid;
+  int64_t songtrackartistid;
   int64_t songalbumid;
 
   char *title_sort;
@@ -370,6 +371,7 @@ struct db_media_file_info {
   char *album_sort;
   char *album_artist_sort;
   char *composer_sort;
+  char *songtrackartistid;
   char *compilationid;
 };
 
@@ -487,6 +489,7 @@ struct db_queue_item {
   char *composer;
 
   int64_t songartistid;
+  int64_t songtrackartistid;
 
   /* Not saved in queue table */
   uint32_t seek;

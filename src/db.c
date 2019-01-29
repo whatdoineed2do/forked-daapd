@@ -207,6 +207,7 @@ static const struct col_type_map mfi_cols_map[] =
     { "album_sort",         mfi_offsetof(album_sort),         DB_TYPE_STRING, DB_FIXUP_ALBUM_SORT },
     { "album_artist_sort",  mfi_offsetof(album_artist_sort),  DB_TYPE_STRING, DB_FIXUP_ALBUM_ARTIST_SORT },
     { "composer_sort",      mfi_offsetof(composer_sort),      DB_TYPE_STRING, DB_FIXUP_COMPOSER_SORT },
+    { "songtrackartistid",  mfi_offsetof(songtrackartistid),  DB_TYPE_INT64,  DB_FIXUP_STANDARD, DB_FLAG_AUTO },
     { "compilationid",      mfi_offsetof(compilationid),      DB_TYPE_STRING },
   };
 
@@ -266,6 +267,7 @@ static const struct col_type_map qi_cols_map[] =
     { "queue_version",      qi_offsetof(queue_version),       DB_TYPE_INT },
     { "composer",           qi_offsetof(composer),            DB_TYPE_STRING, DB_FIXUP_COMPOSER },
     { "songartistid",       qi_offsetof(songartistid),        DB_TYPE_INT64 },
+    { "songtrackartistid",  qi_offsetof(songtrackartistid),   DB_TYPE_INT64 },
   };
 
 /* This list must be kept in sync with
@@ -336,6 +338,7 @@ static const ssize_t dbmfi_cols_map[] =
     dbmfi_offsetof(album_sort),
     dbmfi_offsetof(album_artist_sort),
     dbmfi_offsetof(composer_sort),
+    dbmfi_offsetof(songtrackartistid),
     dbmfi_offsetof(compilationid),
   };
 
@@ -1941,24 +1944,74 @@ db_build_query_group_artists(struct query_params *qp)
   struct query_clause *qc;
   char *count;
   char *query;
+  char *unioncols;
+  int unioncolslen;
 
   qc = db_build_query_clause(qp);
   if (!qc)
     return NULL;
 
-  count = sqlite3_mprintf("SELECT COUNT(DISTINCT f.songartistid) FROM files f %s;", qc->where);
+  /* this is to handle all the additional columns that maybe requested as part 
+   * of the order/having/where that isn't part of what we care about .. this is
+   * required because the union's result set does NOT present all columns from
+   * the files table
+   */
+  unioncolslen = 4;
+  if (qp->having)
+    unioncolslen += strlen(qp->having);
+  if (qp->order)
+    unioncolslen += strlen(qp->order);
+  if (qp->sort)
+    unioncolslen += strlen(sort_clause[qp->sort]);
+  unioncols = malloc(unioncolslen);
+  memset(unioncols, 0, unioncolslen);
+
+  if (qp->having)
+    {
+      sprintf(unioncols, ",%s", qp->having);
+    }
+  if (qp->order)
+    {
+      strcat(unioncols, ",");
+      strcat(unioncols, qp->order);
+    }
+  if (qp->sort)
+    {
+      strcat(unioncols, ",");
+      strcat(unioncols, sort_clause[qp->sort]);
+    }
+
+  count = sqlite3_mprintf("SELECT COUNT(DISTINCT g.id) FROM groups g JOIN files f ON g.persistentid = f.songtrackartistid OR g.persistentid = f.songartistid %s;", qc->where);
   query = sqlite3_mprintf(
+	  "SELECT id, persistentid, album_artist, album_artist_sort, track_count, artist_count, album_count, artist, tmpartistid, sum "
+	    "FROM ( "
 	  "SELECT g.id, g.persistentid, "
 	         "f.album_artist, f.album_artist_sort, "
 		 "COUNT(f.id) as track_count, "
 	         "COUNT(DISTINCT f.songartistid) as artist_count, "
 		 "COUNT(DISTINCT f.songalbumid) as album_count, "
-		 "GROUP_CONCAT(DISTINCT f.album_artist) as album_artist, GROUP_CONCAT(DISTINCT f.songartistid) as songartistid, "
-		 "SUM(f.song_length) "
-	    "FROM files f JOIN groups g ON f.songartistid = g.persistentid %s "
-	"GROUP BY f.songartistid %s %s %s;", qc->where, qc->having, qc->order, qc->index);
+		 "GROUP_CONCAT(DISTINCT f.album_artist) as artist, GROUP_CONCAT(DISTINCT f.songartistid) as tmpartistid, "
+		 "SUM(f.song_length) as sum "
+		 "%s "
+	    "FROM files f JOIN groups g ON f.songartistid = g.persistentid AND f.songtrackartistid != f.songartistid %s "
+	"GROUP BY f.songartistid %s "
+	   "UNION "
+	  "SELECT g.id, g.persistentid, "
+	         "f.artist, f.artist_sort, "
+		 "COUNT(f.id) as track_count, "
+	         "COUNT(DISTINCT f.songtrackartistid) as artist_count, "
+		 "COUNT(DISTINCT f.songalbumid) as album_count, "
+		 "f.artist as artist, f.songtrackartistid as tmpartistid, "
+		 "SUM(f.song_length) as sum "
+		 "%s "
+	    "FROM files f JOIN groups g ON f.songtrackartistid = g.persistentid %s "
+	"GROUP BY f.songtrackartistid %s %s %s "
+	         ");",
+	unioncols, qc->where, qc->having,
+	unioncols, qc->where, qc->having, qc->order, qc->index);
 
   db_free_query_clause(qc);
+  free(unioncols);
 
   return db_build_query_check(qp, count, query);
 }
@@ -4034,7 +4087,7 @@ int
 db_groups_cleanup()
 {
 #define Q_TMPL_ALBUM "DELETE FROM groups WHERE type = 1 AND NOT persistentid IN (SELECT songalbumid from files WHERE disabled = 0);"
-#define Q_TMPL_ARTIST "DELETE FROM groups WHERE type = 2 AND NOT persistentid IN (SELECT songartistid from files WHERE disabled = 0);"
+#define Q_TMPL_ARTIST "DELETE FROM groups WHERE type = 2 AND NOT persistentid IN (SELECT songartistid as id from files WHERE disabled = 0 UNION SELECT songtrackartistid as id from files WHERE disabled = 0);"
   int ret;
 
   db_transaction_begin();
@@ -4980,13 +5033,13 @@ queue_add_file(struct db_media_file_info *dbmfi, int pos, int shuffle_pos, int q
 #define Q_TMPL "INSERT INTO queue "							\
 		    "(id, file_id, song_length, data_kind, media_kind, "		\
 		    "pos, shuffle_pos, path, virtual_path, title, "			\
-		    "artist, composer, album_artist, album, genre, songalbumid, songartistid,"	\
+		    "artist, composer, album_artist, album, genre, songalbumid, songartistid, songtrackartistid, "	\
 		    "time_modified, artist_sort, album_sort, album_artist_sort, year, "	\
 		    "track, disc, queue_version)" 					\
 		"VALUES"                                           			\
 		    "(NULL, %s, %s, %s, %s, "						\
 		    "%d, %d, %Q, %Q, %Q, "						\
-		    "%Q, %Q, %Q, %Q, %Q, %s, %s,"					\
+		    "%Q, %Q, %Q, %Q, %Q, %s, %s, %s, "					\
 		    "%s, %Q, %Q, %Q, %s, "						\
 		    "%s, %s, %d);"
 
@@ -4996,7 +5049,7 @@ queue_add_file(struct db_media_file_info *dbmfi, int pos, int shuffle_pos, int q
   query = sqlite3_mprintf(Q_TMPL,
 			  dbmfi->id, dbmfi->song_length, dbmfi->data_kind, dbmfi->media_kind,
 			  pos, shuffle_pos, dbmfi->path, dbmfi->virtual_path, dbmfi->title,
-			  dbmfi->artist, dbmfi->composer, dbmfi->album_artist, dbmfi->album, dbmfi->genre, dbmfi->songalbumid, dbmfi->songartistid,
+			  dbmfi->artist, dbmfi->composer, dbmfi->album_artist, dbmfi->album, dbmfi->genre, dbmfi->songalbumid, dbmfi->songartistid, dbmfi->songtrackartistid,
 			  dbmfi->time_modified, dbmfi->artist_sort, dbmfi->album_sort, dbmfi->album_artist_sort, dbmfi->year,
 			  dbmfi->track, dbmfi->disc, queue_version);
   ret = db_query_run(query, 1, 0);
@@ -5012,13 +5065,13 @@ queue_add_item(struct db_queue_item *item, int pos, int shuffle_pos, int queue_v
 #define Q_TMPL "INSERT INTO queue "							\
 		    "(id, file_id, song_length, data_kind, media_kind, "		\
 		    "pos, shuffle_pos, path, virtual_path, title, "			\
-		    "artist, composer, album_artist, album, genre, songalbumid, songartistid, "	\
+		    "artist, composer, album_artist, album, genre, songalbumid, songartistid, songtrackartistid, "	\
 		    "time_modified, artist_sort, album_sort, album_artist_sort, year, "	\
 		    "track, disc, artwork_url, queue_version)" 				\
 		"VALUES"                                           			\
 		    "(NULL, %d, %d, %d, %d, "						\
 		    "%d, %d, %Q, %Q, %Q, "						\
-		    "%Q, %Q, %Q, %Q, %Q, %" PRIi64 ", %" PRIi64 ","			\
+		    "%Q, %Q, %Q, %Q, %Q, %" PRIi64 ", %" PRIi64 ", %" PRIi64 ", "	\
 		    "%d, %Q, %Q, %Q, %d, "						\
 		    "%d, %d, %Q, %d);"
 
@@ -5028,7 +5081,7 @@ queue_add_item(struct db_queue_item *item, int pos, int shuffle_pos, int queue_v
   query = sqlite3_mprintf(Q_TMPL,
 			  item->file_id, item->song_length, item->data_kind, item->media_kind,
 			  pos, shuffle_pos, item->path, item->virtual_path, item->title,
-			  item->artist, item->composer, item->album_artist, item->album, item->genre, item->songalbumid, item->songartistid,
+			  item->artist, item->composer, item->album_artist, item->album, item->genre, item->songalbumid, item->songartistid, item->songtrackartistid,
 			  item->time_modified, item->artist_sort, item->album_sort, item->album_artist_sort, item->year,
 			  item->track, item->disc, item->artwork_url, queue_version);
   ret = db_query_run(query, 1, 0);
@@ -5047,7 +5100,7 @@ db_queue_update_item(struct db_queue_item *qi)
 		    "title = %Q, artist = %Q, album_artist = %Q, album = %Q, "		\
 		    "composer = %Q,"                                                    \
 		    "genre = %Q, time_modified = %d, "					\
-		    "songalbumid = %" PRIi64 ", songartistid = %" PRIi64 ", "		\
+		    "songalbumid = %" PRIi64 ", songartistid = %" PRIi64 ", songtrackartistid = %" PRIi64 ", " \
 		    "artist_sort = %Q, album_sort = %Q, album_artist_sort = %Q, "	\
 		    "year = %d, track = %d, disc = %d, artwork_url = %Q, "		\
 		    "queue_version = %d "						\
@@ -5065,7 +5118,7 @@ db_queue_update_item(struct db_queue_item *qi)
 			  qi->title, qi->artist, qi->album_artist, qi->album,
                           qi->composer,
 			  qi->genre, qi->time_modified,
-			  qi->songalbumid, qi->songartistid,
+			  qi->songalbumid, qi->songartistid, qi->songtrackartistid,
 			  qi->artist_sort, qi->album_sort, qi->album_artist_sort,
 			  qi->year, qi->track, qi->disc, qi->artwork_url, queue_version,
 			  qi->id);
@@ -5458,6 +5511,7 @@ queue_enum_fetch(struct query_params *qp, struct db_queue_item *queue_item, int 
   queue_item->artwork_url = strdup_if((char *)sqlite3_column_text(qp->stmt, 22), keep_item);
   queue_item->composer = strdup_if((char *)sqlite3_column_text(qp->stmt, 24), keep_item);
   queue_item->songartistid = sqlite3_column_int64(qp->stmt, 25);
+  queue_item->songtrackartistid = sqlite3_column_int64(qp->stmt, 26);
 
   return 0;
 }
@@ -7026,6 +7080,7 @@ db_open(void)
   char *journal_mode;
   int synchronous;
   int mmap_size;
+  char *dbextnso;
 
   ret = sqlite3_open(db_path, &hdl);
   if (ret != SQLITE_OK)
@@ -7045,8 +7100,10 @@ db_open(void)
       return -1;
     }
 
+  dbextnso = cfg_getstr(cfg_getsec(cfg, "general"), "db_extn");
+  DPRINTF(E_DBG, L_DB, "Database extn: %s\n", dbextnso);
   errmsg = NULL;
-  ret = sqlite3_load_extension(hdl, PKGLIBDIR "/forked-daapd-sqlext.so", NULL, &errmsg);
+  ret = sqlite3_load_extension(hdl, dbextnso, NULL, &errmsg);
   if (ret != SQLITE_OK)
     {
       if (errmsg)
