@@ -45,7 +45,7 @@ const tracksData = {
 
   set: function (vm, response) {
     vm.artist = response[0].data
-    vm.tracks = response[1].data.tracks
+    vm.tracks = response[1].data
   }
 }
 
