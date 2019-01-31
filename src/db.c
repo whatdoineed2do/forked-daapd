@@ -1898,18 +1898,69 @@ db_build_query_group_artists(struct query_params *qp, struct query_clause *qc)
 {
   char *count;
   char *query;
+  char *unioncols;
+  int unioncolslen;
 
-  count = sqlite3_mprintf("SELECT COUNT(DISTINCT f.songartistid) FROM files f %s;", qc->where);
+  /* this is to handle all the additional columns that maybe requested as part 
+   * of the order/having/where that isn't part of what we care about .. this is
+   * required because the union's result set does NOT present all columns from
+   * the files table
+   */
+  unioncolslen = 4;
+  if (qp->having)
+    unioncolslen += strlen(qp->having);
+  if (qp->order)
+    unioncolslen += strlen(qp->order);
+  if (qp->sort)
+    unioncolslen += strlen(sort_clause[qp->sort]);
+  unioncols = malloc(unioncolslen);
+  memset(unioncols, 0, unioncolslen);
+
+  if (qp->having)
+    {
+      sprintf(unioncols, ",%s", qp->having);
+    }
+  if (qp->order)
+    {
+      strcat(unioncols, ",");
+      strcat(unioncols, qp->order);
+    }
+  if (qp->sort)
+    {
+      strcat(unioncols, ",");
+      strcat(unioncols, sort_clause[qp->sort]);
+    }
+
+  count = sqlite3_mprintf("SELECT COUNT(DISTINCT g.id) FROM groups g JOIN files f ON g.persistentid = f.songtrackartistid OR g.persistentid = f.songartistid %s;", qc->where);
   query = sqlite3_mprintf(
+	  "SELECT id, persistentid, album_artist, album_artist_sort, track_count, artist_count, album_count, artist, tmpartistid, sum "
+	    "FROM ( "
 	  "SELECT g.id, g.persistentid, "
 	         "f.album_artist, f.album_artist_sort, "
 		 "COUNT(f.id) as track_count, "
-	         "COUNT(DISTINCT f.songartistid) as artist_count, "
+		 "COUNT(DISTINCT f.songartistid) as artist_count, "
 		 "COUNT(DISTINCT f.songalbumid) as album_count, "
-		 "GROUP_CONCAT(DISTINCT f.album_artist) as album_artist, GROUP_CONCAT(DISTINCT f.songartistid) as songartistid, "
-		 "SUM(f.song_length) "
-	    "FROM files f JOIN groups g ON f.songartistid = g.persistentid %s "
-	"GROUP BY f.songartistid %s %s %s;", qc->where, qc->having, qc->order, qc->index);
+		 "GROUP_CONCAT(DISTINCT f.album_artist) as artist, GROUP_CONCAT(DISTINCT f.songartistid) as tmpartistid, "
+		 "SUM(f.song_length) as sum "
+		 "%s "
+	    "FROM files f JOIN groups g ON f.songartistid = g.persistentid AND f.songtrackartistid != f.songartistid %s "
+	"GROUP BY f.songartistid %s "
+	   "UNION "
+	  "SELECT g.id, g.persistentid, "
+	         "f.artist, f.artist_sort, "
+		 "COUNT(f.id) as track_count, "
+		 "COUNT(DISTINCT f.songtrackartistid) as artist_count, "
+		 "COUNT(DISTINCT f.songalbumid) as album_count, "
+		 "f.artist as artist, f.songtrackartistid as tmpartistid, "
+		 "SUM(f.song_length) as sum "
+		 "%s "
+	    "FROM files f JOIN groups g ON f.songtrackartistid = g.persistentid %s "
+	"GROUP BY f.songtrackartistid %s %s %s "
+	         ");",
+	unioncols, qc->where, qc->having,
+	unioncols, qc->where, qc->having, qc->order, qc->index);
+
+  free(unioncols);
 
   return db_build_query_check(qp, count, query);
 }
