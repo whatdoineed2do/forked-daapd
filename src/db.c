@@ -2093,8 +2093,40 @@ db_build_query_group_artists(struct query_params *qp, struct query_clause *qc)
 {
   char *count;
   char *query;
+  char *unioncols;
+  int unioncolslen;
 
-  count = sqlite3_mprintf("SELECT COUNT(DISTINCT f.songartistid) FROM files f %s;", qc->where);
+  /* this is to handle all the additional columns that maybe requested as part 
+   * of the order/having/where that isn't part of what we care about .. this is
+   * required because the union's result set does NOT present all columns from
+   * the files table
+   */
+  unioncolslen = 4;
+  if (qp->having)
+    unioncolslen += strlen(qp->having);
+  if (qp->order)
+    unioncolslen += strlen(qp->order);
+  if (qp->sort)
+    unioncolslen += strlen(sort_clause[qp->sort]);
+  unioncols = malloc(unioncolslen);
+  memset(unioncols, 0, unioncolslen);
+
+  if (qp->having)
+    {
+      sprintf(unioncols, ",%s", qp->having);
+    }
+  if (qp->order)
+    {
+      strcat(unioncols, ",");
+      strcat(unioncols, qp->order);
+    }
+  if (qp->sort)
+    {
+      strcat(unioncols, ",");
+      strcat(unioncols, sort_clause[qp->sort]);
+    }
+
+  count = sqlite3_mprintf("SELECT COUNT(DISTINCT g.id) FROM groups g JOIN files f ON g.persistentid = f.songtrackartistid OR g.persistentid = f.songartistid %s;", qc->where);
   query = sqlite3_mprintf(
 	  "SELECT id, persistentid, album_artist, album_artist_sort, track_count, artist_count, album_count, artist, tmpartistid, sum, data_kind, media_kind, year, date_released, time_added, time_played, seek, db_timestamp "
 	    "FROM ( "
