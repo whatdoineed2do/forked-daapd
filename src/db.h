@@ -510,6 +510,7 @@ struct db_queue_item {
   uint32_t channels;
 
   int64_t songartistid;
+  int64_t songtrackartistid;
 
   /* Not saved in queue table */
   uint32_t seek;
