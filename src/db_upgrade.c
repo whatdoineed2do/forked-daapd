@@ -987,6 +987,9 @@ static const struct db_upgrade_query db_upgrade_v2001_queries[] =
 #define U_V2002_ALTER_FILES_ADD_SONGTRACKARTISTID \
   "ALTER TABLE files ADD COLUMN songtrackartistid  INTEGER DEFAULT 0;"
 
+#define U_V2002_ALTER_QUEUE_ADD_SONGTRACKARTISTID \
+  "ALTER TABLE queue ADD COLUMN songtrackartistid INTEGER NOT NULL default 0;"
+
 #define U_V2002_UPDATE_FILES_SONGTRACKARTISTID \
   "UPDATE files SET songtrackartistid = daap_songalbumid(LOWER(artist), '');"
 
@@ -1005,7 +1008,8 @@ static const struct db_upgrade_query db_upgrade_v2001_queries[] =
 
 static const struct db_upgrade_query db_upgrade_v2002_queries[] =
   {
-    { U_V2002_ALTER_FILES_ADD_SONGTRACKARTISTID, "add column songtrackartistid" },
+    { U_V2002_ALTER_FILES_ADD_SONGTRACKARTISTID, "add column songtrackartistid to files tbl" },
+    { U_V2002_ALTER_QUEUE_ADD_SONGTRACKARTISTID, "add column songtrackartistid to queue tbl" },
     { U_V2002_UPDATE_FILES_SONGTRACKARTISTID, "insert songtrackartistid" },
     { U_V2002_UPDATE_GROUPS_SONGTRACKARTISTID, "insert missing artist to groups" },
 
