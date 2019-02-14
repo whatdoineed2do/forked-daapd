@@ -300,6 +300,7 @@ static const struct col_type_map qi_cols_map[] =
     { "bitrate",            qi_offsetof(bitrate),             DB_TYPE_INT },
     { "samplerate",         qi_offsetof(samplerate),          DB_TYPE_INT },
     { "channels",           qi_offsetof(channels),            DB_TYPE_INT },
+    { "songtrackartistid",  qi_offsetof(songtrackartistid),   DB_TYPE_INT64 },
   };
 
 /* This list must be kept in sync with
@@ -485,6 +486,7 @@ static const struct qi_mfi_map qi_mfi_map[] =
     { qi_offsetof(bitrate),             mfi_offsetof(bitrate),             dbmfi_offsetof(bitrate) },
     { qi_offsetof(samplerate),          mfi_offsetof(samplerate),          dbmfi_offsetof(samplerate) },
     { qi_offsetof(channels),            mfi_offsetof(channels),            dbmfi_offsetof(channels) },
+    { qi_offsetof(songtrackartistid),   mfi_offsetof(songtrackartistid),   dbmfi_offsetof(songtrackartistid) },
   };
 
 /* This list must be kept in sync with
