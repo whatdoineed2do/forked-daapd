@@ -1,6 +1,5 @@
-# OwnTone
+ OwnTone
 # whatdoineed2do/forked-daapd
-
 from [ejurgensen/forked-daapd](https://github.com/ejurgensen/forked-daapd)
 
 This is the [whatdoineed2do](https://github.com/whatdoineed2do/forked-daapd) fork of the [forked-daapd upstream master](https://github.com/ejurgensen/forked-daapd).
