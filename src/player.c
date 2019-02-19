@@ -920,6 +920,7 @@ source_prev()
 {
   struct player_source *ps = NULL;
   struct db_queue_item *queue_item;
+  int queue_count;
 
   if (!cur_streaming)
     {
@@ -930,11 +931,8 @@ source_prev()
   queue_item = db_queue_fetch_prev(cur_streaming->item_id, shuffle);
   if (!queue_item) 
     {
-      int queue_count;
-      int pos = db_queue_get_pos(cur_streaming->item_id, shuffle);
-
       // do we have no prev item because we're the first item?
-      if ( pos != 0)
+      if (db_queue_get_pos(cur_streaming->item_id, shuffle) != 0)
         return NULL;
 
       queue_count = db_queue_get_count();
@@ -1831,6 +1829,14 @@ get_status(void *arg, int *retval)
 	DPRINTF(E_DBG, L_PLAYER, "Player status: stopped\n");
 
 	status->status = PLAY_STOPPED;
+	if (cur_streaming)
+	  {
+	    status->id = cur_streaming->id;
+	    status->item_id = cur_streaming->item_id;
+	    status->pos_ms = 0;
+	    status->len_ms = cur_streaming->len_ms;
+	  }
+
 	break;
 
       case PLAY_PAUSED:
@@ -1992,36 +1998,13 @@ playback_start_bh(void *arg, int *retval)
   return COMMAND_END;
 }
 
-static enum command_state
-playback_start_item(void *arg, int *retval)
+static int
+playback_start_setup_player_source(struct db_queue_item *queue_item, int *retval)
 {
-  struct db_queue_item *queue_item = arg;
   struct media_file_info *mfi;
-  struct output_device *device;
   struct player_source *ps;
   int seek_ms;
   int ret;
-
-  if (player_state == PLAY_PLAYING)
-    {
-      DPRINTF(E_DBG, L_PLAYER, "Player is already playing, ignoring call to playback start\n");
-
-      status_update(player_state);
-
-      *retval = 1; // Value greater 0 will prevent execution of the bottom half function
-      return COMMAND_END;
-    }
-
-  // Update global playback position
-  pb_pos = last_rtptime + AIRTUNES_V2_PACKET_SAMPLES - 88200;
-
-  if (player_state == PLAY_STOPPED && !queue_item)
-    {
-      DPRINTF(E_LOG, L_PLAYER, "Failed to start/resume playback, no queue item given\n");
-
-      *retval = -1;
-      return COMMAND_END;
-    }
 
   if (!queue_item)
     {
@@ -2060,9 +2043,43 @@ playback_start_item(void *arg, int *retval)
 	  playback_abort();
 	  source_free(ps);
 	  *retval = -1;
-	  return COMMAND_END;
+	  return ret;
 	}
     }
+  return 0;
+}
+
+static enum command_state
+playback_start_item(void *arg, int *retval)
+{
+  struct db_queue_item *queue_item = arg;
+  struct output_device *device;
+  int ret;
+
+  if (player_state == PLAY_PLAYING)
+    {
+      DPRINTF(E_DBG, L_PLAYER, "Player is already playing, ignoring call to playback start\n");
+
+      status_update(player_state);
+
+      *retval = 1; // Value greater 0 will prevent execution of the bottom half function
+      return COMMAND_END;
+    }
+
+  // Update global playback position
+  pb_pos = last_rtptime + AIRTUNES_V2_PACKET_SAMPLES - 88200;
+
+  if (player_state == PLAY_STOPPED && !queue_item)
+    {
+      DPRINTF(E_LOG, L_PLAYER, "Failed to start/resume playback, no queue item given\n");
+
+      *retval = -1;
+      return COMMAND_END;
+    }
+
+  ret = playback_start_setup_player_source(queue_item, retval);
+  if (ret < 0)
+    return COMMAND_END;
 
   ret = source_play();
   if (ret < 0)
@@ -2163,8 +2180,15 @@ playback_start(void *arg, int *retval)
 
   if (player_state == PLAY_STOPPED)
     {
+      
       // Start playback of first item in queue
-      queue_item = db_queue_fetch_bypos(0, shuffle);
+      //  OR
+      // where have we previous moved the (stopped) playhead to
+ 
+      queue_item = (cur_streaming == NULL) ?
+	  db_queue_fetch_bypos(0, shuffle) :
+	  db_queue_fetch_byitemid(cur_streaming->item_id);
+
       if (!queue_item)
 	return COMMAND_END;
     }
@@ -2191,6 +2215,22 @@ playback_prev_bh(void *arg, int *retval)
       *retval = -1;
       return COMMAND_END;
     }
+
+  if (player_state == PLAY_STOPPED)
+    {
+      DPRINTF(E_DBG, L_PLAYER, "player stopped, moving playhead to prev stream source\n");
+
+      ps = source_prev();
+      if (cur_streaming->setup_done)
+        input_stop(cur_streaming);
+      source_free(cur_streaming);
+      cur_streaming = ps;
+      status_update(player_state);
+
+      *retval = 0;
+      return COMMAND_END;
+    }
+
 
   // Only add to history if playback started
   if (cur_streaming->output_start > cur_streaming->stream_start)
@@ -2258,7 +2298,10 @@ playback_next_bh(void *arg, int *retval)
   struct player_source *ps;
   int ret;
   int id;
+  int queue_count;
+  struct db_queue_item *queue_item;
   uint32_t item_id;
+
 
   // The upper half is playback_pause, therefor the current playing item is
   // already set as the cur_streaming (cur_playing is NULL).
@@ -2266,6 +2309,24 @@ playback_next_bh(void *arg, int *retval)
     {
       DPRINTF(E_LOG, L_PLAYER, "Could not get current stream source\n");
       *retval = -1;
+      return COMMAND_END;
+    }
+
+  /* if we're in stopped state, just move playhead - the tophalf will have set 
+   * cur_streaming
+   */
+  if (player_state == PLAY_STOPPED)
+    {
+      DPRINTF(E_DBG, L_PLAYER, "player stopped, moving playhead to next stream source\n");
+
+      ps = source_next();
+      if (cur_streaming->setup_done)
+        input_stop(cur_streaming);
+      source_free(cur_streaming);
+      cur_streaming = ps;
+      status_update(player_state);
+
+      *retval = 0;
       return COMMAND_END;
     }
 
@@ -2280,23 +2341,43 @@ playback_next_bh(void *arg, int *retval)
       worker_execute(skipcount_inc_cb, &id, sizeof(int), 5);
     }
 
-  ps = source_next();
-  if (!ps)
+  queue_count = db_queue_get_count();
+  if (db_queue_get_pos(cur_streaming->item_id, shuffle) == queue_count-1)
     {
-      playback_abort();
-      *retval = -1;
-      return COMMAND_END;
+      /* last item on queue skip fwd and move it to start of queue we have 
+       * to do this outside of source_next() which is used during normal play
+       * operation
+       */
+      queue_item = db_queue_fetch_bypos(0, shuffle);
+      if (!queue_item)
+	{
+	  *retval = -1;
+	  return COMMAND_END;
+	}
+
+      playback_start_setup_player_source(queue_item, retval);
+      free_queue_item(queue_item, 0);
     }
-
-  source_stop();
-
-  ret = source_open(ps, last_rtptime + AIRTUNES_V2_PACKET_SAMPLES, 0);
-  if (ret < 0)
+  else
     {
-      source_free(ps);
-      playback_abort();
-      *retval = -1;
-      return COMMAND_END;
+      ps = source_next();
+      if (!ps)
+	{
+	  playback_abort();
+	  *retval = -1;
+	  return COMMAND_END;
+	}
+
+      source_stop();
+
+      ret = source_open(ps, last_rtptime + AIRTUNES_V2_PACKET_SAMPLES, 0);
+      if (ret < 0)
+	{
+	  source_free(ps);
+	  playback_abort();
+	  *retval = -1;
+	  return COMMAND_END;
+	}
     }
 
   if (player_state == PLAY_STOPPED)
@@ -2417,6 +2498,38 @@ playback_pause(void *arg, int *retval)
 
   // Otherwise, just run the bottom half
   return COMMAND_END;
+}
+
+/* ensure that cur_{play,stream}ing object is set in the non playing state and 
+ * returns otherwise drops through to performing actual pause
+ */
+static enum command_state
+playback_pause_set_stream(void *arg, int *retval)
+{
+  struct db_queue_item *queue_item = NULL;
+
+  *retval = -1;
+
+  if (player_state == PLAY_STOPPED)
+    {
+      DPRINTF(E_DBG, L_PLAYER, "pause_set_stream - not playing, obtaining player source\n");
+ 
+      if (cur_streaming == NULL)
+        {
+	  // havent moved playhead
+	  queue_item = db_queue_fetch_bypos(0, shuffle);
+	  if (!queue_item)
+	    return COMMAND_END;
+
+	  playback_start_setup_player_source(queue_item, retval);
+	  free_queue_item(queue_item, 0);
+	}
+
+      *retval = 0;
+      return COMMAND_END;
+    }
+  
+  return playback_pause(arg, retval);
 }
 
 /*
@@ -3134,7 +3247,7 @@ player_playback_next(void)
 {
   int ret;
 
-  ret = commands_exec_sync(cmdbase, playback_pause, playback_next_bh, NULL);
+  ret = commands_exec_sync(cmdbase, playback_pause_set_stream, playback_next_bh, NULL);
   return ret;
 }
 
@@ -3143,7 +3256,7 @@ player_playback_prev(void)
 {
   int ret;
 
-  ret = commands_exec_sync(cmdbase, playback_pause, playback_prev_bh, NULL);
+  ret = commands_exec_sync(cmdbase, playback_pause_set_stream, playback_prev_bh, NULL);
   return ret;
 }
 
