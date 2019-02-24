@@ -1890,6 +1890,7 @@ static int
 jsonapi_reply_player_next(struct httpd_request *hreq)
 {
   int ret;
+  struct player_status status;
 
   ret = player_playback_next();
   if (ret < 0)
@@ -1902,6 +1903,11 @@ jsonapi_reply_player_next(struct httpd_request *hreq)
       DPRINTF(E_LOG, L_WEB, "Error switching to next item.\n");
       return HTTP_INTERNAL;
     }
+
+  player_get_status(&status);
+  if (status.status == PLAY_STOPPED)
+    // in the non-playing state, we just move the playhead
+    return HTTP_NOCONTENT;
 
   ret = player_playback_start();
   if (ret < 0)
@@ -1917,6 +1923,7 @@ static int
 jsonapi_reply_player_previous(struct httpd_request *hreq)
 {
   int ret;
+  struct player_status status;
 
   ret = player_playback_prev();
   if (ret < 0)
@@ -1929,6 +1936,11 @@ jsonapi_reply_player_previous(struct httpd_request *hreq)
       DPRINTF(E_LOG, L_WEB, "Error switching to previous item.\n");
       return HTTP_INTERNAL;
     }
+
+  player_get_status(&status);
+  if (status.status == PLAY_STOPPED)
+    // in the non-playing state, we just move the playhead
+    return HTTP_NOCONTENT;
 
   ret = player_playback_start();
   if (ret < 0)
