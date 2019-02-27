@@ -126,6 +126,10 @@ export default {
     },
     artwork_url: function () {
       return webapi.artwork_url_append_size_params(this.now_playing.artwork_url)
+    },
+
+    seeking: function () {
+      return this.is_seeking
     }
   },
 
