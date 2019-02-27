@@ -27,6 +27,11 @@
         <span class="icon has-text-grey-light"><i class="mdi mdi-information-outline"></i></span>
       </a>
     </div>
+    <div class="container has-text-centered">
+      <div class="subtitle has-text-grey is-7" v-show="now_playing.samplerate > 0">
+      {{ now_playing.type }} | {{ now_playing.samplerate }} Hz | {{ now_playing.channels }} | {{ now_playing.bitrate }} Kb/s
+      </div>
+    </div>
     <div class="hero-foot fd-has-padding-left-right">
       <div class="container has-text-centered fd-has-margin-bottom">
         <p class="control has-text-centered fd-progress-now-playing">
