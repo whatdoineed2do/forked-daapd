@@ -234,13 +234,24 @@ export default {
     return axios.get('./api/library/genres')
   },
 
-  library_genre (genre) {
-    const genreParams = {
+  library_genre_albums (genre) {
+    var genreParams = {
       type: 'albums',
       media_kind: 'music',
       expression: 'genre is "' + genre + '"'
     }
     return axios.get('./api/search', {
+      params: genreParams
+    })
+  },
+
+  library_genre_artists (genre) {
+    var genreParams = {
+      type: 'artists',
+      media_kind: 'music',
+      expression: 'genre is "' + genre + '"'
+    }
+    return axios.get('/api/search', {
       params: genreParams
     })
   },
