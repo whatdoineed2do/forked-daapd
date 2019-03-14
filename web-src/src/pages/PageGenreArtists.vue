@@ -1,9 +1,10 @@
 <template>
   <div>
+    <tabs-music></tabs-music>
+
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
-      <template slot="options">
-        <index-button-list :index="index_list"></index-button-list>
-      </template>
       <template slot="heading-left">
         <p class="title is-4">{{ genre }}</p>
       </template>
@@ -36,10 +37,11 @@
 <script>
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
-import IndexButtonList from '@/components/IndexButtonList'
+import TabsMusic from '@/components/TabsMusic'
 import ListItemArtist from '@/components/ListItemArtist'
 import ModalDialogArtist from '@/components/ModalDialogArtist'
 import ModalDialogGenre from '@/components/ModalDialogGenre'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 
 const artistsData = {
@@ -56,7 +58,7 @@ const artistsData = {
 export default {
   name: 'PageGenreArtists',
   mixins: [ LoadDataBeforeEnterMixin(artistsData) ],
-  components: { ContentWithHeading, ListItemArtist, IndexButtonList, ModalDialogArtist, ModalDialogGenre },
+  components: { ContentWithHeading, TabsMusic, ListItemArtist, IndexList, ModalDialogArtist, ModalDialogGenre },
 
   data () {
     return {
