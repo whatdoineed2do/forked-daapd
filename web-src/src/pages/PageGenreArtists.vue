@@ -18,15 +18,15 @@
         </div>
       </template>
       <template slot="content">
-        <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artists">artists</a> | <a class="has-text-link" @click="open_albums">albums</a> | {{ tracks.total }} tracks</p>
-        <list-item-track v-for="(track, index) in tracks.items" :key="track.id" :track="track" @click="play_track(index)">
+        <p class="heading has-text-centered-mobile">{{ artists.total }} artists | <a class="has-text-link" @click="open_albums">albums</a> | <a class="has-text-link" @click="open_tracks">tracks</a></p>
+        <list-item-artist v-for="artist in artists.items" :key="artist.id" :artist="artist" @click="open_artist(artist)">
           <template slot="actions">
-            <a @click="open_dialog(track)">
+            <a @click="open_dialog(artist)">
               <span class="icon has-text-dark"><i class="mdi mdi-dots-vertical mdi-18px"></i></span>
             </a>
           </template>
-        </list-item-track>
-        <modal-dialog-track :show="show_details_modal" :track="selected_track" @close="show_details_modal = false" />
+        </list-item-artist>
+        <modal-dialog-artist :show="show_details_modal" :artist="selected_artist" @close="show_details_modal = false" />
         <modal-dialog-genre :show="show_genre_details_modal" :genre="{ 'name': genre }" @close="show_genre_details_modal = false" />
       </template>
     </content-with-heading>
@@ -37,34 +37,34 @@
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import IndexButtonList from '@/components/IndexButtonList'
-import ListItemTrack from '@/components/ListItemTrack'
-import ModalDialogTrack from '@/components/ModalDialogTrack'
+import ListItemArtist from '@/components/ListItemArtist'
+import ModalDialogArtist from '@/components/ModalDialogArtist'
 import ModalDialogGenre from '@/components/ModalDialogGenre'
 import webapi from '@/webapi'
 
-const tracksData = {
+const artistsData = {
   load: function (to) {
-    return webapi.library_genre_tracks(to.params.genre)
+    return webapi.library_genre_artists(to.params.genre)
   },
 
   set: function (vm, response) {
     vm.genre = vm.$route.params.genre
-    vm.tracks = response.data.tracks
+    vm.artists = response.data.artists
   }
 }
 
 export default {
-  name: 'PageGenreTracks',
-  mixins: [ LoadDataBeforeEnterMixin(tracksData) ],
-  components: { ContentWithHeading, ListItemTrack, IndexButtonList, ModalDialogTrack, ModalDialogGenre },
+  name: 'PageGenreArtists',
+  mixins: [ LoadDataBeforeEnterMixin(artistsData) ],
+  components: { ContentWithHeading, ListItemArtist, IndexButtonList, ModalDialogArtist, ModalDialogGenre },
 
   data () {
     return {
-      tracks: { items: [] },
+      artists: { items: [] },
       genre: '',
 
       show_details_modal: false,
-      selected_track: {},
+      selected_artist: {},
 
       show_genre_details_modal: false
     }
@@ -72,8 +72,8 @@ export default {
 
   computed: {
     index_list () {
-      return [...new Set(this.tracks.items
-        .map(track => track.title_sort.charAt(0).toUpperCase()))]
+      return [...new Set(this.artists.items
+        .map(artist => artist.name_sort.charAt(0).toUpperCase()))]
     }
   },
 
@@ -83,21 +83,25 @@ export default {
       this.$router.push({ name: 'Genre', params: { genre: this.genre } })
     },
 
-    open_artists: function () {
+    open_tracks: function () {
       this.show_details_modal = false
-      this.$router.push({ name: 'GenreArtists', params: { genre: this.genre } })
+      this.$router.push({ name: 'GenreTracks', params: { genre: this.genre } })
+    },
+
+    open_artist: function (artist) {
+      this.$router.push({ path: '/music/artists/' + artist.id })
     },
 
     play: function () {
       webapi.player_play_expression('genre is "' + this.genre + '" and media_kind is music', true)
     },
 
-    play_track: function (position) {
+    play_artist: function (position) {
       webapi.player_play_expression('genre is "' + this.genre + '" and media_kind is music', false, position)
     },
 
-    open_dialog: function (track) {
-      this.selected_track = track
+    open_dialog: function (artist) {
+      this.selected_artist = artist
       this.show_details_modal = true
     }
   }
