@@ -44,12 +44,21 @@
           <span>{{ item_progress_ms | duration }} / {{ now_playing.length_ms | duration }}</span>
         </p>
         <div class="buttons has-addons is-centered">
-          <player-button-previous class="button is-medium"></player-button-previous>
-          <player-button-play-pause class="button is-medium" icon_style="mdi-36px"></player-button-play-pause>
-          <player-button-next class="button is-medium"></player-button-next>
-          <player-button-repeat class="button is-medium is-light"></player-button-repeat>
-          <player-button-shuffle class="button is-medium is-light"></player-button-shuffle>
-          <player-button-consume class="button is-medium is-light"></player-button-consume>
+          <div>
+            <player-button-previous class="button is-medium is-rounded is-white"></player-button-previous>
+            <player-button-stop class="button is-medium is-rounded is-white"></player-button-stop>
+            <player-button-play-pause class="button is-medium is-rounded is-white" icon_style="mdi-24px"></player-button-play-pause>
+            <player-button-next class="button is-medium is-rounded is-white"></player-button-next>
+          </div>
+          <div>
+            <player-button-repeat class="button is-small is-rounded is-light"></player-button-repeat>
+          </div>
+          <div>
+            <player-button-shuffle class="button is-small is-rounded is-light"></player-button-shuffle>
+          </div>
+          <div>
+            <player-button-consume class="button is-small is-rounded is-light"></player-button-consume>
+          </div>
         </div>
       </div>
       <modal-dialog-queue-item :show="show_details_modal" :item="selected_item" @close="show_details_modal = false" />
@@ -60,6 +69,7 @@
 <script>
 import ModalDialogQueueItem from '@/components/ModalDialogQueueItem'
 import PlayerButtonPlayPause from '@/components/PlayerButtonPlayPause'
+import PlayerButtonStop from '@/components/PlayerButtonStop'
 import PlayerButtonNext from '@/components/PlayerButtonNext'
 import PlayerButtonPrevious from '@/components/PlayerButtonPrevious'
 import PlayerButtonShuffle from '@/components/PlayerButtonShuffle'
@@ -71,7 +81,7 @@ import * as types from '@/store/mutation_types'
 
 export default {
   name: 'PageNowPlaying',
-  components: { ModalDialogQueueItem, PlayerButtonPlayPause, PlayerButtonNext, PlayerButtonPrevious, PlayerButtonShuffle, PlayerButtonConsume, PlayerButtonRepeat, RangeSlider },
+  components: { ModalDialogQueueItem, PlayerButtonPlayPause, PlayerButtonStop, PlayerButtonNext, PlayerButtonPrevious, PlayerButtonShuffle, PlayerButtonConsume, PlayerButtonRepeat, RangeSlider },
 
   data () {
     return {
