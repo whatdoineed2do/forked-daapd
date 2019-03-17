@@ -20,6 +20,7 @@
       <!-- Skip previous (not visible on "now playing" page) -->
       <player-button-previous v-if="is_now_playing_page" class="navbar-item fd-margin-left-auto" icon_style="mdi-24px"></player-button-previous>
       <player-button-seek-back v-if="is_now_playing_page" seek_ms="10000" class="navbar-item" icon_style="mdi-24px"></player-button-seek-back>
+      <player-button-stop v-if="is_now_playing_page" class="navbar-item" icon_style="mdi-36px"></player-button-stop>
       <!-- Play/pause -->
       <player-button-play-pause class="navbar-item" icon_style="mdi-36px" show_disabled_message></player-button-play-pause>
       <player-button-seek-forward v-if="is_now_playing_page" seek_ms="30000" class="navbar-item" icon_style="mdi-24px"></player-button-seek-forward>
@@ -200,6 +201,7 @@ import _audio from '@/audio'
 import NavbarItemLink from './NavbarItemLink'
 import NavbarItemOutput from './NavbarItemOutput'
 import PlayerButtonPlayPause from '@/components/PlayerButtonPlayPause'
+import PlayerButtonStop from '@/components/PlayerButtonStop'
 import PlayerButtonNext from '@/components/PlayerButtonNext'
 import PlayerButtonPrevious from '@/components/PlayerButtonPrevious'
 import PlayerButtonShuffle from '@/components/PlayerButtonShuffle'
@@ -217,6 +219,7 @@ export default {
     NavbarItemOutput,
     RangeSlider,
     PlayerButtonPlayPause,
+    PlayerButtonStop,
     PlayerButtonNext,
     PlayerButtonPrevious,
     PlayerButtonShuffle,
