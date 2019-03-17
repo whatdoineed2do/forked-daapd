@@ -321,6 +321,24 @@ composer_to_json(const struct db_composer_info *composer)
 
   return item;
 }
+    
+static json_object *
+composer_to_json(const struct db_composer_info *composer)
+{
+  json_object *item;
+
+  if (composer == NULL)
+    {
+      return NULL;
+    }
+
+  item = json_object_new_object();
+  safe_json_add_string(item, "name", composer->name);
+  json_object_object_add(item, "album_count", json_object_new_int(composer->album_count));
+  json_object_object_add(item, "track_count", json_object_new_int(composer->track_count));
+
+  return item;
+}
 
 static json_object *
 directory_to_json(struct directory_info *directory_info)
@@ -639,6 +657,39 @@ fetch_genres(struct query_params *query_params, json_object *items, int *total)
 
       json_object_array_add(items, item);
       free_gi(&genre, 1);
+    }
+
+  if (total)
+    *total = query_params->results;
+
+ error:
+  db_query_end(query_params);
+
+  return ret;
+}
+    
+static int
+fetch_composers(struct query_params *query_params, json_object *items, int *total)
+{
+  json_object *item;
+  int ret;
+  struct db_composer_info composer;
+
+  ret = db_query_start(query_params);
+  if (ret < 0)
+    goto error;
+
+  while (((ret = db_query_fetch_composer(query_params, &composer)) == 0) && composer.name)
+    {
+      item = composer_to_json(&composer);
+      if (!item)
+	{
+	  ret = -1;
+	  goto error;
+	}
+
+      json_object_array_add(items, item);
+      free_ci(&composer, 1);
     }
 
   if (total)
