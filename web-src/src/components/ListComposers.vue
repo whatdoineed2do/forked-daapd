@@ -69,13 +69,7 @@ export default {
   methods: {
     open_composer: function (composer) {
       this.selected_composer = composer
-      if (this.media_kind_resolved === 'podcast') {
-        // No composer page for podcasts
-      } else if (this.media_kind_resolved === 'audiobook') {
-        this.$router.push({ path: '/audiobooks/composers/' + composer.id })
-      } else {
-        this.$router.push({ path: '/music/composers/' + composer.id })
-      }
+      this.$router.push({ name: 'ComposerTracks', params: { composer: composer.name } })
     },
 
     open_dialog: function (composer) {
