@@ -42,7 +42,7 @@ export default {
       }
 
       return {
-        type: 'track,artist,album,playlist,audiobook,podcast',
+        type: 'track,artist,album,playlist,audiobook,podcast,composer',
         query: this.query,
         limit: 3,
         offset: 0
