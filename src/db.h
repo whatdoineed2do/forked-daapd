@@ -383,6 +383,13 @@ struct db_composer_info {
   int track_count;
 };
 
+struct db_genre_info {
+  char *name;
+  int album_count;
+  int artist_count;
+  int track_count;
+};
+
 enum strip_type {
   STRIP_NONE,
   STRIP_PATH,
@@ -535,6 +542,9 @@ free_queue_item(struct db_queue_item *queue_item, int content_only);
 void
 free_ci(struct db_composer_info*, int content_only);
 
+void
+free_gi(struct db_genre_info*, int content_only);
+
 /* Maintenance and DB hygiene */
 void
 db_hook_post_scan(void);
@@ -582,6 +592,9 @@ db_query_fetch_string_sort(struct query_params *qp, char **string, char **sortst
 
 int
 db_query_fetch_composer(struct query_params *qp, struct db_composer_info *dci);
+
+int
+db_query_fetch_genre(struct query_params *qp, struct db_genre_info *dgi);
 
 /* Files */
 int
