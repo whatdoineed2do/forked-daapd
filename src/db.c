@@ -737,6 +737,20 @@ free_ci(struct db_composer_info *dci, int content_only)
     memset(dci, 0, sizeof(struct db_composer_info));
 }
 
+void
+free_gi(struct db_genre_info *dgi, int content_only)
+{
+  if (!dgi)
+    return;
+
+  free(dgi->name);
+
+  if (!content_only)
+    free(dgi);
+  else
+    memset(dgi, 0, sizeof(struct db_genre_info));
+}
+
 static void
 sort_tag_create(char **sort_tag, const char *src_tag)
 {
@@ -2521,6 +2535,96 @@ db_query_fetch_string_sort(struct query_params *qp, char **string, char **sortst
   return 0;
 }
 
+static int
+db_genre_info_count(const char *genre, int *album_count, int *artist_count, int *track_count)
+{
+#define Q_TMPL "SELECT COUNT(DISTINCT(songalbumid)), COUNT(DISTINCT(songartistid)), COUNT(id) FROM files WHERE GENRE='%q';"
+
+  sqlite3_stmt *stmt;
+  char *query;
+  int ret;
+
+  query = sqlite3_mprintf(Q_TMPL, genre);
+  if (!query)
+    {
+      DPRINTF(E_LOG, L_DB, "Out of memory for query string\n");
+
+      return -1;
+    }
+
+  ret = db_blocking_prepare_v2(query, strlen(query) + 1, &stmt, NULL);
+  if (ret != SQLITE_OK)
+    {
+      DPRINTF(E_LOG, L_DB, "Could not prepare statement: %s\n", sqlite3_errmsg(hdl));
+
+      sqlite3_free(query);
+      return -1;
+    }
+
+  ret = db_blocking_step(stmt);
+  if (ret != SQLITE_ROW)
+    {
+      if (ret == SQLITE_DONE)
+	DPRINTF(E_DBG, L_DB, "No results\n");
+      else
+	DPRINTF(E_LOG, L_DB, "Could not step: %s\n", sqlite3_errmsg(hdl));
+
+      sqlite3_finalize(stmt);
+      sqlite3_free(query);
+      return -1;
+    }
+
+  *album_count  = sqlite3_column_int(stmt, 0);
+  *artist_count = sqlite3_column_int(stmt, 1);
+  *track_count = sqlite3_column_int(stmt, 2);
+
+  sqlite3_finalize(stmt);
+  sqlite3_free(query);
+
+  return ret;
+
+#undef Q_TMPL
+}
+
+int
+db_query_fetch_genre(struct query_params *qp, struct db_genre_info *dgi)
+{
+  int ret;
+  const char *name;
+
+  memset(dgi, 0, sizeof(struct db_genre_info));
+
+  if (!qp->stmt)
+    {
+      DPRINTF(E_LOG, L_DB, "Query not started!\n");
+      return -1;
+    }
+
+  if (!(qp->type & Q_F_BROWSE))
+    {
+      DPRINTF(E_LOG, L_DB, "Not a browse query!\n");
+      return -1;
+    }
+
+  ret = db_blocking_step(qp->stmt);
+  if (ret == SQLITE_DONE)
+    {
+      DPRINTF(E_DBG, L_DB, "End of query results\n");
+      return 0;
+    }
+  else if (ret != SQLITE_ROW)
+    {
+      DPRINTF(E_LOG, L_DB, "Could not step: %s\n", sqlite3_errmsg(hdl));
+      return -1;
+    }
+
+  name = (char *)sqlite3_column_text(qp->stmt, 0);
+  if ( (ret = db_genre_info_count(name, &dgi->album_count, &dgi->artist_count, &dgi->track_count)) < 0)
+    return ret;
+  dgi->name = strdup(name);
+
+  return 0;
+}
 
 static int
 db_composer_info_count(const char *composer, int *album_count, int *track_count)
