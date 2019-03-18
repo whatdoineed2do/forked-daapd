@@ -270,7 +270,7 @@ playlist_to_json(struct db_playlist_info *dbpli)
 }
 
 static json_object *
-genre_to_json(const char *genre)
+genre_to_json(const struct db_genre_info *genre)
 {
   json_object *item;
 
@@ -280,7 +280,10 @@ genre_to_json(const char *genre)
     }
 
   item = json_object_new_object();
-  safe_json_add_string(item, "name", genre);
+  safe_json_add_string(item, "name", genre->name);
+  json_object_object_add(item, "album_count", json_object_new_int(genre->album_count));
+  json_object_object_add(item, "artist_count", json_object_new_int(genre->artist_count));
+  json_object_object_add(item, "track_count", json_object_new_int(genre->track_count));
 
   return item;
 }
@@ -538,16 +541,15 @@ fetch_genres(struct query_params *query_params, json_object *items, int *total)
 {
   json_object *item;
   int ret;
-  char *genre;
-  char *sort_item;
+  struct db_genre_info genre;
 
   ret = db_query_start(query_params);
   if (ret < 0)
     goto error;
 
-  while (((ret = db_query_fetch_string_sort(query_params, &genre, &sort_item)) == 0) && (genre))
+  while (((ret = db_query_fetch_genre(query_params, &genre)) == 0) && genre.name)
     {
-      item = genre_to_json(genre);
+      item = genre_to_json(&genre);
       if (!item)
 	{
 	  ret = -1;
@@ -555,6 +557,7 @@ fetch_genres(struct query_params *query_params, json_object *items, int *total)
 	}
 
       json_object_array_add(items, item);
+      free_gi(&genre, 1);
     }
 
   if (total)
