@@ -29,6 +29,12 @@
                   <span class="">Genres</span>
                 </a>
               </router-link>
+              <router-link tag="li" to="/music/composers" active-class="is-active">
+                <a>
+                  <span class="icon is-small"><i class="mdi mdi-book-open-page-variant"></i></span>
+                  <span class="">Composers</span>
+                </a>
+              </router-link>
               <router-link tag="li" to="/music/radio" active-class="is-active">
                 <a>
                   <span class="icon is-small"><i class="mdi mdi-radio"></i></span>
