@@ -384,6 +384,12 @@ struct db_genre_info {
   int track_count;
 };
 
+struct db_composer_info {
+  char *name;
+  int album_count;
+  int track_count;
+};
+
 enum strip_type {
   STRIP_NONE,
   STRIP_PATH,
@@ -530,6 +536,9 @@ free_queue_item(struct db_queue_item *queue_item, int content_only);
 
 void
 free_gi(struct db_genre_info*, int content_only);
+
+void
+free_ci(struct db_composer_info*, int content_only);
 
 /* Maintenance and DB hygiene */
 void

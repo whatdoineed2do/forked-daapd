@@ -292,6 +292,24 @@ genre_to_json(const struct db_genre_info *genre)
 
   return item;
 }
+    
+static json_object *
+composer_to_json(const struct db_composer_info *composer)
+{
+  json_object *item;
+
+  if (composer == NULL)
+    {
+      return NULL;
+    }
+
+  item = json_object_new_object();
+  safe_json_add_string(item, "name", composer->name);
+  json_object_object_add(item, "album_count", json_object_new_int(composer->album_count));
+  json_object_object_add(item, "track_count", json_object_new_int(composer->track_count));
+
+  return item;
+}
 
 static json_object *
 directory_to_json(struct directory_info *directory_info)
@@ -594,6 +612,39 @@ fetch_genres(struct query_params *query_params, json_object *items, int *total)
 
       json_object_array_add(items, item);
       free_gi(&genre, 1);
+    }
+
+  if (total)
+    *total = query_params->results;
+
+ error:
+  db_query_end(query_params);
+
+  return ret;
+}
+    
+static int
+fetch_composers(struct query_params *query_params, json_object *items, int *total)
+{
+  json_object *item;
+  int ret;
+  struct db_composer_info composer;
+
+  ret = db_query_start(query_params);
+  if (ret < 0)
+    goto error;
+
+  while (((ret = db_query_fetch_composer(query_params, &composer)) == 0) && composer.name)
+    {
+      item = composer_to_json(&composer);
+      if (!item)
+	{
+	  ret = -1;
+	  goto error;
+	}
+
+      json_object_array_add(items, item);
+      free_ci(&composer, 1);
     }
 
   if (total)
@@ -3109,6 +3160,76 @@ jsonapi_reply_library_genres(struct httpd_request *hreq)
 }
 
 static int
+jsonapi_reply_library_composers(struct httpd_request *hreq)
+{
+  time_t db_update;
+  struct query_params query_params;
+  const char *param;
+  enum media_kind media_kind;
+  json_object *reply;
+  json_object *items;
+  int total;
+  int ret;
+
+
+  db_update = (time_t) db_admin_getint64(DB_ADMIN_DB_UPDATE);
+  if (db_update && httpd_request_not_modified_since(hreq->req, &db_update))
+    return HTTP_NOTMODIFIED;
+
+  media_kind = 0;
+  param = evhttp_find_header(hreq->query, "media_kind");
+  if (param)
+    {
+      media_kind = db_media_kind_enum(param);
+      if (!media_kind)
+	{
+	  DPRINTF(E_LOG, L_WEB, "Invalid media kind '%s'\n", param);
+	  return HTTP_BADREQUEST;
+	}
+    }
+
+  reply = json_object_new_object();
+  items = json_object_new_array();
+  json_object_object_add(reply, "items", items);
+
+  memset(&query_params, 0, sizeof(struct query_params));
+
+  ret = query_params_limit_set(&query_params, hreq);
+  if (ret < 0)
+    goto error;
+
+  query_params.type = Q_BROWSE_COMPOSERS;
+  query_params.sort = S_COMPOSER;
+  query_params.idx_type = I_NONE;
+
+  if (media_kind)
+    query_params.filter = db_mprintf("(f.media_kind = %d)", media_kind);
+
+  ret = fetch_composers(&query_params, items, NULL);
+  if (ret < 0)
+    goto error;
+  else
+    total = json_object_array_length(items);
+
+  json_object_object_add(reply, "total", json_object_new_int(total));
+  json_object_object_add(reply, "offset", json_object_new_int(query_params.offset));
+  json_object_object_add(reply, "limit", json_object_new_int(query_params.limit));
+
+  ret = evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(reply));
+  if (ret < 0)
+    DPRINTF(E_LOG, L_WEB, "browse: Couldn't add genres to response buffer.\n");
+
+ error:
+  jparse_free(reply);
+  free_query_params(&query_params, 1);
+
+  if (ret < 0)
+    return HTTP_INTERNAL;
+
+  return HTTP_OK;
+}
+
+static int
 jsonapi_reply_library_count(struct httpd_request *hreq)
 {
   time_t db_update;
@@ -3706,7 +3827,8 @@ static struct httpd_uri_map adm_handlers[] =
     { EVHTTP_REQ_GET,    "^/api/library/albums/[[:digit:]]+/tracks$",    jsonapi_reply_library_album_tracks },
     { EVHTTP_REQ_GET,    "^/api/library/tracks/[[:digit:]]+$",           jsonapi_reply_library_tracks_get_byid },
     { EVHTTP_REQ_PUT,    "^/api/library/tracks/[[:digit:]]+$",           jsonapi_reply_library_tracks_put_byid },
-    { EVHTTP_REQ_GET,    "^/api/library/genres$",                        jsonapi_reply_library_genres},
+    { EVHTTP_REQ_GET,    "^/api/library/genres$",                        jsonapi_reply_library_genres },
+    { EVHTTP_REQ_GET,    "^/api/library/composers$",                     jsonapi_reply_library_composers },
     { EVHTTP_REQ_GET,    "^/api/library/count$",                         jsonapi_reply_library_count },
     { EVHTTP_REQ_GET,    "^/api/library/files$",                         jsonapi_reply_library_files },
 
