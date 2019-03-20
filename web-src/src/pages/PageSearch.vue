@@ -457,9 +457,42 @@ export default {
       })
     },
 
+    open_composer: function (composer) {
+      this.$router.push({ name: 'ComposerAlbums', params: { composer: composer.name } })
+    },
+
+    open_playlist: function (playlist) {
+      this.$router.push({ path: '/playlists/' + playlist.id + '/tracks' })
+    },
+
     open_recent_search: function (query) {
       this.search_query = query
       this.new_search()
+    },
+
+    open_track_dialog: function (track) {
+      this.selected_track = track
+      this.show_track_details_modal = true
+    },
+
+    open_album_dialog: function (album) {
+      this.selected_album = album
+      this.show_album_details_modal = true
+    },
+
+    open_artist_dialog: function (artist) {
+      this.selected_artist = artist
+      this.show_artist_details_modal = true
+    },
+
+    open_composer_dialog: function (composer) {
+      this.selected_composer = composer
+      this.show_composer_details_modal = true
+    },
+
+    open_playlist_dialog: function (playlist) {
+      this.selected_playlist = playlist
+      this.show_playlist_details_modal = true
     }
   },
 
