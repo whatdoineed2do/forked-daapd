@@ -16,6 +16,9 @@ import PageGenre from '@/pages/PageGenre'
 import PageGenreArtists from '@/pages/PageGenreArtists'
 import PageGenreTracks from '@/pages/PageGenreTracks'
 import PageArtistTracks from '@/pages/PageArtistTracks'
+import PageComposers from '@/pages/PageComposers'
+import PageComposer from '@/pages/PageComposer'
+import PageComposerTracks from '@/pages/PageComposerTracks'
 import PagePodcasts from '@/pages/PagePodcasts'
 import PagePodcast from '@/pages/PagePodcast'
 import PageAudiobooks from '@/pages/PageAudiobooks'
@@ -127,6 +130,24 @@ export const router = new VueRouter({
       name: 'GenreTracks',
       component: PageGenreTracks,
       meta: { show_progress: true, has_index: true }
+    },
+    {
+      path: '/music/composers',
+      name: 'Composers',
+      component: PageComposers,
+      meta: { show_progress: true, has_tabs: true, has_index: true }
+    },
+    {
+      path: '/music/composers/:composer/albums',
+      name: 'ComposerAlbums',
+      component: PageComposer,
+      meta: { show_progress: true, has_tabs: true, has_index: true }
+    },
+    {
+      path: '/music/composers/:composer/tracks',
+      name: 'ComposerTracks',
+      component: PageComposerTracks,
+      meta: { show_progress: true, has_tabs: true, has_index: true }
     },
     {
       path: '/podcasts',
