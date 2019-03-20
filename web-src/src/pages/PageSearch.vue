@@ -100,6 +100,31 @@
       </template>
     </content-with-heading>
 
+    <!-- Composers -->
+    <content-with-heading v-if="show_composers">
+      <template slot="heading-left">
+        <p class="title is-4">Composers</p>
+      </template>
+      <template slot="content">
+        <list-item-composer v-for="composer in composers.items" :key="composer.name" :composer="composer" @click="open_composer(composer)">
+          <template slot="actions">
+            <a @click="open_composer_dialog(composer)">
+              <span class="icon has-text-dark"><i class="mdi mdi-dots-vertical mdi-18px"></i></span>
+            </a>
+          </template>
+        </list-item-composer>
+        <modal-dialog-composer :show="show_composer_details_modal" :composer="selected_composer" @close="show_composer_details_modal = false" />
+      </template>
+      <template slot="footer">
+        <nav v-if="show_all_composers_button" class="level">
+          <p class="level-item">
+            <a class="button is-light is-small is-rounded" v-on:click="open_search_composers">Show all {{ composers.total }} composers</a>
+          </p>
+        </nav>
+        <p v-if="!composers.total">No results</p>
+      </template>
+    </content-with-heading>
+
     <!-- Playlists -->
     <content-with-heading v-if="show_playlists">
       <template slot="heading-left">
@@ -133,17 +158,19 @@ import TabsSearch from '@/components/TabsSearch'
 import ListItemTrack from '@/components/ListItemTrack'
 import ListItemArtist from '@/components/ListItemArtist'
 import ListItemAlbum from '@/components/ListItemAlbum'
+import ListItemComposer from '@/components/ListItemComposer'
 import ListItemPlaylist from '@/components/ListItemPlaylist'
 import ModalDialogTrack from '@/components/ModalDialogTrack'
 import ModalDialogAlbum from '@/components/ModalDialogAlbum'
 import ModalDialogArtist from '@/components/ModalDialogArtist'
+import ModalDialogComposer from '@/components/ModalDialogComposer'
 import ModalDialogPlaylist from '@/components/ModalDialogPlaylist'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 
 export default {
   name: 'PageSearch',
-  components: { ContentWithHeading, TabsSearch, ListItemTrack, ListItemArtist, ListItemAlbum, ListItemPlaylist, ModalDialogTrack, ModalDialogAlbum, ModalDialogArtist, ModalDialogPlaylist },
+  components: { ContentWithHeading, TabsSearch, ListItemTrack, ListItemArtist, ListItemAlbum, ListItemComposer, ListItemPlaylist, ModalDialogTrack, ModalDialogAlbum, ModalDialogArtist, ModalDialogComposer, ModalDialogPlaylist },
 
   data () {
     return {
@@ -151,6 +178,7 @@ export default {
       tracks: { items: [], total: 0 },
       artists: { items: [], total: 0 },
       albums: { items: [], total: 0 },
+      composers: { items: [], total: 0 },
       playlists: { items: [], total: 0 },
 
       show_track_details_modal: false,
@@ -161,6 +189,9 @@ export default {
 
       show_artist_details_modal: false,
       selected_artist: {},
+
+      show_composer_details_modal: false,
+      selected_composer: {},
 
       show_playlist_details_modal: false,
       selected_playlist: {}
@@ -191,6 +222,13 @@ export default {
     },
     show_all_albums_button () {
       return this.albums.total > this.albums.items.length
+    },
+
+    show_composers () {
+      return this.$route.query.type && this.$route.query.type.includes('composer')
+    },
+    show_all_composers_button () {
+      return this.composers.total > this.composers.items.length
     },
 
     show_playlists () {
@@ -224,6 +262,7 @@ export default {
         this.tracks = data.tracks ? data.tracks : { items: [], total: 0 }
         this.artists = data.artists ? data.artists : { items: [], total: 0 }
         this.albums = data.albums ? data.albums : { items: [], total: 0 }
+        this.composers = data.composers ? data.composers : { items: [], total: 0 }
         this.playlists = data.playlists ? data.playlists : { items: [], total: 0 }
 
         this.$store.commit(types.ADD_RECENT_SEARCH, searchParams.query)
@@ -237,7 +276,7 @@ export default {
 
       this.$router.push({ path: '/search/library',
         query: {
-          type: 'track,artist,album,playlist',
+          type: 'track,artist,album,composer,playlist',
           query: this.search_query,
           limit: 3,
           offset: 0
@@ -273,6 +312,15 @@ export default {
       })
     },
 
+    open_search_composers: function () {
+      this.$router.push({ path: '/search/library',
+        query: {
+          type: 'tracks',
+          query: this.$route.query.query
+        }
+      })
+    },
+
     open_search_playlists: function () {
       this.$router.push({ path: '/search/library',
         query: {
@@ -292,6 +340,10 @@ export default {
 
     open_album: function (album) {
       this.$router.push({ path: '/music/albums/' + album.id })
+    },
+
+    open_composer: function (composer) {
+      this.$router.push({ name: 'ComposerAlbums', params: { composer: composer.name } })
     },
 
     open_playlist: function (playlist) {
@@ -316,6 +368,11 @@ export default {
     open_artist_dialog: function (artist) {
       this.selected_artist = artist
       this.show_artist_details_modal = true
+    },
+
+    open_composer_dialog: function (composer) {
+      this.selected_composer = composer
+      this.show_composer_details_modal = true
     },
 
     open_playlist_dialog: function (playlist) {
