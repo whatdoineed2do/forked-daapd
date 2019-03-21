@@ -87,7 +87,7 @@ export default {
 
     open_composers: function () {
       this.show_details_modal = false
-      this.$router.push({ name: 'Composers', params: { genre: this.name } })
+      this.$router.push({ name: 'Composers', params: { genre: this.genre } })
     },
 
     open_tracks: function () {
