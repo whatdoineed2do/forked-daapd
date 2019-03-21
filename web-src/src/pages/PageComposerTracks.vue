@@ -1,9 +1,10 @@
 <template>
   <div>
+    <tabs-music></tabs-music>
+
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
-      <template slot="options">
-        <index-button-list :index="index_list"></index-button-list>
-      </template>
       <template slot="heading-left">
         <p class="title is-4">{{ composer }}</p>
         <p class="heading">{{ tracks.total }} tracks</p>
@@ -37,7 +38,8 @@
 <script>
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
-import IndexButtonList from '@/components/IndexButtonList'
+import TabsMusic from '@/components/TabsMusic'
+import IndexList from '@/components/IndexList'
 import ListItemTrack from '@/components/ListItemTrack'
 import ModalDialogTrack from '@/components/ModalDialogTrack'
 import ModalDialogComposer from '@/components/ModalDialogComposer'
@@ -57,7 +59,7 @@ const tracksData = {
 export default {
   name: 'PageComposerTracks',
   mixins: [ LoadDataBeforeEnterMixin(tracksData) ],
-  components: { ContentWithHeading, ListItemTrack, IndexButtonList, ModalDialogTrack, ModalDialogComposer },
+  components: { ContentWithHeading, TabsMusic, ListItemTrack, IndexList, ModalDialogTrack, ModalDialogComposer },
 
   data () {
     return {
