@@ -12,7 +12,7 @@
               <div class="content is-small">
                 <p>
                   <span class="heading">Albums</span>
-                  <a class="title is-6 has-text-link" @click="open_albums">{{ artist.album_count }}</a>
+                  <a class="title is-6 has-text-link" @click="open_artist">{{ artist.album_count }}</a>
                 </p>
                 <p>
                   <span class="heading">Tracks</span>
@@ -65,11 +65,6 @@ export default {
     open_artist: function () {
       this.$emit('close')
       this.$router.push({ path: '/music/artists/' + this.artist.id })
-    },
-
-    open_albums: function () {
-      this.$emit('close')
-      this.$router.push({ path: '/music/artists/' + this.artist.id + '/ablums' })
     },
 
     open_tracks: function () {
