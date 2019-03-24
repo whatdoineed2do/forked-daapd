@@ -247,9 +247,9 @@ export default {
 
   library_genre_artists (genre) {
     var genreParams = {
-      'type': 'artists',
-      'media_kind': 'music',
-      'expression': 'genre is "' + genre + '"'
+      type: 'artists',
+      media_kind: 'music',
+      expression: 'genre is "' + genre + '"'
     }
     return axios.get('/api/search', {
       params: genreParams
