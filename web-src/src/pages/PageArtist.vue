@@ -30,7 +30,7 @@
       <p class="heading has-text-centered-mobile">{{ albums.total }} albums | <a class="has-text-link" @click="open_tracks">{{ track_count }} tracks</a></p>
       <list-albums :albums="albums_list"></list-albums>
       <modal-dialog-album :show="show_details_modal" :album="selected_album" @close="show_details_modal = false" />
-      <modal-dialog-artist :show="show_artist_details_modal" :artist="artist" @close="show_artist_details_modal = false" />
+      <modal-dialog-artist :show="show_artist_details_modal" :artist="consolidated_artist" @close="show_artist_details_modal = false" />
     </template>
   </content-with-heading>
   </div>
@@ -70,9 +70,6 @@ const artistData = {
       track_count: vm.track_count,
       uri: vm.albums.items.map(a => a.uri).join(',')
     }
-
-    vm.name = response[0].data.name
-    vm.id = response[0].data.id
   }
 }
 
