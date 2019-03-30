@@ -52,6 +52,14 @@ const artistData = {
     vm.artist_id = vm.$route.params.artist_id
     vm.artist = response[0].data.items
     vm.albums = response[1].data
+
+    vm.consolidated_artist = {
+      'id': vm.artist_id,
+      'name': vm.album_artist,
+      'album_count': vm.albums.items.length,
+      'track_count': vm.track_count,
+      'uri': vm.albums.items.map(a => a.uri).join(',')
+    }
   }
 }
 
@@ -64,7 +72,8 @@ export default {
     return {
       album_artist: '',
       artist_id: '',
-      artist: {},
+      consolidated_artist: {},
+      artist: [], // can be multiple entries if compilation album
       albums: { items: [] },
 
       sort_options: ['Name', 'Release date'],
