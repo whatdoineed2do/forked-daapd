@@ -7154,6 +7154,9 @@ db_open(void)
   int mmap_size;
   char *dbextnso;
 
+  if (!db_path)
+    return -1;
+
   ret = sqlite3_open(db_path, &hdl);
   if (ret != SQLITE_OK)
     {
