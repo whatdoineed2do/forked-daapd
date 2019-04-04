@@ -16,6 +16,9 @@ general {
 	# Database location
 #	db_path = "@localstatedir@/cache/@PACKAGE@/songs3.db"
 
+	# Database extn location
+#	db_extn = "@pkglibdir@/forked-daapd-sqlext.so"
+
 	# Log file and level
 	# Available levels: fatal, log, warning, info, debug, spam
 	logfile = "@localstatedir@/log/@PACKAGE@.log"
