@@ -6950,6 +6950,7 @@ db_open(void)
   char *journal_mode;
   int synchronous;
   int mmap_size;
+  char *dbextnso;
 
   ret = sqlite3_open(db_path, &hdl);
   if (ret != SQLITE_OK)
@@ -6969,7 +6970,10 @@ db_open(void)
       return -1;
     }
 
-  ret = sqlite3_load_extension(hdl, db_sqlite_ext_path, NULL, &errmsg);
+  dbextnso = cfg_getstr(cfg_getsec(cfg, "general"), "db_extn");
+  DPRINTF(E_DBG, L_DB, "Database extn: %s\n", dbextnso);
+  errmsg = NULL;
+  ret = sqlite3_load_extension(hdl, dbextnso, NULL, &errmsg);
   if (ret != SQLITE_OK)
     {
       DPRINTF(E_LOG, L_DB, "Could not load SQLite extension: %s\n", errmsg);
