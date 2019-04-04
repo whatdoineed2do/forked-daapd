@@ -21,6 +21,9 @@ general {
 	# to initiate backup of songs3.db
 #	db_backup_path = "@localstatedir@/cache/@PACKAGE@/songs3.bak"
 
+	# Database extn location
+#	db_extn = "@pkglibdir@/forked-daapd-sqlext.so"
+
 	# Log file and level
 	# Available levels: fatal, log, warning, info, debug, spam
 	logfile = "@localstatedir@/log/@PACKAGE@.log"
