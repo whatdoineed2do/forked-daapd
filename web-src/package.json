@@ -33,6 +33,7 @@
     "vue-tiny-lazyload-img": "^0.1.0",
     "vuedraggable": "^2.24.2",
     "vue-star-rating": "^1.6.1",
+    "vuedraggable": "^2.23.2",
     "vuex": "^3.5.1"
   },
   "devDependencies": {
