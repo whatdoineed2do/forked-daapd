@@ -97,11 +97,11 @@ export default {
   computed: {
     modal_obj () {
       return {
-        'id': this.id,
-        'name': this.name,
-        'album_count': this.albums.items.length,
-        'track_count': this.track_count,
-        'uri': this.albums.items.map(a => a.uri).join(',')
+        id: this.id,
+        name: this.name,
+        album_count: this.albums.items.length,
+        track_count: this.track_count,
+        uri: this.albums.items.map(a => a.uri).join(',')
       }
     },
 
