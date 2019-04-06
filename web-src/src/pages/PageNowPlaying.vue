@@ -4,9 +4,14 @@
       <div class="container has-text-centered fd-has-margin-top">
         <h1 class="title is-4">
           {{ now_playing.title }}
-          <div class="subtitle is-6" v-show="composer_visible">
-            {{ composer() }}
-          </div>
+          <div class="fd-has-padding-left-right"><star-rating v-model="rating"
+            :star-size="17"
+            :padding="3"
+            :show-rating="false"
+            :max-rating="5"
+            :increment="0.5"
+            :inline="true"
+            @rating-selected="rate_track"></star-rating></div>
         </h1>
         <h2 class="title is-6">
           {{ now_playing.artist }}
@@ -81,19 +86,21 @@ import PlayerButtonShuffle from '@/components/PlayerButtonShuffle'
 import PlayerButtonConsume from '@/components/PlayerButtonConsume'
 import PlayerButtonRepeat from '@/components/PlayerButtonRepeat'
 import RangeSlider from 'vue-range-slider'
+import StarRating from 'vue-star-rating'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 
 export default {
   name: 'PageNowPlaying',
-  components: { ModalDialogQueueItem, PlayerButtonPlayPause, PlayerButtonStop, PlayerButtonNext, PlayerButtonPrevious, PlayerButtonShuffle, PlayerButtonConsume, PlayerButtonRepeat, RangeSlider },
+  components: { ModalDialogQueueItem, PlayerButtonPlayPause, PlayerButtonStop, PlayerButtonNext, PlayerButtonPrevious, PlayerButtonShuffle, PlayerButtonConsume, PlayerButtonRepeat, RangeSlider, StarRating },
 
   data () {
     return {
       item_progress_ms: 0,
       interval_id: 0,
       artwork_visible: false,
-      composer_visible: false,
+
+      rating: 0,
 
       show_details_modal: false,
       selected_item: {}
@@ -152,13 +159,13 @@ export default {
       this.artwork_visible = false
     },
 
-    composer: function () {
-      if (this.now_playing.composer === undefined || this.now_playing.composer === null || this.now_playing.genre === undefined || this.now_playing.genre === null) {
-        this.composer_visible = false
-      } else {
-        this.composer_visible = (this.now_playing.genre.toLowerCase() === 'classical')
+    rate_track: function (rating) {
+      if (rating === 0.5) {
+        rating = 0
       }
-      return this.now_playing.composer
+      this.rating = Math.ceil(rating)
+      this.state.item_rating = this.rating * 20
+      webapi.library_track_update(this.now_playing.track_id, { 'rating': this.rating * 20 })
     },
 
     open_dialog: function (item) {
@@ -177,6 +184,7 @@ export default {
       if (this.state.state === 'play') {
         this.interval_id = window.setInterval(this.tick, 1000)
       }
+      this.rating = this.state.item_rating / 20
     }
   }
 }
