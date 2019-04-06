@@ -2,6 +2,14 @@
   <section>
     <div v-if="now_playing.id > 0" class="fd-is-fullheight">
       <div class="fd-is-expanded">
+        <div class="has-text-centered fd-has-padding-left-right"><star-rating v-model="rating"
+          :star-size="17"
+          :padding="3"
+          :show-rating="false"
+          :max-rating="5"
+          :increment="0.5"
+          :inline="true"
+          @rating-selected="rate_track"></star-rating></div>
         <cover-artwork @click="open_dialog(now_playing)"
           :artwork_url="now_playing.artwork_url"
           :artist="now_playing.artist"
@@ -66,18 +74,21 @@
 import ModalDialogQueueItem from '@/components/ModalDialogQueueItem'
 import RangeSlider from 'vue-range-slider'
 import CoverArtwork from '@/components/CoverArtwork'
+import StarRating from 'vue-star-rating'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 
 export default {
   name: 'PageNowPlaying',
-  components: { ModalDialogQueueItem, RangeSlider, CoverArtwork },
+  components: { ModalDialogQueueItem, RangeSlider, CoverArtwork, StarRating },
 
   data () {
     return {
       is_seeking: false,
       item_progress_ms: 0,
       interval_id: 0,
+
+      rating: 0,
 
       show_details_modal: false,
       selected_item: {}
@@ -149,6 +160,15 @@ export default {
       this.is_seeking = false
     },
 
+    rate_track: function (rating) {
+      if (rating === 0.5) {
+        rating = 0
+      }
+      this.rating = Math.ceil(rating)
+      this.state.item_rating = this.rating * 20
+      webapi.library_track_update(this.now_playing.track_id, { rating: this.rating * 20 })
+    },
+
     open_dialog: function (item) {
       this.selected_item = item
       this.show_details_modal = true
@@ -165,6 +185,14 @@ export default {
       if (this.state.state === 'play') {
         this.interval_id = window.setInterval(this.tick, 1000)
       }
+    },
+
+    'now_playing' () {
+      webapi.library_track(this.now_playing.track_id).then((response) => {
+        this.rating = response.data.rating / 20
+      }).catch(() => {
+        this.rating = 0
+      })
     }
   }
 }
