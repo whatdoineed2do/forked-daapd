@@ -4,6 +4,14 @@
       <div class="container has-text-centered fd-has-margin-top">
         <h1 class="title is-4">
           {{ now_playing.title }}
+          <div class="fd-has-padding-left-right"><star-rating v-model="rating"
+            :star-size="17"
+            :padding="3"
+            :show-rating="false"
+            :max-rating="5"
+            :increment="0.5"
+            :inline="true"
+            @rating-selected="rate_track"></star-rating></div>
           <h2 class="subtitle is-7 has-text-grey" v-if="composer">
               {{ composer }}
           </h2>
@@ -81,18 +89,21 @@ import PlayerButtonShuffle from '@/components/PlayerButtonShuffle'
 import PlayerButtonConsume from '@/components/PlayerButtonConsume'
 import PlayerButtonRepeat from '@/components/PlayerButtonRepeat'
 import RangeSlider from 'vue-range-slider'
+import StarRating from 'vue-star-rating'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 
 export default {
   name: 'PageNowPlaying',
-  components: { ModalDialogQueueItem, PlayerButtonPlayPause, PlayerButtonStop, PlayerButtonNext, PlayerButtonPrevious, PlayerButtonShuffle, PlayerButtonConsume, PlayerButtonRepeat, RangeSlider },
+  components: { ModalDialogQueueItem, PlayerButtonPlayPause, PlayerButtonStop, PlayerButtonNext, PlayerButtonPrevious, PlayerButtonShuffle, PlayerButtonConsume, PlayerButtonRepeat, RangeSlider, StarRating },
 
   data () {
     return {
       item_progress_ms: 0,
       interval_id: 0,
       artwork_visible: false,
+
+      rating: 0,
 
       show_details_modal: false,
       selected_item: {}
@@ -173,6 +184,15 @@ export default {
       this.artwork_visible = false
     },
 
+    rate_track: function (rating) {
+      if (rating === 0.5) {
+        rating = 0
+      }
+      this.rating = Math.ceil(rating)
+      this.state.item_rating = this.rating * 20
+      webapi.library_track_update(this.now_playing.track_id, { 'rating': this.rating * 20 })
+    },
+
     open_dialog: function (item) {
       this.selected_item = item
       this.show_details_modal = true
@@ -189,6 +209,7 @@ export default {
       if (this.state.state === 'play') {
         this.interval_id = window.setInterval(this.tick, 1000)
       }
+      this.rating = this.state.item_rating / 20
     }
   }
 }
