@@ -58,7 +58,7 @@ nexpr		:	NOT^ crit
 			;
 
 crit		:	LPAR expression RPAR	->	expression
-			|	STRTAG (INCLUDES|IS|STARTSWITH) STR
+			|	STRTAG (INCLUDES|IS|IN|STARTSWITH) STR
 			|	INTTAG INTBOOL INT
 			|	DATETAG	(AFTER|BEFORE) dateval
 			|	ENUMTAG IS ENUMVAL
@@ -125,6 +125,9 @@ INCLUDES	:	'includes'
 			;
 
 IS			:	'is'
+			;
+
+IN			:	'in'
 			;
 
 STARTSWITH	:	'starts with'
