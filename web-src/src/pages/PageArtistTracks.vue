@@ -5,7 +5,7 @@
         <index-button-list :index="index_list"></index-button-list>
       </template>
       <template slot="heading-left">
-        <p class="title is-4">{{ album_artist }}</p>
+        <p class="title is-4">{{ name }}</p>
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
@@ -57,8 +57,8 @@ export default {
 
   data () {
     return {
-      album_artist: '',
-      artist_id: '',
+      name: '',
+      id: '',
       artist: {},
       tracks: { items: [] },
 
@@ -88,7 +88,7 @@ export default {
   methods: {
     open_artist: function () {
       this.show_details_modal = false
-      this.$router.push({ path: '/music/artists/' + this.artist_id })
+      this.$router.push({ path: '/music/artists/' + this.id })
     },
 
     play: function () {
