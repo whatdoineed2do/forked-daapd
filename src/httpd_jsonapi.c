@@ -396,6 +396,7 @@ fetch_artist(const char *artist_id)
   int ret = 0;
   int total = 0;
   char *artist_name = NULL;
+  char *artist_name_sort = NULL;
   bool various_artists = false;
 
   memset(&query_params, 0, sizeof(struct query_params));
@@ -428,7 +429,10 @@ fetch_artist(const char *artist_id)
 
       // make sure we set the artist name to the matching one in db
       if (artist_name == NULL && strcmp(artist_id, dbgri.persistentid) == 0)
-	artist_name = strdup(dbgri.itemname);
+        {
+          artist_name = strdup(dbgri.itemname);
+          artist_name_sort = strdup(dbgri.itemname_sort);
+        }
 
       if (!various_artists && atol(dbgri.groupartistcount) > 1)
 	various_artists = true;
@@ -447,14 +451,16 @@ fetch_artist(const char *artist_id)
       goto error;
     }
 
-  json_object_object_add(reply, "artist_id", json_object_new_string(artist_id));
-  json_object_object_add(reply, "artist", json_object_new_string(various_artists ? "Various Artists" : artist_name));
+  json_object_object_add(reply, "id", json_object_new_string(artist_id));
+  json_object_object_add(reply, "name", json_object_new_string(various_artists ? "Various Artists" : artist_name));
+  json_object_object_add(reply, "name_sort", json_object_new_string(various_artists ? "Various Artists" : artist_name_sort));
   json_object_object_add(reply, "total", json_object_new_int(total));
 
  error:
   db_query_end(&query_params);
   free(query_params.filter);
   free(artist_name);
+  free(artist_name_sort);
 
   return reply;
 }
