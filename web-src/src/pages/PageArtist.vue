@@ -14,7 +14,7 @@
         </div>
       </template>
     <template slot="heading-left">
-      <p class="title is-4">{{ album_artist }}</p>
+      <p class="title is-4">{{ name }}</p>
     </template>
     <template slot="heading-right">
       <div class="buttons is-centered">
