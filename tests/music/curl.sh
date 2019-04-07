@@ -12,7 +12,10 @@ echo "multi artist search: foo,bar"
 curl -s http://localhost:3689/api/library/artists/8897714372139739445,4401536315706768408 | jq
 curl -s http://localhost:3689/api/library/artists/8897714372139739445,4401536315706768408/albums | jq
 curl -s http://localhost:3689/api/library/artists/8897714372139739445,4401536315706768408/tracks| jq
-curl -s "http://localhost:3689/api/search?type=track&expression=songartistid+is+%228897714372139739445,4401536315706768408%22+and+media_kind+is+music+order+by+play_count+desc&limit=10" | jq
+echo "search: bar"
+curl -s "http://localhost:3689/api/search?type=track&expression=songartistid+is+%228897714372139739445%22+and+media_kind+is+music+order+by+play_count+desc&limit=10" | jq
+echo "search: bar,foo"
+curl -s "http://localhost:3689/api/search?type=track&expression=songartistid+in+%228897714372139739445,4401536315706768408%22+and+media_kind+is+music+order+by+play_count+desc&limit=10" | jq
 
 echo "album foo, 1 artist"
 curl -s http://localhost:3689/api/library/albums/4973605953000000699 | jq
