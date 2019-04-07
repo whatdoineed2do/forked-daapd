@@ -11,6 +11,12 @@
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
+          <star-rating v-model="min_rating"
+            :star-size="17"
+            :show-rating="false"
+            :max-rating="5"
+            :increment="0.5"
+            @rating-selected="show_rating"></star-rating>
           <a class="button is-small is-light is-rounded" @click="show_composer_details_modal = true">
             <span class="icon"><i class="mdi mdi-dots-horizontal mdi-18px"></i></span>
           </a>
@@ -21,7 +27,7 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_albums">albums</a> | {{ tracks.total }} tracks</p>
-        <list-item-track v-for="(track, index) in tracks.items" :key="track.id" :track="track" @click="play_track(index)">
+        <list-item-track v-for="(track, index) in tracks.items" :key="track.id" :track="track" v-if="track.rating >= min_rating" @click="play_track(index)">
           <template slot="actions">
             <a @click="open_dialog(track)">
               <span class="icon has-text-dark"><i class="mdi mdi-dots-vertical mdi-18px"></i></span>
@@ -43,6 +49,7 @@ import IndexList from '@/components/IndexList'
 import ListItemTrack from '@/components/ListItemTrack'
 import ModalDialogTrack from '@/components/ModalDialogTrack'
 import ModalDialogComposer from '@/components/ModalDialogComposer'
+import StarRating from 'vue-star-rating'
 import webapi from '@/webapi'
 
 const tracksData = {
@@ -59,12 +66,14 @@ const tracksData = {
 export default {
   name: 'PageComposerTracks',
   mixins: [ LoadDataBeforeEnterMixin(tracksData) ],
-  components: { ContentWithHeading, TabsMusic, ListItemTrack, IndexList, ModalDialogTrack, ModalDialogComposer },
+  components: { ContentWithHeading, TabsMusic, ListItemTrack, IndexList, ModalDialogTrack, ModalDialogComposer, StarRating },
 
   data () {
     return {
       tracks: { items: [] },
       composer: '',
+
+      min_rating: 0,
 
       show_details_modal: false,
       selected_track: {},
@@ -92,6 +101,13 @@ export default {
 
     play_track: function (position) {
       webapi.player_play_expression('composer is "' + this.composer + '" and media_kind is music', false, position)
+    },
+
+    show_rating: function (rating) {
+      if (rating === 0.5) {
+        rating = 0
+      }
+      this.min_rating = Math.ceil(rating) * 20
     },
 
     open_dialog: function (track) {
