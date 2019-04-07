@@ -18,6 +18,8 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile">{{ albums.total }} albums | <a class="has-text-link" @click="open_tracks">{{ track_count }} tracks</a></p>
+        <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_toptracks">top tracks</a></p>
+
       <list-item-album v-for="album in albums.items" :key="album.id" :album="album" @click="open_album(album)">
         <template slot="actions">
           <a @click="open_dialog(album)">
@@ -26,7 +28,7 @@
         </template>
       </list-item-album>
       <modal-dialog-album :show="show_details_modal" :album="selected_album" @close="show_details_modal = false" />
-      <modal-dialog-artist :show="show_artist_details_modal" :artist="consolidated_artist" @close="show_artist_details_modal = false" />
+      <modal-dialog-artist :show="show_artist_details_modal" :artist="modal_obj" @close="show_artist_details_modal = false" />
       </template>
     </content-with-heading>
   </div>
@@ -87,6 +89,16 @@ export default {
   },
 
   computed: {
+    modal_obj () {
+      return {
+        'id': this.id,
+        'name': this.name,
+        'album_count': this.albums.items.length,
+        'track_count': this.track_count,
+        'uri': this.albums.items.map(a => a.uri).join(',')
+      }
+    },
+
     index_list () {
       return [...new Set(this.albums.items
         .map(album => album.name_sort.charAt(0).toUpperCase()))]
@@ -101,6 +113,11 @@ export default {
   },
 
   methods: {
+    open_toptracks: function () {
+      this.show_details_modal = false
+      this.$router.push({ name: 'TopArtistTracks', params: { condition: 'songartistid in "' + this.id + '" and media_kind is music', id: this.name } })
+    },
+
     open_tracks: function () {
       this.$router.push({ path: '/music/artists/' + this.id + '/tracks' })
     },
