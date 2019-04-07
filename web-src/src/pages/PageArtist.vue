@@ -1,20 +1,25 @@
 <template>
-  <content-with-heading>
-    <template slot="heading-left">
-      <p class="title is-4">{{ album_artist }}</p>
-    </template>
-    <template slot="heading-right">
-      <div class="buttons is-centered">
+  <div>
+    <tabs-music></tabs-music>
+
+    <index-list :index="index_list"></index-list>
+
+    <content-with-heading>
+      <template slot="heading-left">
+        <p class="title is-4">{{ name }}</p>
+      </template>
+      <template slot="heading-right">
         <a class="button is-small is-light is-rounded" @click="show_artist_details_modal = true">
           <span class="icon"><i class="mdi mdi-dots-horizontal mdi-18px"></i></span>
         </a>
         <a class="button is-small is-dark is-rounded" @click="play">
           <span class="icon"><i class="mdi mdi-shuffle"></i></span> <span>Shuffle</span>
         </a>
-      </div>
-    </template>
-    <template slot="content">
-      <p class="heading has-text-centered-mobile">{{ albums.total }} albums | <a class="has-text-link" @click="open_tracks">{{ track_count }} tracks</a></p>
+      </template>
+      <template slot="content">
+        <p class="heading has-text-centered-mobile">{{ albums.total }} albums | <a class="has-text-link" @click="open_tracks">{{ track_count }} tracks</a></p>
+        <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_toptracks">top tracks</a></p>
+
       <list-item-album v-for="album in albums.items" :key="album.id" :album="album" @click="open_album(album)">
         <template slot="actions">
           <a @click="open_dialog(album)">
@@ -23,17 +28,20 @@
         </template>
       </list-item-album>
       <modal-dialog-album :show="show_details_modal" :album="selected_album" @close="show_details_modal = false" />
-      <modal-dialog-artist :show="show_artist_details_modal" :artist="consolidated_artist" @close="show_artist_details_modal = false" />
-    </template>
-  </content-with-heading>
+      <modal-dialog-artist :show="show_artist_details_modal" :artist="modal_obj" @close="show_artist_details_modal = false" />
+      </template>
+    </content-with-heading>
+  </div>
 </template>
 
 <script>
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
+import TabsMusic from '@/components/TabsMusic'
 import ListItemAlbum from '@/components/ListItemAlbum'
 import ModalDialogAlbum from '@/components/ModalDialogAlbum'
 import ModalDialogArtist from '@/components/ModalDialogArtist'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 
 const artistData = {
@@ -45,30 +53,22 @@ const artistData = {
   },
 
   set: function (vm, response) {
-    vm.album_artist = response[0].data.artist
-    vm.artist_id = vm.$route.params.artist_id
+    vm.name = response[0].data.name
+    vm.id = response[0].data.id
     vm.artist = response[0].data.items
     vm.albums = response[1].data
-
-    vm.consolidated_artist = {
-      'id': vm.artist_id,
-      'name': vm.album_artist,
-      'album_count': vm.albums.items.length,
-      'track_count': vm.track_count,
-      'uri': vm.albums.items.map(a => a.uri).join(',')
-    }
   }
 }
 
 export default {
   name: 'PageArtist',
   mixins: [ LoadDataBeforeEnterMixin(artistData) ],
-  components: { ContentWithHeading, ListItemAlbum, ModalDialogAlbum, ModalDialogArtist },
+  components: { ContentWithHeading, TabsMusic, IndexList, ListItemAlbum, ModalDialogAlbum, ModalDialogArtist },
 
   data () {
     return {
-      album_artist: '',
-      artist_id: '',
+      name: '',
+      id: '',
       consolidated_artist: {},
       artist: [], // can be multiple entries if compilation album
       albums: { items: [] },
@@ -81,6 +81,21 @@ export default {
   },
 
   computed: {
+    modal_obj () {
+      return {
+        'id': this.id,
+        'name': this.name,
+        'album_count': this.albums.items.length,
+        'track_count': this.track_count,
+        'uri': this.albums.items.map(a => a.uri).join(',')
+      }
+    },
+
+    index_list () {
+      return [...new Set(this.albums.items
+        .map(album => album.name_sort.charAt(0).toUpperCase()))]
+    },
+
     track_count () {
       var n = 0
       return this.albums.items.reduce((acc, item) => {
@@ -91,8 +106,13 @@ export default {
   },
 
   methods: {
+    open_toptracks: function () {
+      this.show_details_modal = false
+      this.$router.push({ name: 'TopArtistTracks', params: { condition: 'songartistid in "' + this.id + '" and media_kind is music', id: this.name } })
+    },
+
     open_tracks: function () {
-      this.$router.push({ path: '/music/artists/' + this.artist_id + '/tracks' })
+      this.$router.push({ path: '/music/artists/' + this.id + '/tracks' })
     },
 
     play: function () {
