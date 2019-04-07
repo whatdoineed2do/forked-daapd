@@ -78,6 +78,29 @@ export default {
   },
 
   computed: {
+    track_count () {
+      return this.tracks.items.length
+    },
+
+    album_count () {
+      return new Set(this.tracks.items.map(track => track.album_id)).size
+    },
+
+    rated_tracks () {
+      return this.tracks.items.filter(track => track.rating >= this.min_rating)
+    },
+
+    modal_artist_obj () {
+      var tracks = this.min_rating === 0 ? this.tracks.items : this.tracks.items.filter(a => a.rating >= this.min_rating)
+      return {
+        id: this.id,
+        name: this.name,
+        album_count: new Set(tracks.map(track => track.album_id)).size,
+        track_count: tracks.length,
+        uri: tracks.map(a => a.uri).join(',')
+      }
+    },
+
     index_list () {
       return [...new Set(this.tracks.items
         .map(track => track.title_sort.charAt(0).toUpperCase()))]
