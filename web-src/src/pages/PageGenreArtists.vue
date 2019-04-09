@@ -58,7 +58,7 @@ const artistsData = {
 
 export default {
   name: 'PageGenreArtists',
-  mixins: [ LoadDataBeforeEnterMixin(artistsData) ],
+  mixins: [LoadDataBeforeEnterMixin(artistsData)],
   components: { ContentWithHeading, TabsMusic, ListItemArtist, IndexList, ModalDialogArtist, ModalDialogGenre },
 
   data () {
