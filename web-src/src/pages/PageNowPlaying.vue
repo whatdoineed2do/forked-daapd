@@ -56,8 +56,7 @@
         <div class="buttons has-addons is-centered">
           <div>
             <player-button-previous class="button is-medium is-rounded is-white"></player-button-previous>
-            <player-button-stop class="button is-medium is-rounded is-white"></player-button-stop>
-            <player-button-play-pause class="button is-medium is-rounded is-white" icon_style="mdi-24px"></player-button-play-pause>
+            <player-button-play-stop class="button is-medium is-rounded is-white" icon_style="mdi-24px"></player-button-play-stop>
             <player-button-next class="button is-medium is-rounded is-white"></player-button-next>
           </div>
           <div>
@@ -78,8 +77,7 @@
 
 <script>
 import ModalDialogQueueItem from '@/components/ModalDialogQueueItem'
-import PlayerButtonPlayPause from '@/components/PlayerButtonPlayPause'
-import PlayerButtonStop from '@/components/PlayerButtonStop'
+import PlayerButtonPlayStop from '@/components/PlayerButtonPlayStop'
 import PlayerButtonNext from '@/components/PlayerButtonNext'
 import PlayerButtonPrevious from '@/components/PlayerButtonPrevious'
 import PlayerButtonShuffle from '@/components/PlayerButtonShuffle'
@@ -92,7 +90,7 @@ import * as types from '@/store/mutation_types'
 
 export default {
   name: 'PageNowPlaying',
-  components: { ModalDialogQueueItem, PlayerButtonPlayPause, PlayerButtonStop, PlayerButtonNext, PlayerButtonPrevious, PlayerButtonShuffle, PlayerButtonConsume, PlayerButtonRepeat, RangeSlider, StarRating },
+  components: { ModalDialogQueueItem, PlayerButtonPlayStop, PlayerButtonNext, PlayerButtonPrevious, PlayerButtonShuffle, PlayerButtonConsume, PlayerButtonRepeat, RangeSlider, StarRating },
 
   data () {
     return {
