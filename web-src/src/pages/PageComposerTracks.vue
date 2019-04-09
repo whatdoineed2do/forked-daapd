@@ -26,7 +26,7 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_albums">albums</a> | {{ tracks.total }} tracks</p>
-        <list-item-track v-for="(track, index) in tracks.items" :key="track.id" :track="track" v-if="track.rating >= min_rating" @click="play_track(index)">
+        <list-item-track v-for="(track, index) in rated_tracks" :key="track.id" :track="track" @click="play_track(index)">
           <template slot="actions">
             <a @click="open_dialog(track)">
               <span class="icon has-text-dark"><i class="mdi mdi-dots-vertical mdi-18px"></i></span>
