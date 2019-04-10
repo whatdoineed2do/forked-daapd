@@ -105,6 +105,7 @@ static cfg_opt_t sec_library[] =
     CFG_INT("pipe_bits_per_sample", 16, CFGF_NONE),
     CFG_BOOL("rating_updates", cfg_false, CFGF_NONE),
     CFG_STR_LIST("show_composer", "{classical,soundtrack}", CFGF_NONE),
+    CFG_STR("playlist_pls_save_directory", NULL, CFGF_NONE),
     CFG_END()
   };
 

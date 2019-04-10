@@ -199,6 +199,13 @@ library {
 	# empty list to disable or "*" to display all
 	# entries are case insensitive
 	show_composer = { }
+
+	# directory to save playlists generated from current play queue
+	# The current play queue can be serialised into a .pls playlist via REST
+	# call- disabled if value empty/not writable
+	# The directory _should_ be in same list as 'directories' to allow the
+	# server to use the user saved pls
+	#playlist_pls_save_directory = ""
 }
 
 # Local audio output
