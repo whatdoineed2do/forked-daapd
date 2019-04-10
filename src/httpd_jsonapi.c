@@ -30,6 +30,9 @@
 # include <config.h>
 #endif
 
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <limits.h>
 #include <regex.h>
@@ -3118,6 +3121,91 @@ jsonapi_reply_library_playlist_tracks(struct httpd_request *hreq)
 }
 
 static int
+jsonapi_reply_library_playlist_from_queue(struct httpd_request *hreq)
+{
+  struct query_params query_params;
+  const char *param;
+  int count;
+  struct db_queue_item queue_item;
+  int i;
+  int fd = -1;
+  int ret = 0;
+  char buf[PATH_MAX];
+  const char *plsdir;
+  mode_t  umsk;
+
+  if ( (param = evhttp_find_header(hreq->query, "name")) == NULL)
+    {
+      DPRINTF(E_LOG, L_WEB, "Invalid argument, missing 'name'\n");
+      return HTTP_BADREQUEST;
+    }
+
+  count = db_queue_get_count();
+
+  plsdir = cfg_getstr(cfg_getsec(cfg, "library"), "playlist_pls_save_directory");
+  if (plsdir == NULL || (plsdir && access(plsdir, W_OK) < 0))
+    {
+      DPRINTF(E_LOG, L_WEB, "Rejecting pls save requst, invalid playlist save directory=%s\n", plsdir ? plsdir: "NULL");
+      return HTTP_BADREQUEST;
+    }
+  snprintf(buf, PATH_MAX, "%s/%s.pls", plsdir, param);
+
+  umsk = umask(0);
+  umask(umsk);
+
+  memset(&query_params, 0, sizeof(struct query_params));
+
+  if ( (fd = open(buf, O_CREAT | O_WRONLY | O_TRUNC, 0666 & ~umsk)) < 0)
+    {
+      DPRINTF(E_LOG, L_WEB, "failed to create pls file: %s - %s\n", buf, strerror(errno));
+      ret = -1;
+      goto error;
+    }
+
+  if (write(fd, "[playlist]\n", 11) != 11) 
+    {
+      DPRINTF(E_LOG, L_WEB, "failed to write header to pls file: %s\n", strerror(errno));
+      ret = -1;
+      goto error;
+    }
+
+  ret = db_queue_enum_start(&query_params);
+  if (ret < 0)
+    goto db_start_error;
+
+  i = 0;
+  while ((ret = db_queue_enum_fetch(&query_params, &queue_item)) == 0 && queue_item.id > 0)
+    {
+      ret = snprintf(buf, PATH_MAX, "File%u=%s\n", i++, queue_item.path);
+      if (write(fd, buf, ret) != ret)
+	{
+	  DPRINTF(E_LOG, L_WEB, "failed to write element (%u) to pls file: %s\n", i-1, strerror(errno));
+	  ret = -1;
+	  goto error;
+	}
+    }
+
+  ret = snprintf(buf, PATH_MAX, "NumberOfEntries=%d\nVersion=2\n", count);
+  if (write(fd, buf, ret) != ret)
+    {
+      DPRINTF(E_LOG, L_WEB, "failed to write footer to pls file: %s\n", strerror(errno));
+      ret = -1;
+      goto error;
+    }
+
+ error:
+  db_queue_enum_end(&query_params);
+ db_start_error:
+  free(query_params.filter);
+  close(fd);
+
+  if (ret < 0)
+    return HTTP_INTERNAL;
+
+  return HTTP_OK;
+}
+
+static int
 jsonapi_reply_library_genres(struct httpd_request *hreq)
 {
   time_t db_update;
@@ -3857,6 +3945,7 @@ static struct httpd_uri_map adm_handlers[] =
     { EVHTTP_REQ_POST,   "^/api/queue/items/add$",                       jsonapi_reply_queue_tracks_add },
     { EVHTTP_REQ_PUT,    "^/api/queue/items/[[:digit:]]+$",              jsonapi_reply_queue_tracks_move },
     { EVHTTP_REQ_DELETE, "^/api/queue/items/[[:digit:]]+$",              jsonapi_reply_queue_tracks_delete },
+    { EVHTTP_REQ_POST,   "^/api/queue/save$", jsonapi_reply_library_playlist_from_queue},
 
     { EVHTTP_REQ_GET,    "^/api/library/playlists$",                     jsonapi_reply_library_playlists },
     { EVHTTP_REQ_GET,    "^/api/library/playlists/[[:digit:]]+$",        jsonapi_reply_library_playlist },
