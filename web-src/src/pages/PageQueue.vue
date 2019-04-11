@@ -35,6 +35,12 @@
             </span>
             <span>Clear</span>
           </a>
+          <a class="button is-small" v-show="queue_items.length > 1" @click="save_dialog">
+            <span class="icon">
+              <i class="mdi mdi-content-save"></i>
+            </span>
+            <span>Save</span>
+          </a>
         </div>
       </template>
       <template slot="content">
@@ -55,6 +61,7 @@
             </list-item-queue-item>
         </draggable>
         <modal-dialog-queue-item :show="show_details_modal" :item="selected_item" @close="show_details_modal = false" />
+        <modal-dialog-playlist-save :show="show_pls_save_modal" @close="show_pls_save_modal = false" />
       </template>
     </content-with-heading>
   </div>
@@ -65,19 +72,21 @@ import ContentWithHeading from '@/templates/ContentWithHeading'
 import TabsMusic from '@/components/TabsMusic'
 import ListItemQueueItem from '@/components/ListItemQueueItem'
 import ModalDialogQueueItem from '@/components/ModalDialogQueueItem'
+import ModalDialogPlaylistSave from '@/components/ModalDialogPlaylistSave'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 import draggable from 'vuedraggable'
 
 export default {
   name: 'PageQueue',
-  components: { ContentWithHeading, TabsMusic, ListItemQueueItem, draggable, ModalDialogQueueItem },
+  components: { ContentWithHeading, TabsMusic, ListItemQueueItem, draggable, ModalDialogQueueItem, ModalDialogPlaylistSave },
 
   data () {
     return {
       edit_mode: false,
 
       show_details_modal: false,
+      show_pls_save_modal: false,
       selected_item: {}
     }
   },
@@ -127,6 +136,10 @@ export default {
     open_dialog: function (item) {
       this.selected_item = item
       this.show_details_modal = true
+    },
+
+    save_dialog: function (item) {
+      this.show_pls_save_modal = true
     }
   }
 }
