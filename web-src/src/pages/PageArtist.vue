@@ -23,7 +23,7 @@
         </template>
       </list-item-album>
       <modal-dialog-album :show="show_details_modal" :album="selected_album" @close="show_details_modal = false" />
-      <modal-dialog-artist :show="show_artist_details_modal" :artist="artist" @close="show_artist_details_modal = false" />
+      <modal-dialog-artist :show="show_artist_details_modal" :artist="modal_obj" @close="show_artist_details_modal = false" />
     </template>
   </content-with-heading>
 </template>
@@ -58,12 +58,37 @@ export default {
   data () {
     return {
       artist: {},
-      albums: {},
+      albums: { items: [] },
 
       show_details_modal: false,
       selected_album: {},
 
       show_artist_details_modal: false
+    }
+  },
+
+  computed: {
+    modal_obj () {
+      return {
+        'id': this.artist.id,
+        'name': this.artist.name,
+        'album_count': this.albums.length,
+        'track_count': this.track_count,
+        'uri': this.albums.items.map(a => a.uri).join(',')
+      }
+    },
+
+    index_list () {
+      return [...new Set(this.albums.items
+        .map(album => album.name_sort.charAt(0).toUpperCase()))]
+    },
+
+    track_count () {
+      var n = 0
+      return this.albums.items.reduce((acc, item) => {
+        acc += item.track_count
+        return acc
+      }, n)
     }
   },
 
