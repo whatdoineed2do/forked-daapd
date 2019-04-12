@@ -37,3 +37,4 @@ curl -s 'http://localhost:3689/api/search?type=tracks&media_kind=music&expressio
 echo "artists, classical'"
 curl -s 'http://localhost:3689/api/search?type=artist&media_kind=music&expression=genre+is+%22Classical%22' | jq
 
+curl -X POST "http://localhost:3689/api/queue/items/add?expre\"/export/public/music/dnb-rs-acjbu.mp3\""
