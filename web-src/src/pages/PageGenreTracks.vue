@@ -29,7 +29,7 @@
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artists">artists</a> | <a class="has-text-link" @click="open_albums">albums</a> | {{ tracks.total }} tracks | <a class="has-text-link" @click="open_composers">composers</a></p>
         <list-tracks :tracks="rated_tracks"></list-tracks>
         <modal-dialog-track :show="show_details_modal" :track="selected_track" @close="show_details_modal = false" />
-        <modal-dialog-genre :show="show_genre_details_modal" :genre="{ 'name': genre }" @close="show_genre_details_modal = false" />
+        <modal-dialog-genre :show="show_genre_details_modal" :genre="modal_obj" @close="show_genre_details_modal = false" />
       </template>
     </content-with-heading>
   </div>
@@ -77,6 +77,17 @@ export default {
   },
 
   computed: {
+    modal_obj () {
+      var tracks = this.min_rating === 0 ? this.tracks.items : this.tracks.items.filter(a => a.rating >= this.min_rating)
+      return {
+        name: this.genre,
+        album_count: new Set(tracks.map(track => track.album_id)).size,
+        artist_count: new Set(tracks.map(track => track.artist_id)).size,
+        track_count: tracks.length,
+        uri: tracks.map(a => a.uri).join(',')
+      }
+    },
+
     index_list () {
       return [...new Set(this.tracks.items
         .map(track => track.title_sort.charAt(0).toUpperCase()))]
