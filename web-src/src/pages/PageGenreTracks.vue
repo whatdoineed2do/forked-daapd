@@ -36,7 +36,7 @@
           </template>
         </list-item-track>
         <modal-dialog-track :show="show_details_modal" :track="selected_track" @close="show_details_modal = false" />
-        <modal-dialog-genre :show="show_genre_details_modal" :genre="{ 'name': genre }" @close="show_genre_details_modal = false" />
+        <modal-dialog-genre :show="show_genre_details_modal" :genre="modal_obj" @close="show_genre_details_modal = false" />
       </template>
     </content-with-heading>
   </div>
@@ -84,6 +84,16 @@ export default {
   },
 
   computed: {
+    modal_obj () {
+      return {
+        'name': this.genre,
+        'album_count': new Set(this.tracks.items.map(track => track.album_id)).size,
+        'artist_count': new Set(this.tracks.items.map(track => track.artist_id)).size,
+        'track_count': this.tracks.items.length,
+        'uri': this.tracks.items.map(a => a.uri).join(',')
+      }
+    },
+
     index_list () {
       return [...new Set(this.tracks.items
         .map(track => track.title_sort.charAt(0).toUpperCase()))]

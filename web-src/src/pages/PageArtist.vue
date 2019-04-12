@@ -28,7 +28,7 @@
         </template>
       </list-item-album>
       <modal-dialog-album :show="show_details_modal" :album="selected_album" @close="show_details_modal = false" />
-      <modal-dialog-artist :show="show_artist_details_modal" :artist="consolidated_artist" @close="show_artist_details_modal = false" />
+      <modal-dialog-artist :show="show_artist_details_modal" :artist="modal_obj" @close="show_artist_details_modal = false" />
       </template>
     </content-with-heading>
   </div>
@@ -57,14 +57,6 @@ const artistData = {
     vm.id = response[0].data.id
     vm.artist = response[0].data.items
     vm.albums = response[1].data
-
-    vm.consolidated_artist = {
-      'id': vm.id,
-      'name': vm.name,
-      'album_count': vm.albums.items.length,
-      'track_count': vm.track_count,
-      'uri': vm.albums.items.map(a => a.uri).join(',')
-    }
   }
 }
 
@@ -89,6 +81,16 @@ export default {
   },
 
   computed: {
+    modal_obj () {
+      return {
+        'id': this.id,
+        'name': this.name,
+        'album_count': this.albums.items.length,
+        'track_count': this.track_count,
+        'uri': this.albums.items.map(a => a.uri).join(',')
+      }
+    },
+
     index_list () {
       return [...new Set(this.albums.items
         .map(album => album.name_sort.charAt(0).toUpperCase()))]

@@ -29,7 +29,7 @@
           </template>
         </list-item-artist>
         <modal-dialog-artist :show="show_details_modal" :artist="selected_artist" @close="show_details_modal = false" />
-        <modal-dialog-genre :show="show_genre_details_modal" :genre="{ 'name': genre }" @close="show_genre_details_modal = false" />
+        <modal-dialog-genre :show="show_genre_details_modal" :genre="modal_obj" @close="show_genre_details_modal = false" />
       </template>
     </content-with-heading>
   </div>
@@ -74,6 +74,22 @@ export default {
   },
 
   computed: {
+    modal_obj () {
+      return {
+        'name': this.genre,
+        'album_count': this.artists.items.reduce((acc, item) => {
+          acc += item.album_count
+          return acc
+        }, 0),
+        'artist_count': this.artists.items.length,
+        'track_count': this.artists.items.reduce((acc, item) => {
+          acc += item.track_count
+          return acc
+        }, 0),
+        'uri': this.artists.items.map(a => a.uri).join(',')
+      }
+    },
+
     index_list () {
       return [...new Set(this.artists.items
         .map(artist => artist.name_sort.charAt(0).toUpperCase()))]
