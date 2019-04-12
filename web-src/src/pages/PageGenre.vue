@@ -21,7 +21,8 @@
       <template slot="content">
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artists">artists</a> | {{ genre_albums.total }} albums | <a class="has-text-link" @click="open_tracks">tracks</a> | <a class="has-text-link" @click="open_composers">composers</a> </p>
         <list-albums :albums="genre_albums.items"></list-albums>
-        <modal-dialog-genre :show="show_genre_details_modal" :genre="{ 'name': name }" @close="show_genre_details_modal = false" />
+        <modal-dialog-album :show="show_details_modal" :album="selected_album" @close="show_details_modal = false" />
+        <modal-dialog-genre :show="show_genre_details_modal" :genre="modal_obj" @close="show_genre_details_modal = false" />
       </template>
     </content-with-heading>
   </div>
@@ -32,6 +33,7 @@ import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import ListAlbums from '@/components/ListAlbums'
 import TabsMusic from '@/components/TabsMusic'
+import ModalDialogAlbum from '@/components/ModalDialogAlbum'
 import ModalDialogGenre from '@/components/ModalDialogGenre'
 import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
@@ -54,19 +56,30 @@ const genreData = {
 export default {
   name: 'PageGenre',
   mixins: [LoadDataBeforeEnterMixin(genreData)],
-  components: { ContentWithHeading, ListAlbums, ModalDialogGenre, IndexList, TabsMusic },
+  components: { ContentWithHeading, ListAlbums, ModalDialogGenre, ModalDialogAlbum, IndexList, TabsMusic },
 
   data () {
     return {
       name: '',
-      tracks: 0,
       genre_albums: { items: [] },
-
+      tracks: 0,
+      show_details_modal: false,
+      selected_album: {},
       show_genre_details_modal: false
     }
   },
 
   computed: {
+    modal_obj () {
+      return {
+        name: this.name,
+        album_count: this.genre_albums.items.length,
+        artist_count: new Set(this.genre_albums.items.map(album => album.artist_id)).size,
+        track_count: this.tracks,
+        uri: this.genre_albums.items.map(a => a.uri).join(',')
+      }
+    },
+
     index_list () {
       return [...new Set(this.genre_albums.items
         .map(album => album.name_sort.charAt(0).toUpperCase()))]
