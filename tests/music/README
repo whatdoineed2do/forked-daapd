@@ -1,1 +1,35 @@
 These are empty music files containing various tags that can be used to populate a dummy database for testing
+
+Possible way to generated sample files using sox:
+
+    sox -n -c 2 -r 48000 foo.mp3 synth 5 sin 500-20 fade h 0.2 5 0.2
+
+and add meta with ffmpeg
+
+    ffmpeg -i foo.mp3 -c:a copy \
+        -metadata title="sin sweep" \
+	-metadata album="Best of SoX" \
+	-metadata album_artist="Various Artists" \
+	-metadata artist="Foo" \
+	-metadata genre="Pop" \
+	-metadata year="2019" \
+	foo-meta.mp3
+
+Finally validate:
+
+    ffprobe -hide_banner -i foo-meta.mp3
+
+Alternatively, to copy meta from a file (foo.mp3) using the audio from another file (sin.mp3) to bar.mp3:
+
+    ffmpeg -i foo.mp3 -i sin.mp3 \
+        -map_metadata 0 -map 1 \
+	-c:a copy bar.mp3
+
+To add album art:
+
+    ffmpeg -i foo.mp3 -i cover.jpg \
+        -map 0:0 -map 1:0 \
+	-codec copy -id3v2_version 3 \
+        -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" \
+	bar.mp3
+
