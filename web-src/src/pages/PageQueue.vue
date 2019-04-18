@@ -44,7 +44,13 @@
         </div>
       </template>
       <template slot="content">
-        <draggable v-model="queue_items" :options="{handle:'.handle'}"  @end="move_item">
+        <draggable class="list-group"
+           v-model="queue_items"
+           v-bind="dragOptions"
+           @start="drag=true"
+           @update="move_item"
+           @end="drag=false">
+         <transition-group type="transition" :name="!drag ? 'flip-list' : null">
           <list-item-queue-item v-for="(item, index) in queue_items"
             :key="item.id" :item="item" :position="index"
             :current_position="current_position"
@@ -59,6 +65,7 @@
                 </a>
               </template>
             </list-item-queue-item>
+         </transition-group>
         </draggable>
         <modal-dialog-queue-item :show="show_details_modal" :item="selected_item" @close="show_details_modal = false" />
         <modal-dialog-playlist-save :show="show_pls_save_modal" @close="show_pls_save_modal = false" />
@@ -84,6 +91,7 @@ export default {
   data () {
     return {
       edit_mode: false,
+      drag: false,
 
       show_details_modal: false,
       show_pls_save_modal: false,
@@ -108,6 +116,14 @@ export default {
     },
     show_only_next_items () {
       return this.$store.state.show_only_next_items
+    },
+    dragOptions () {
+      return {
+        animation: 100,
+        group: 'description',
+        disabled: false,
+        ghostClass: 'ghost'
+      }
     }
   },
 
@@ -146,4 +162,16 @@ export default {
 </script>
 
 <style>
+.flip-list-move {
+  transition: transform 0.2s;
+}
+
+.no-move {
+  transition: transform 0s;
+}
+
+.ghost {
+  opacity: 0.9;
+  background: #c8ebfb;
+}
 </style>

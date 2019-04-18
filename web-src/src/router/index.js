@@ -36,11 +36,17 @@ import SpotifyPageArtist from '@/pages/SpotifyPageArtist'
 import SpotifyPageAlbum from '@/pages/SpotifyPageAlbum'
 import SpotifyPagePlaylist from '@/pages/SpotifyPagePlaylist'
 import SpotifyPageSearch from '@/pages/SpotifyPageSearch'
+import PageFoo from '@/pages/PageFoo'
 
 Vue.use(VueRouter)
 
 export const router = new VueRouter({
   routes: [
+    {
+      path: '/foo',
+      name: 'PageFoo',
+      component: PageFoo
+    },
     {
       path: '/',
       name: 'PageQueue',
