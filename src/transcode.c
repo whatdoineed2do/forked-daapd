@@ -1197,7 +1197,6 @@ transcode_encode_setup(enum transcode_profile profile, struct media_quality *qua
   int bps;
 
   CHECK_NULL(L_XCODE, ctx = calloc(1, sizeof(struct encode_ctx)));
-  memset(ctx, 0, sizeof(struct encode_ctx));
   CHECK_NULL(L_XCODE, ctx->filt_frame = av_frame_alloc());
   CHECK_NULL(L_XCODE, ctx->encoded_pkt = av_packet_alloc());
 
@@ -1298,7 +1297,6 @@ transcode_decode_setup_raw(enum transcode_profile profile, struct media_quality 
   int ret;
 
   CHECK_NULL(L_XCODE, ctx = calloc(1, sizeof(struct decode_ctx)));
-  memset(ctx, 0, sizeof(struct decode_ctx));
 
   if (init_settings(&ctx->settings, profile, quality) < 0)
     {
@@ -1760,7 +1758,7 @@ transcode_decode_query(struct decode_ctx *ctx, const char *query)
 }
 
 const char*
-transcode_decode_codec(struct decode_ctx *ctx)
+transcode_decode_query_codec(struct decode_ctx *ctx)
 {
   if (ctx->audio_stream.stream && ctx->audio_stream.stream->codecpar)
     return avcodec_get_name(ctx->audio_stream.stream->codecpar->codec_id);

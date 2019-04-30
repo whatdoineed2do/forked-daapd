@@ -1701,23 +1701,13 @@ get_status(void *arg, int *retval)
 
   status->plid = cur_plid;
 
-  if (pb_session.playing_now == NULL)
-    memset(&status->quality, 0, sizeof(struct media_quality));
-  else
-    {
-      status->quality.sample_rate     = pb_session.playing_now->quality.sample_rate;
-      status->quality.bits_per_sample = pb_session.playing_now->quality.bits_per_sample;
-      status->quality.channels        = pb_session.playing_now->quality.channels;
-      status->quality.bit_rate        = pb_session.playing_now->quality.bit_rate;
-      status->quality.codec           = pb_session.playing_now->quality.codec;
-    }
-
   switch (player_state)
     {
       case PLAY_STOPPED:
 	DPRINTF(E_DBG, L_PLAYER, "Player status: stopped\n");
 
 	status->status  = PLAY_STOPPED;
+
 	break;
 
       case PLAY_PAUSED:
@@ -1729,6 +1719,8 @@ get_status(void *arg, int *retval)
 
 	status->pos_ms  = pb_session.playing_now->pos_ms;
 	status->len_ms  = pb_session.playing_now->len_ms;
+
+	status->quality = pb_session.playing_now->quality;
 
 	break;
 
@@ -1751,6 +1743,8 @@ get_status(void *arg, int *retval)
 
 	status->pos_ms  = pb_session.playing_now->pos_ms;
 	status->len_ms  = pb_session.playing_now->len_ms;
+
+	status->quality = pb_session.playing_now->quality;
 
 	break;
     }
