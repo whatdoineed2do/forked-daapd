@@ -107,6 +107,15 @@ seek(struct player_source *ps, int seek_ms)
 }
 
 static int
+seek_http(struct player_source *source, int seek_ms)
+{
+  // stream is live/unknown length so obvs can't seek
+  if (source->len_ms == 0)
+    return -1;
+  return transcode_seek(source->input_ctx, seek_ms);
+}
+
+static int
 metadata_get_http(struct input_metadata *metadata, struct player_source *ps, uint64_t rtptime)
 {
   struct http_icy_metadata *m;
@@ -154,4 +163,5 @@ struct input_definition input_http =
   .start = start,
   .stop = stop,
   .metadata_get = metadata_get_http,
+  .seek = seek_http,
 };
