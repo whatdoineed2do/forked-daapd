@@ -48,7 +48,7 @@
             min="0"
             :max="state.item_length_ms"
             :value="item_progress_ms"
-            :disabled="state.state === 'stop'"
+            :disabled="state.state === 'stop' || seeking"
             step="1000"
             @change="seek" >
           </range-slider>
@@ -108,6 +108,7 @@ export default {
       artwork_visible: false,
 
       rating: 0,
+      is_seeking: false,
 
       show_details_modal: false,
       selected_item: {}
@@ -175,8 +176,13 @@ export default {
     },
 
     seek: function (newPosition) {
-      webapi.player_seek(newPosition).catch(() => {
+      this.is_seeking = true
+      this.item_progress_ms = newPosition
+      webapi.player_seek(newPosition).then(() => {
+        this.is_seeking = false
+      }).catch(() => {
         this.item_progress_ms = this.state.item_progress_ms
+        this.is_seeking = false
       })
     },
 
