@@ -1,4 +1,7 @@
 <template>
+  <div>
+    <tabs-music></tabs-music>
+
   <content-with-heading>
     <template slot="heading-left">
       <p class="heading">{{ queue.count }} tracks</p>
@@ -60,10 +63,12 @@
       <modal-dialog-playlist-save v-if="is_queue_save_allowed" :show="show_pls_save_modal" @close="show_pls_save_modal = false" />
     </template>
   </content-with-heading>
+  </div>
 </template>
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading'
+import TabsMusic from '@/components/TabsMusic'
 import ListItemQueueItem from '@/components/ListItemQueueItem'
 import ModalDialogQueueItem from '@/components/ModalDialogQueueItem'
 import ModalDialogAddUrlStream from '@/components/ModalDialogAddUrlStream'
@@ -74,7 +79,7 @@ import draggable from 'vuedraggable'
 
 export default {
   name: 'PageQueue',
-  components: { ContentWithHeading, ListItemQueueItem, draggable, ModalDialogQueueItem, ModalDialogAddUrlStream, ModalDialogPlaylistSave },
+  components: { ContentWithHeading, TabsMusic, ListItemQueueItem, draggable, ModalDialogQueueItem, ModalDialogAddUrlStream, ModalDialogPlaylistSave },
 
   data () {
     return {
