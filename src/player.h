@@ -106,6 +106,9 @@ int
 player_playback_stop(void);
 
 int
+player_playback_stop_clear(void);
+
+int
 player_playback_pause(void);
 
 int
