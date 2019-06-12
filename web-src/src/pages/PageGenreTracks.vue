@@ -85,12 +85,13 @@ export default {
 
   computed: {
     modal_obj () {
+      var tracks = this.min_rating === 0 ? this.tracks.items : this.tracks.items.filter(a => a.rating >= this.min_rating)
       return {
         'name': this.genre,
-        'album_count': new Set(this.tracks.items.map(track => track.album_id)).size,
-        'artist_count': new Set(this.tracks.items.map(track => track.artist_id)).size,
-        'track_count': this.tracks.items.length,
-        'uri': this.tracks.items.map(a => a.uri).join(',')
+        'album_count': new Set(tracks.map(track => track.album_id)).size,
+        'artist_count': new Set(tracks.map(track => track.artist_id)).size,
+        'track_count': tracks.length,
+        'uri': tracks.map(a => a.uri).join(',')
       }
     },
 
