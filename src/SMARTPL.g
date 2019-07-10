@@ -60,6 +60,7 @@ crit		:	LPAR expression RPAR	->	expression
 			|	STRTAG (INCLUDES|IS|IN|STARTSWITH) STR
 			|	INTTAG INTBOOL INT
 			|	DATETAG	(AFTER|BEFORE) dateval
+			|	DATETAG	dateval
 			|	ENUMTAG IS ENUMVAL
 			|	GROUPTAG INTBOOL INT
 			;
