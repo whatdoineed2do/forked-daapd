@@ -272,6 +272,14 @@ expression	returns [ pANTLR3_STRING result, pANTLR3_STRING orderby, pANTLR3_STRI
 			$result->append8($result, " < ");
 			$result->append8($result, (const char*)$dateval.result->chars);
 		}
+	|	DATETAG dateval
+		{
+			$result = $DATETAG.text->factory->newRaw($DATETAG.text->factory);
+			$result->append8($result, "f.");
+			$result->appendS($result, $DATETAG.text->toUTF8($DATETAG.text));
+			$result->append8($result, " > ");
+			$result->append8($result, (const char*)$dateval.result->chars);
+		}
 	|	ENUMTAG IS ENUMVAL
 		{
 			pANTLR3_UINT8 tag;
