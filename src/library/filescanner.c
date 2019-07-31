@@ -1383,6 +1383,7 @@ process_inotify_file(struct watch_info *wi, char *path, struct inotify_event *ie
 
       dir_id = get_parent_dir_id(file);
 
+      DPRINTF(E_LOG, L_SCAN, "processing: %s\n", path);
       if (S_ISDIR(sb.st_mode))
         {
 	  process_inotify_dir(wi, resolved_path, ie);
