@@ -1,5 +1,36 @@
 <template>
   <div>
+    <section class="section fd-tabs-section">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column is-four-fifths">
+            <div class="tabs is-centered is-small">
+              <ul>
+                <li :class="[ view === 'dir_view' ? 'is-active' : '']">
+                  <a @click="view='dir_view'">
+                    <span class="icon is-small"><i class="mdi mdi-folder"></i></span>
+                    <span>Directories</span>
+                  </a>
+                </li>
+                <li :class="[ view === 'file_view' ? 'is-active' : '']">
+                  <a @click="view='file_view'">
+                    <span class="icon is-small"><i class="mdi mdi-file"></i></span>
+                    <span>Files</span>
+                  </a>
+                </li>
+                <li :class="[ view === 'pls_view' ? 'is-active' : '']">
+                  <a @click="view='pls_view'">
+                    <span class="icon is-small"><i class="mdi mdi-library-music"></i></span>
+                    <span>Playlists</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <content-with-heading>
       <template slot="heading-left">
         <p class="title is-4">Files</p>
@@ -30,6 +61,7 @@
           </div>
         </div>
 
+        <div v-show="view === 'dir_view'">
         <list-item-directory v-for="directory in files.directories" :key="directory.path" :directory="directory" @click="open_directory(directory)">
         <template slot="actions">
           <a @click="open_directory_dialog(directory)">
@@ -37,7 +69,9 @@
           </a>
         </template>
         </list-item-directory>
+        </div>
 
+        <div v-show="view === 'pls_view'">
         <list-item-playlist v-for="playlist in files.playlists.items" :key="playlist.id" :playlist="playlist" @click="open_playlist(playlist)">
           <template slot="icon">
             <span class="icon">
@@ -50,7 +84,9 @@
             </a>
           </template>
         </list-item-playlist>
+        </div>
 
+        <div v-show="view === 'file_view'">
         <list-item-track v-for="(track, index) in files.tracks.items" :key="track.id" :track="track" @click="play_track(index)">
           <template slot="icon">
             <span class="icon">
@@ -63,6 +99,7 @@
             </a>
           </template>
         </list-item-track>
+        </div>
 
         <modal-dialog-directory :show="show_directory_details_modal" :directory="selected_directory" @close="show_directory_details_modal = false" />
         <modal-dialog-playlist :show="show_playlist_details_modal" :playlist="selected_playlist" @close="show_playlist_details_modal = false" />
@@ -92,8 +129,16 @@ const filesData = {
   },
 
   set: function (vm, response) {
+    vm.view = 'file_view'
     if (response) {
       vm.files = response.data
+      if (vm.files.tracks.length > 0) {
+        vm.view = 'file_view'
+      } else if (vm.files.directories.length > 0) {
+        vm.view = 'dir_view'
+      } else if (vm.files.playlists.length > 0) {
+        vm.view = 'pls_view'
+      }
     } else {
       vm.files = {
         directories: vm.$store.state.config.directories.map(dir => { return { path: dir } }),
@@ -113,6 +158,8 @@ export default {
     return {
       files: { directories: [], tracks: { items: [] }, playlists: { items: [] } },
 
+      view: '',
+
       show_directory_details_modal: false,
       selected_directory: {},
 
@@ -131,6 +178,28 @@ export default {
       }
       return '/'
     }
+
+    /*
+    index_list () {
+      var items = []
+
+      if (this.view === 'dir_view') {
+        items = this.files.directories
+      } else if (this.view === 'file_view') {
+        items = this.files.tracks.items
+      } else if (this.view === 'pls_view') {
+        items = this.files.playlists.items
+      }
+
+      if (items.length === 0) {
+        return [...new Set()]
+      }
+
+      return [...new Set(items
+        .map(dirent => dirent.path.slice(this.current_directory.length + 1, dirent.path.length)
+          .charAt(0).toUpperCase()))]
+    }
+    */
   },
 
   methods: {
