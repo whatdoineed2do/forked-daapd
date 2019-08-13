@@ -31,6 +31,8 @@
       </div>
     </section>
 
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
       <template slot="heading-left">
         <p class="title is-4">Files</p>
@@ -87,7 +89,7 @@
         </div>
 
         <div v-show="view === 'file_view'">
-        <list-item-track v-for="(track, index) in files.tracks.items" :key="track.id" :track="track" @click="play_track(index)">
+        <list-item-track v-for="(track, index) in files.tracks.items" :key="track.id" :track="track" :alt_index_id="basename(track.path)" @click="play_track(index)">
           <template slot="icon">
             <span class="icon">
               <i class="mdi mdi-file-outline"></i>
@@ -118,6 +120,7 @@ import ListItemTrack from '@/components/ListItemTrack'
 import ModalDialogDirectory from '@/components/ModalDialogDirectory'
 import ModalDialogPlaylist from '@/components/ModalDialogPlaylist'
 import ModalDialogTrack from '@/components/ModalDialogTrack'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 
 const filesData = {
@@ -152,7 +155,7 @@ const filesData = {
 export default {
   name: 'PageFiles',
   mixins: [ LoadDataBeforeEnterMixin(filesData) ],
-  components: { ContentWithHeading, ListItemDirectory, ListItemPlaylist, ListItemTrack, ModalDialogDirectory, ModalDialogPlaylist, ModalDialogTrack },
+  components: { ContentWithHeading, ListItemDirectory, ListItemPlaylist, ListItemTrack, ModalDialogDirectory, ModalDialogPlaylist, ModalDialogTrack, IndexList },
 
   data () {
     return {
@@ -177,18 +180,13 @@ export default {
         return this.$route.query.directory
       }
       return '/'
-    }
+    },
 
-    /*
     index_list () {
       var items = []
 
-      if (this.view === 'dir_view') {
-        items = this.files.directories
-      } else if (this.view === 'file_view') {
+      if (this.view === 'file_view') {
         items = this.files.tracks.items
-      } else if (this.view === 'pls_view') {
-        items = this.files.playlists.items
       }
 
       if (items.length === 0) {
@@ -196,10 +194,8 @@ export default {
       }
 
       return [...new Set(items
-        .map(dirent => dirent.path.slice(this.current_directory.length + 1, dirent.path.length)
-          .charAt(0).toUpperCase()))]
+        .map(dirent => this.basename(dirent.path).charAt(0).toUpperCase()))]
     }
-    */
   },
 
   methods: {
@@ -219,6 +215,10 @@ export default {
     open_directory_dialog: function (directory) {
       this.selected_directory = directory
       this.show_directory_details_modal = true
+    },
+
+    basename: function (path) {
+      return path.slice(this.current_directory.length + 1, path.length)
     },
 
     play: function () {
