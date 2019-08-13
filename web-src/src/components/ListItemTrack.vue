@@ -1,5 +1,5 @@
 <template functional>
-  <div class="media" :id="'index_' + props.track.title_sort.charAt(0).toUpperCase()" :class="{ 'with-progress': slots().progress }">
+  <div class="media" :id="'index_' + (props.alt_index_id === undefined ? props.track.title_sort : props.alt_index_id).charAt(0).toUpperCase()" :class="{ 'with-progress': slots().progress }">
     <figure class="media-left fd-has-action" v-if="slots().icon" @click="listeners.click">
       <slot name="icon"></slot>
     </figure>
@@ -18,7 +18,7 @@
 <script>
 export default {
   name: 'ListItemTrack',
-  props: ['track']
+  props: ['track', 'alt_index_id']
 }
 </script>
 
