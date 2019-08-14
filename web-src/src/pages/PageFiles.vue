@@ -9,19 +9,19 @@
                 <li :class="[ view === 'dir_view' ? 'is-active' : '']">
                   <a @click="view='dir_view'">
                     <span class="icon is-small"><i class="mdi mdi-folder"></i></span>
-                    <span>Directories</span>
+                    <span>Directories ({{ count(files.directories) }})</span>
                   </a>
                 </li>
                 <li :class="[ view === 'file_view' ? 'is-active' : '']">
                   <a @click="view='file_view'">
                     <span class="icon is-small"><i class="mdi mdi-file"></i></span>
-                    <span>Files</span>
+                    <span>Files ({{ count(files.tracks.items) }})</span>
                   </a>
                 </li>
                 <li :class="[ view === 'pls_view' ? 'is-active' : '']">
                   <a @click="view='pls_view'">
                     <span class="icon is-small"><i class="mdi mdi-library-music"></i></span>
-                    <span>Playlists</span>
+                    <span>Playlists ({{ count(files.playlists.items) }})</span>
                   </a>
                 </li>
               </ul>
@@ -135,14 +135,15 @@ const filesData = {
     vm.view = 'file_view'
     if (response) {
       vm.files = response.data
-      if (vm.files.tracks.length > 0) {
+      if (vm.count(vm.files.tracks.items) > 0) {
         vm.view = 'file_view'
-      } else if (vm.files.directories.length > 0) {
+      } else if (vm.count(vm.files.directories) > 0) {
         vm.view = 'dir_view'
-      } else if (vm.files.playlists.length > 0) {
+      } else if (vm.count(vm.files.playlists.items) > 0) {
         vm.view = 'pls_view'
       }
     } else {
+      vm.view = 'dir_view'
       vm.files = {
         directories: vm.$store.state.config.directories.map(dir => { return { path: dir } }),
         tracks: { items: [] },
@@ -215,6 +216,13 @@ export default {
     open_directory_dialog: function (directory) {
       this.selected_directory = directory
       this.show_directory_details_modal = true
+    },
+
+    count: function (what) {
+      if (what === undefined || what === null) {
+        return 0
+      }
+      return what.length
     },
 
     basename: function (path) {
