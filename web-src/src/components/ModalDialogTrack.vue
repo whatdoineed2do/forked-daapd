@@ -68,7 +68,7 @@
                 </p>
                 <p>
                   <span class="heading">Added at</span>
-                  <span class="title is-6">{{ track.time_added | time('L LT') }}</span>
+                  <span class="title is-6">{{ track.time_added | time('lll') }}</span>
                 </p>
                 <p>
                   <span class="heading">Rating</span>
