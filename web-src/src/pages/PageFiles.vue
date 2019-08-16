@@ -63,8 +63,8 @@
           </div>
         </div>
 
-        <div v-show="view === 'dir_view'">
-        <list-item-directory v-for="directory in files.directories" :key="directory.path" :directory="directory" @click="open_directory(directory)">
+        <div v-if="view === 'dir_view'">
+        <list-item-directory v-for="directory in files.directories" :key="directory.path" :directory="directory" :alt_index_id="basename(directory.path)" @click="open_directory(directory)">
         <template slot="actions">
           <a @click="open_directory_dialog(directory)">
             <span class="icon has-text-dark"><i class="mdi mdi-dots-vertical mdi-18px"></i></span>
@@ -73,7 +73,7 @@
         </list-item-directory>
         </div>
 
-        <div v-show="view === 'pls_view'">
+        <div v-if="view === 'pls_view'">
         <list-item-playlist v-for="playlist in files.playlists.items" :key="playlist.id" :playlist="playlist" @click="open_playlist(playlist)">
           <template slot="icon">
             <span class="icon">
@@ -88,7 +88,7 @@
         </list-item-playlist>
         </div>
 
-        <div v-show="view === 'file_view'">
+        <div v-if="view === 'file_view'">
         <list-item-track v-for="(track, index) in files.tracks.items" :key="track.id" :track="track" :alt_index_id="basename(track.path)" @click="play_track(index)">
           <template slot="icon">
             <span class="icon">
@@ -188,12 +188,13 @@ export default {
 
       if (this.view === 'file_view') {
         items = this.files.tracks.items
+      } else if (this.view === 'dir_view') {
+        items = this.files.directories
       }
 
       if (items.length === 0) {
         return [...new Set()]
       }
-
       return [...new Set(items
         .map(dirent => this.basename(dirent.path).charAt(0).toUpperCase()))]
     }
