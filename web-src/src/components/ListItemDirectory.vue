@@ -1,5 +1,5 @@
 <template functional>
-  <div class="media">
+   <div class="media" :id="'index_' + (props.alt_index_id === undefined ? props.directory.path : props.alt_index_id).charAt(0).toUpperCase()" :class="{ 'with-progress': slots().progress }">
     <figure class="media-left fd-has-action" @click="listeners.click">
       <span class="icon">
         <i class="mdi mdi-folder"></i>
@@ -18,7 +18,7 @@
 <script>
 export default {
   name: 'ListItemDirectory',
-  props: [ 'directory' ]
+  props: [ 'directory', 'alt_index_id' ]
 }
 </script>
 
