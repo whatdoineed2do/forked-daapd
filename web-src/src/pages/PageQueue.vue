@@ -4,8 +4,8 @@
 
     <content-with-heading>
       <template slot="heading-left">
-        <p class="heading">{{ queue.count }} tracks</p>
         <p class="title is-4">Queue</p>
+        <p class="heading">{{ queue.count }} tracks | {{ queue_duration }} Playtime</p>
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
@@ -114,6 +114,18 @@ export default {
     },
     is_queue_save_allowed () {
       return this.$store.state.config.allow_modifying_stored_playlists && this.$store.state.config.default_playlist_directory
+    },
+    queue_duration () {
+      var seconds = this.queue.items.reduce((acc, item) => {
+        acc += item.length_ms
+        return acc
+      }, 0) / 1000
+
+      var h = Math.floor(seconds / 3600)
+      var m = Math.floor(seconds % 3600 / 60)
+      var s = Math.floor(seconds % 3600 % 60)
+
+      return [ h > 0 ? h + ':' : '' ] + ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2)
     },
     queue () {
       return this.$store.state.queue
