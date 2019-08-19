@@ -108,7 +108,7 @@
 // by extension playback_cb(). We will try to catch up, but if the delay
 // gets above this value, we will suspend playback and reset the output.
 // (value is in milliseconds)
-#define PLAYER_WRITE_BEHIND_MAX 2000
+#define PLAYER_WRITE_BEHIND_MAX 1500
 
 //#define DEBUG_PLAYER 1
 
