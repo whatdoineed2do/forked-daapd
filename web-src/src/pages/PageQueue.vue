@@ -6,6 +6,7 @@
       <template slot="heading-left">
         <p class="title is-4">Queue</p>
         <p class="heading">{{ queue.count }} tracks | {{ queue_duration }} Playtime</p>
+        <a class="subtitle has-text-link is-7" v-show="queue_items.length > 0 && now_playing.id !== undefined" href='#' v-scroll-to="{ el: '#index_' + now_playing.id, offset: -165 }">Now Playing</a>
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
@@ -137,6 +138,9 @@ export default {
         this.$store.state.queue.items = value
         this.$store.commit(types.UPDATE_QUEUE, this.$store.state.queue)
       }
+    },
+    now_playing () {
+      return this.$store.getters.now_playing
     },
     current_position () {
       const nowPlaying = this.$store.getters.now_playing

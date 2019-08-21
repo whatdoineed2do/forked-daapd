@@ -1,5 +1,5 @@
 <template>
-  <div class="media" v-if="is_next || !show_only_next_items">
+  <div class="media" v-if="is_next || !show_only_next_items" :id="'index_' + item.id">
     <div class="media-left" v-if="edit_mode">
       <span class="icon has-text-grey fd-is-movable handle"><i class="mdi mdi-drag-horizontal mdi-18px"></i></span>
     </div>
