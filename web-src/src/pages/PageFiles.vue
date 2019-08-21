@@ -227,7 +227,7 @@ export default {
     },
 
     basename: function (path) {
-      return path.slice(this.current_directory.length + 1, path.length)
+      return path.slice(this.current_directory === '/' ? path.lastIndexOf('/') + 1 : this.current_directory.length + 1, path.length)
     },
 
     play: function () {
