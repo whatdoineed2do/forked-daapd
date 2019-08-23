@@ -56,6 +56,9 @@ general {
 	# unusual platform and experience audio drop-outs, you can try changing
 	# this option
 #	high_resolution_clock = yes
+
+	# Set the MP3 streaming bit rate (in kbps), valid options: 128 / 192 / 320
+#	streaming_bitrate = 192
 }
 
 # Library configuration

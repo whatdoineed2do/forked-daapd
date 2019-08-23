@@ -52,6 +52,7 @@ extern struct event_base *evbase_httpd;
 #define STREAMING_MP3_SAMPLE_RATE 44100
 #define STREAMING_MP3_BPS         16
 #define STREAMING_MP3_CHANNELS    2
+static int streaming_mp3_bitrate = 192000;
 
 
 // Linked list of mp3 streaming requests
@@ -182,7 +183,7 @@ streaming_end(void)
 static void
 streaming_meta_cb(evutil_socket_t fd, short event, void *arg)
 {
-  struct media_quality mp3_quality = { STREAMING_MP3_SAMPLE_RATE, STREAMING_MP3_BPS, STREAMING_MP3_CHANNELS };
+  struct media_quality mp3_quality = { STREAMING_MP3_SAMPLE_RATE, STREAMING_MP3_BPS, STREAMING_MP3_CHANNELS, streaming_mp3_bitrate };
   struct media_quality quality;
   struct decode_ctx *decode_ctx;
   int ret;
@@ -203,6 +204,9 @@ streaming_meta_cb(evutil_socket_t fd, short event, void *arg)
 
   if (!decode_ctx)
     goto error;
+
+  if (quality.bit_rate)
+    mp3_quality.bit_rate = quality.bit_rate;
 
   streaming_encode_ctx = transcode_encode_setup(XCODE_MP3, &mp3_quality, decode_ctx, NULL, 0, 0);
   transcode_decode_cleanup(&decode_ctx);
@@ -617,6 +621,21 @@ int
 streaming_init(void)
 {
   int ret;
+
+  streaming_mp3_bitrate = cfg_getint(cfg_getsec(cfg, "general"), "streaming_bitrate");
+  switch (streaming_mp3_bitrate)
+  {
+    case 128:
+    case 192:
+    case 320:
+      streaming_mp3_bitrate *= 1000;
+      break;
+
+    default:
+      DPRINTF(E_WARN, L_STREAMING, "streaming_bitrate=%d not 128/192/320, defaulting\n", streaming_mp3_bitrate);
+      streaming_mp3_bitrate = 192000;
+  }
+  DPRINTF(E_INFO, L_STREAMING, "MP3 streaming_bitrate=%d\n", streaming_mp3_bitrate);
 
   pthread_mutex_init(&streaming_sessions_lck, NULL);
 
