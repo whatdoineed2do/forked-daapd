@@ -112,13 +112,15 @@ export default {
     },
 
     queue_add: function () {
-      this.$emit('close')
-      webapi.queue_add(this.track.uri)
+      webapi.queue_add(this.track.uri).then(() => {
+        this.$emit('close')
+      })
     },
 
     queue_add_next: function () {
-      this.$emit('close')
-      webapi.queue_add_next(this.track.uri)
+      webapi.queue_add_next(this.track.uri).then(() => {
+        this.$emit('close')
+      })
     },
 
     open_album: function () {
