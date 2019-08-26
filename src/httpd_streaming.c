@@ -87,7 +87,7 @@ static int streaming_meta[2];
 
 #define STREAMING_ICY_METALEN_MAX      4080  // 255*16 incl header/footer (16bytes)
 #define STREAMING_ICY_METATITLELEN_MAX 4064  // STREAMING_ICY_METALEN_MAX -16 (not incl header/footer)
-static const short STREAMING_ICY_METAINT = 8192;
+static const short STREAMING_ICY_METAINT = 16384;
 static unsigned streaming_icy_clients;
 static char *streaming_icy_title;
 
