@@ -3875,6 +3875,23 @@ jsonapi_reply_search(struct httpd_request *hreq)
   return HTTP_OK;
 }
 
+static int
+jsonapi_reply_block(struct httpd_request *hreq)
+{
+  const char *param;
+  long zzz = 5;
+
+  if ((param = evhttp_find_header(hreq->query, "zzz")))
+    {
+      zzz = atol(param);
+    }
+  DPRINTF(E_LOG, L_WEB, "blocking %ld seconds\n", zzz);
+  sleep(zzz);
+
+  return HTTP_OK;
+}
+
+
 static struct httpd_uri_map adm_handlers[] =
   {
     { EVHTTP_REQ_GET,    "^/api/config$",                                jsonapi_reply_config },
@@ -3935,6 +3952,8 @@ static struct httpd_uri_map adm_handlers[] =
     { EVHTTP_REQ_GET,    "^/api/library/composers$",                     jsonapi_reply_library_composers },
     { EVHTTP_REQ_GET,    "^/api/library/count$",                         jsonapi_reply_library_count },
     { EVHTTP_REQ_GET,    "^/api/library/files$",                         jsonapi_reply_library_files },
+
+    { EVHTTP_REQ_PUT,    "^/api/block$",                                 jsonapi_reply_block},
 
     { EVHTTP_REQ_GET,    "^/api/search$",                                jsonapi_reply_search },
 
