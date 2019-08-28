@@ -523,7 +523,7 @@ streaming_write(struct output_buffer *obuf)
     }
 }
 
-int
+void
 streaming_request(struct evhttp_request *req, struct httpd_uri_parsed *uri_parsed)
 {
   struct streaming_session *session;
@@ -542,7 +542,7 @@ streaming_request(struct evhttp_request *req, struct httpd_uri_parsed *uri_parse
       DPRINTF(E_LOG, L_STREAMING, "Got MP3 streaming request, but cannot encode to MP3\n");
 
       evhttp_send_error(req, HTTP_NOTFOUND, "Not Found");
-      return -1;
+      return;
     }
 
   evcon = evhttp_request_get_connection(req);
@@ -580,7 +580,7 @@ streaming_request(struct evhttp_request *req, struct httpd_uri_parsed *uri_parse
       DPRINTF(E_LOG, L_STREAMING, "Out of memory for streaming request\n");
 
       evhttp_send_error(req, HTTP_SERVUNAVAIL, "Internal Server Error");
-      return -1;
+      return;
     }
 
   pthread_mutex_lock(&streaming_sessions_lck);
@@ -600,8 +600,6 @@ streaming_request(struct evhttp_request *req, struct httpd_uri_parsed *uri_parse
   pthread_mutex_unlock(&streaming_sessions_lck);
 
   evhttp_connection_set_closecb(evcon, streaming_close_cb, session);
-
-  return 0;
 }
 
 int
