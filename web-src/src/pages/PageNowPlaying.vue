@@ -30,6 +30,9 @@
         <div class="container has-text-centered fd-has-margin-top">
           <h1 class="title is-5">
             {{ now_playing.title }}
+            <h2 class="subtitle is-7 has-text-grey" v-if="composer">
+              {{ composer }}
+            </h2>
           </h1>
           <h2 class="title is-6">
             {{ now_playing.artist }}
