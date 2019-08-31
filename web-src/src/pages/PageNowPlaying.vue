@@ -4,12 +4,12 @@
       <div class="container has-text-centered fd-has-margin-top">
         <h1 class="title is-4">
           {{ now_playing.title }}
+          <h2 class="subtitle is-7 has-text-grey" v-if="composer">
+              {{ composer }}
+          </h2>
         </h1>
         <h2 class="title is-6">
           {{ now_playing.artist }}
-        </h2>
-        <h2 class="subtitle is-6 has-text-grey has-text-weight-bold" v-if="composer">
-            {{ composer }}
         </h2>
         <h3 class="subtitle is-6">
           {{ now_playing.album }}
