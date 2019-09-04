@@ -59,6 +59,7 @@ enum query_type {
 
   // Supplementary, not incl in browse_clause[]
   Q_BROWSE_GENRES_WITH_COUNT = Q_F_BROWSE_COUNT | Q_BROWSE_GENRES,
+  Q_BROWSE_COMPOSERS_WITH_COUNT = Q_F_BROWSE_COUNT | Q_BROWSE_COMPOSERS,
 };
 
 #define ARTWORK_UNKNOWN   0
