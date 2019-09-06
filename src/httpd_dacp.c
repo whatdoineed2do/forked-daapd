@@ -50,7 +50,7 @@
 #include "listener.h"
 
 /* httpd event base, from httpd.c */
-extern struct event_base *evbase_httpd;
+struct event_base *evbase_httpd;
 
 struct dacp_update_request {
   struct evhttp_request *req;
@@ -2719,7 +2719,7 @@ dacp_is_request(const char *path)
 }
 
 int
-dacp_init(void)
+dacp_init(struct event_base* evbase)
 {
   char buf[64];
   int i;
@@ -2727,6 +2727,8 @@ dacp_init(void)
 
   current_rev = 2;
   update_requests = NULL;
+
+  evbase_httpd = evbase;
 
 #ifdef HAVE_EVENTFD
   update_efd = eventfd(0, EFD_CLOEXEC);
