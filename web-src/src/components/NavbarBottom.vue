@@ -175,7 +175,7 @@
               </div>
               <div class="level-item fd-expanded">
                 <div class="fd-expanded">
-                  <p class="heading" :class="{ 'has-text-grey-light': !playing }">HTTP stream <a href="stream.mp3"><span class="is-lowercase">(stream.mp3)</span></a></p>
+                  <p class="heading" :class="{ 'has-text-grey-light': !playing }">HTTP stream <a :href=stream_location><span class="is-lowercase">(stream.mp3)</span></a></p>
                   <range-slider
                     class="slider fd-has-action"
                     min="0"
@@ -278,6 +278,11 @@ export default {
 
     player () {
       return this.$store.state.player
+    },
+
+    stream_location () {
+      var port = (this.$store.state.config.stream_port === 0 || this.$store.state.config.stream_port === undefined) ? window.location.port : this.$store.state.config.stream_port
+      return window.location.protocol + '//' + window.location.hostname + ':' + port + '/stream.mp3'
     },
 
     config () {
