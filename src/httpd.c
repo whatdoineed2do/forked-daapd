@@ -1668,7 +1668,7 @@ httpd_init(const char *webroot)
       goto rsp_fail;
     }
 
-  ret = daap_init();
+  ret = daap_init(evbase_httpd);
   if (ret < 0)
     {
       DPRINTF(E_FATAL, L_HTTPD, "DAAP protocol init failed\n");
@@ -1676,7 +1676,7 @@ httpd_init(const char *webroot)
       goto daap_fail;
     }
 
-  ret = dacp_init();
+  ret = dacp_init(evbase_httpd);
   if (ret < 0)
     {
       DPRINTF(E_FATAL, L_HTTPD, "DACP protocol init failed\n");
@@ -1718,7 +1718,7 @@ httpd_init(const char *webroot)
     }
 #endif
 
-  streaming_init();
+  streaming_init(evbase_httpd);
 
 #ifdef HAVE_EVENTFD
   exit_efd = eventfd(0, EFD_CLOEXEC);
