@@ -8,6 +8,7 @@ export default new Vuex.Store({
   state: {
     config: {
       websocket_port: 0,
+      stream_port: 0,
       version: '',
       buildoptions: []
     },
