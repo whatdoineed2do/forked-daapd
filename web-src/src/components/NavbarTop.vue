@@ -43,7 +43,6 @@
           </a>
 
           <div class="navbar-dropdown is-right">
-
             <navbar-item-link to="/playlists"><span class="icon"><i class="mdi mdi-library-music"></i></span> <b>Playlists</b></navbar-item-link>
             <navbar-item-link to="/music" exact><span class="icon"><i class="mdi mdi-music"></i></span> <b>Music</b></navbar-item-link>
             <navbar-item-link to="/music/artists"><span class="fd-navbar-item-level2">Artists</span></navbar-item-link>
