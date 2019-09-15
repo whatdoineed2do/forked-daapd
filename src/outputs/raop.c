@@ -355,6 +355,7 @@ static struct raop_session *raop_sessions;
 static int
 raop_device_start(struct output_device *rd, int callback_id);
 
+static bool exclude_all = false;
 
 /* ------------------------------- MISC HELPERS ----------------------------- */
 
@@ -4474,6 +4475,11 @@ raop_device_cb(const char *name, const char *type, const char *domain, const cha
   at_name++;
 
   DPRINTF(E_DBG, L_RAOP, "Event for AirPlay device '%s' (port %d, id %" PRIx64 ")\n", at_name, port, id);
+  if (exclude_all)
+    {
+      DPRINTF(E_LOG, L_RAOP, "Excluding all AirPlay devices, incl '%s' as set in config\n", at_name);
+      return;
+    }
 
   devcfg = cfg_gettsec(cfg, "airplay", at_name);
   if (devcfg && cfg_getbool(devcfg, "exclude"))
@@ -4952,6 +4958,8 @@ raop_init(void)
 
       goto out_stop_control;
     }
+
+  exclude_all = cfg_getbool(cfg_gettsec(cfg, "airplay", "*"), "exclude");
 
   return 0;
 
