@@ -2170,7 +2170,7 @@ playback_start(void *arg, int *retval)
 	count = 0;
 	db_queue_get_count(&count);
 	if (count == 0)
-	  *retval = 0;
+	  *retval = 1;
         return COMMAND_END;
       }
     }
@@ -2587,6 +2587,7 @@ static enum command_state
 playback_pause_set_stream(void *arg, int *retval)
 {
   struct db_queue_item *queue_item = NULL;
+  uint32_t count;
   int ret = 0;
 
   *retval = -1;
@@ -2600,7 +2601,13 @@ playback_pause_set_stream(void *arg, int *retval)
           // havent moved playhead
           queue_item = db_queue_fetch_bypos(0, shuffle);
           if (!queue_item)
-            return COMMAND_END;
+            {
+              count = 0;
+              db_queue_get_count(&count);
+              if (count == 0)
+                *retval = 1;
+              return COMMAND_END;
+            }
 
 	  ret = pb_session_start(queue_item, 0);
           free_queue_item(queue_item, 0);
