@@ -2349,6 +2349,35 @@ db_build_query_count_items(struct query_params *qp, struct query_clause *qc)
   return query;
 }
 
+static char *
+db_build_query_dup_items(struct query_params *qp, struct query_clause *qc)
+{
+  char *query;
+
+  qp->results = 1;
+
+  query = sqlite3_mprintf(
+    "WITH cte AS "
+    "( "
+        "SELECT title,artist,count(*) c "
+          "FROM files  "
+      "GROUP BY title,artist "
+        "HAVING c > 1 "
+    ") "
+    "SELECT * "
+      "FROM files t "
+"INNER JOIN cte "
+        "ON cte.title = t.title AND "
+           "cte.artist = t.artist AND "
+           "t.data_kind = 0 "
+  "ORDER BY t.title,t.artist,t.bitrate DESC,t.song_length DESC;");
+ 
+  if (!query)
+    DPRINTF(E_LOG, L_DB, "Out of memory for query string\n");
+
+  return query;
+}
+
 int
 db_query_start(struct query_params *qp)
 {
@@ -2400,6 +2429,10 @@ db_query_start(struct query_params *qp)
 
       case Q_COUNT_ITEMS:
 	query = db_build_query_count_items(qp, qc);
+	break;
+
+      case Q_DUP_ITEMS:
+	query = db_build_query_dup_items(qp, NULL);
 	break;
 
       default:
