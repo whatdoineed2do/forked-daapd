@@ -4514,6 +4514,139 @@ jsonapi_reply_library_backup(struct httpd_request *hreq)
   return HTTP_OK;
 }
 
+// MAINT ///////////////////////////////////////////////////////////////////////
+static int
+fetch_dup(struct query_params *query_params, json_object *items, int *total, int *groupttl)
+{
+    struct db_media_file_info dbmfi;
+    json_object *group = NULL;
+    json_object *group_items = NULL;
+    char *group_title = NULL;
+    int count = 0;
+    int ret;
+
+    ret = db_query_start(query_params);
+    if (ret < 0)
+        goto error;
+
+    // fake req type
+    query_params->type = Q_ITEMS;
+    while (((ret = db_query_fetch_file(query_params, &dbmfi)) == 0) && (dbmfi.id))
+    {
+        json_object *item;
+        int intval;
+
+        item = json_object_new_object();
+        
+        if (group_title == NULL) {
+          group_title = malloc(strlen(dbmfi.title)+2);
+          sprintf(group_title, "X%s", dbmfi.title);
+        }
+
+        if (strcmp(dbmfi.title, group_title) != 0)
+        {
+          if (group)
+          {
+            json_object_object_add(group, "total", json_object_new_int(count));
+            count = 0;
+          }
+
+          group = json_object_new_object();
+          group_items = json_object_new_array();
+          json_object_object_add(group, "items", group_items);
+          json_object_array_add(items, group);
+
+          safe_json_add_string(group, "title", dbmfi.title);
+
+          if (groupttl) ++(*groupttl);
+        }
+        ++count;
+
+        safe_json_add_int_from_string(item, "id", dbmfi.id);
+        safe_json_add_string(item, "artist", dbmfi.artist);
+        safe_json_add_string(item, "album", dbmfi.album);
+        safe_json_add_string(item, "album_artist", dbmfi.album_artist);
+        safe_atoi32(dbmfi.data_kind, &intval);
+        safe_json_add_string(item, "data_kind", db_data_kind_label(intval));
+        safe_json_add_string(item, "path", dbmfi.path);
+        safe_json_add_string(item, "codec", dbmfi.codectype);
+        safe_json_add_int_from_string(item, "file_size", dbmfi.file_size);
+        safe_json_add_time_from_string(item, "time_added", dbmfi.time_added);
+        safe_json_add_int_from_string(item, "length", dbmfi.song_length);
+        safe_json_add_int_from_string(item, "samplerate", dbmfi.samplerate);
+        safe_json_add_int_from_string(item, "channels", dbmfi.channels);
+        safe_json_add_int_from_string(item, "bitrate", dbmfi.bitrate);
+
+        json_object_array_add(group_items, item);
+
+        free(group_title);
+        group_title = strdup(dbmfi.title);
+
+        if (total) ++(*total);
+    }
+
+    if (group)
+    {
+        json_object_object_add(group, "total", json_object_new_int(count));
+        count = 0;
+    }
+
+   error:
+    db_query_end(query_params);
+    free(group_title);
+
+    return ret;
+}
+
+static int
+jsonapi_reply_library_maint_dup(struct httpd_request *hreq)
+{
+  time_t db_update;
+  struct query_params query_params;
+  json_object *reply;
+  json_object *items;
+  int total, groupttl;
+  int ret = 0;
+
+  db_update = (time_t) db_admin_getint64(DB_ADMIN_DB_UPDATE);
+  if (db_update && httpd_request_not_modified_since(hreq->req, &db_update))
+    return HTTP_NOTMODIFIED;
+
+  reply = json_object_new_object();
+  items = json_object_new_array();
+  json_object_object_add(reply, "items", items);
+
+  memset(&query_params, 0, sizeof(struct query_params));
+
+  ret = query_params_limit_set(&query_params, hreq);
+  if (ret < 0)
+    goto error;
+
+  query_params.type = Q_DUP_ITEMS;
+
+  total = 0;
+  groupttl = 0;
+  ret = fetch_dup(&query_params, items, &total, &groupttl);
+  if (ret < 0)
+    goto error;
+
+  json_object_object_add(reply, "total", json_object_new_int(total));
+  json_object_object_add(reply, "groups", json_object_new_int(groupttl));
+
+  ret = evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(reply));
+  if (ret < 0)
+    DPRINTF(E_LOG, L_WEB, "dup: Couldn't add dup to response buffer.\n");
+
+ error:
+  free_query_params(&query_params, 1);
+  jparse_free(reply);
+
+  if (ret < 0)
+    return HTTP_INTERNAL;
+
+  return HTTP_OK;
+}
+////////////////////////////////////////////////////////////////////////////////
 
 static struct httpd_uri_map adm_handlers[] =
   {
@@ -4591,6 +4724,8 @@ static struct httpd_uri_map adm_handlers[] =
     { EVHTTP_REQ_PUT,    "^/api/library/backup$",                        jsonapi_reply_library_backup },
 
     { EVHTTP_REQ_GET,    "^/api/search$",                                jsonapi_reply_search },
+
+    { EVHTTP_REQ_GET,    "^/api/library/maint/dup$",                     jsonapi_reply_library_maint_dup},
 
     { 0, NULL, NULL }
   };
