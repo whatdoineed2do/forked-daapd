@@ -57,6 +57,9 @@ enum query_type {
   Q_BROWSE_TRACKS    = Q_F_BROWSE | 7,
   Q_BROWSE_VPATH     = Q_F_BROWSE | 8,
   Q_BROWSE_PATH      = Q_F_BROWSE | 9,
+
+  Q_DUP_ITEMS        = 100,
+  Q_JUNK_META_ITEMS  = 101,
 };
 
 #define ARTWORK_UNKNOWN   0
