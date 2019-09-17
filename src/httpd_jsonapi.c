@@ -4819,11 +4819,16 @@ fetch_dup(struct query_params *query_params, json_object *items, int *total, int
 static int
 jsonapi_reply_library_maint_dup(struct httpd_request *hreq)
 {
+  time_t db_update;
   struct query_params query_params;
   json_object *reply;
   json_object *items;
   int total, groupttl;
   int ret = 0;
+
+  db_update = (time_t) db_admin_getint64(DB_ADMIN_DB_UPDATE);
+  if (db_update && httpd_request_not_modified_since(hreq->req, &db_update))
+    return HTTP_NOTMODIFIED;
 
   reply = json_object_new_object();
   items = json_object_new_array();
