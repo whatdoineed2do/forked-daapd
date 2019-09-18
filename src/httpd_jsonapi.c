@@ -4980,6 +4980,69 @@ jsonapi_reply_library_maint_junkmeta(struct httpd_request *hreq)
 
   return HTTP_OK;
 }
+
+static struct httpd_uri_map adm_handlers[];
+static int
+jsonapi_reply_library_schema(struct httpd_request *hreq)
+{
+  struct httpd_uri_map *apiptr = adm_handlers;
+  json_object *reply;
+  json_object *items;
+  json_object *endpoint;
+  json_object *endpoint_types;
+  int total = 0;
+  int ret;
+
+  reply = json_object_new_object();
+  items = json_object_new_array();
+  json_object_object_add(reply, "items", items);
+
+  struct Endpoints {
+    int method;
+    const char* name;
+  };
+  struct Endpoints endpoints[] = {
+    { EVHTTP_REQ_GET, "GET" },
+    { EVHTTP_REQ_PUT, "PUT" },
+    { EVHTTP_REQ_DELETE, "DELETE" },
+    { EVHTTP_REQ_POST, "POST" },
+    { 0, NULL }
+  };
+  while (apiptr->regexp)
+    {
+      struct Endpoints *e = endpoints;
+
+      endpoint = json_object_new_object();
+      endpoint_types = json_object_new_array();
+
+      safe_json_add_string(endpoint, "endpoint", apiptr->regexp);
+      while (e->name)
+        {
+          if (apiptr->method & e->method)
+            json_object_array_add(endpoint_types, json_object_new_string(e->name));
+          ++e;
+        }
+      if (json_object_array_length(endpoint_types) == 0)
+        json_object_array_add(endpoint_types, json_object_new_int(apiptr->method));
+
+      json_object_object_add(endpoint, "types", endpoint_types);
+      json_object_array_add(items, endpoint);
+
+      ++apiptr;
+      ++total;
+    }
+
+  json_object_object_add(reply, "total", json_object_new_int(total));
+
+  ret = evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(reply));
+
+  jparse_free(reply);
+
+  if (ret < 0)
+    return HTTP_INTERNAL;
+
+  return HTTP_OK;
+}
 ////////////////////////////////////////////////////////////////////////////////
 
 static struct httpd_uri_map adm_handlers[] =
@@ -5062,6 +5125,7 @@ static struct httpd_uri_map adm_handlers[] =
 
     { EVHTTP_REQ_GET,    "^/api/library/maint/dup$",                     jsonapi_reply_library_maint_dup},
     { EVHTTP_REQ_GET,    "^/api/library/maint/junkmeta$",                jsonapi_reply_library_maint_junkmeta},
+    { EVHTTP_REQ_GET,    "^/api/schema$",                                jsonapi_reply_library_schema},
 
     { 0, NULL, NULL }
   };
