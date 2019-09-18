@@ -2382,6 +2382,28 @@ db_build_query_count_items(struct query_params *qp, struct query_clause *qc)
 }
 
 static char *
+db_build_query_junk_meta_items(struct query_params *qp, struct query_clause *qc)
+{
+  char *query;
+
+  qp->results = 1;
+
+  query = sqlite3_mprintf(
+        "SELECT * "
+          "FROM files "
+         "WHERE UNICODE(title) > 128 AND UNICODE(title) < 4000 OR "
+               "UNICODE(artist) > 128 AND UNICODE(artist) < 4000 OR "
+               "UNICODE(album) > 128 AND UNICODE(album) < 4000 "
+      "ORDER BY songartistid,songalbumid "
+      ";");
+
+  if (!query)
+    DPRINTF(E_LOG, L_DB, "Out of memory for query string\n");
+
+  return query;
+}
+
+static char *
 db_build_query_dup_items(struct query_params *qp, struct query_clause *qc)
 {
   char *query;
@@ -2465,6 +2487,10 @@ db_query_start(struct query_params *qp)
 
       case Q_DUP_ITEMS:
 	query = db_build_query_dup_items(qp, NULL);
+	break;
+
+      case Q_JUNK_META_ITEMS:
+	query = db_build_query_junk_meta_items(qp, NULL);
 	break;
 
       default:
