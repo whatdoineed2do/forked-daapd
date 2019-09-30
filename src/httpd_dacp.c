@@ -155,7 +155,7 @@ dacp_nowplaying(struct evbuffer *evbuf, struct player_status *status, struct db_
   int64_t songalbumid;
   int pos_pl;
 
-  if ((status->status == PLAY_STOPPED) || !queue_item)
+  if (!queue_item)
     return;
 
   /* Send bogus id's if playing internet radio or pipe, because clients like
@@ -201,7 +201,7 @@ dacp_nowplaying(struct evbuffer *evbuf, struct player_status *status, struct db_
 static void
 dacp_playingtime(struct evbuffer *evbuf, struct player_status *status, struct db_queue_item *queue_item)
 {
-  if ((status->status == PLAY_STOPPED) || !queue_item)
+  if (!queue_item)
     return;
 
   if (queue_item->song_length)
@@ -655,6 +655,13 @@ make_playstatusupdate(struct evbuffer *evbuf, int current_rev)
 
 	  queue_item = &dummy_queue_item;
 	}
+    }
+  else
+    {
+      // try to get the first item of Q
+      queue_item = db_queue_fetch_bypos(0, status.shuffle);
+      if (!queue_item)
+        queue_item = &dummy_queue_item;
     }
 
   dmap_add_int(psu, "mstt", 200);             /* 12 */
@@ -1765,6 +1772,18 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
 
       while ((db_queue_enum_fetch(&qp, &queue_item) == 0) && (queue_item.id > 0) && (count < span))
 	{
+	  // if we're not playing, the "up next" is empty even if the web ui has it
+	  if (status.status == PLAY_STOPPED)
+	    {
+	      if (count > 0 && playqueuecontents_add_queue_item(songlist, &queue_item, count, status.plid) < 0)
+	      	{
+		  db_queue_enum_end(&qp);
+		  goto error;
+		}
+	      ++count;
+	      continue;
+	    }
+
 	  if (status.item_id == 0 || status.item_id == queue_item.id)
 	    {
 	      count = 1;
@@ -2053,6 +2072,13 @@ dacp_reply_playqueueedit_move(struct httpd_request *hreq)
     }
 
     player_get_status(&status);
+    if (status.status == PLAY_STOPPED)
+      {
+	 // if stopped the item_id == 0, grab the first item from q
+	struct db_queue_item  *qi = db_queue_fetch_bypos(0, status.shuffle);
+	status.item_id = qi->id;
+	free_queue_item(qi, 0);
+      }
     db_queue_move_byposrelativetoitem(src, dst, status.item_id, status.shuffle);
   }
 
@@ -2385,6 +2411,16 @@ dacp_reply_getproperty(struct httpd_request *hreq)
 	  DPRINTF(E_LOG, L_DACP, "Could not fetch queue_item for item-id %d\n", status.item_id);
 
 	  dacp_send_error(hreq, "cmgt", "Server error");
+	  goto out_free_proplist;
+	}
+    }
+  else
+    {
+      // try to get the first item of Q
+      queue_item = db_queue_fetch_bypos(0, status.shuffle);
+      if (!queue_item)
+       	{
+	  dmap_send_error(hreq->req, "cmgt", "Server error");
 	  goto out_free_proplist;
 	}
     }
