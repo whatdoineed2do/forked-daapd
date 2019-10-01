@@ -1647,6 +1647,10 @@ dacp_reply_nextitem(struct httpd_request *hreq)
       return -1;
     }
 
+  // mirror jsonapi - the above next will just shift the playhead when stoppped
+  struct player_status status;
+  player_get_status(&status);
+  if (status.status != PLAY_STOPPED)
   ret = player_playback_start();
   if (ret < 0)
     {
@@ -1680,6 +1684,9 @@ dacp_reply_previtem(struct httpd_request *hreq)
       return -1;
     }
 
+  struct player_status status;
+  player_get_status(&status);
+  if (status.status != PLAY_STOPPED)
   ret = player_playback_start();
   if (ret < 0)
     {
