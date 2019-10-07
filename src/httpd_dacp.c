@@ -659,7 +659,9 @@ make_playstatusupdate(struct evbuffer *evbuf, int current_rev)
   else
     {
       // try to get the first item of Q
-      queue_item = db_queue_fetch_bypos(0, status.shuffle);
+      queue_item = status.item_id > 0 ?
+                       db_queue_fetch_byitemid(status.item_id) :
+                       db_queue_fetch_bypos(0, status.shuffle);
       if (!queue_item)
         queue_item = &dummy_queue_item;
     }
