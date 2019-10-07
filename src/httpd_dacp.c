@@ -1765,11 +1765,56 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
   count = 0; // count of songs in songlist
 
   /*
-   * If the span parameter is negativ make song list for Previously Played,
+   * If the span parameter is negativ make song list for Previously Played (if Q is empty) or just the items of the queue before the current play point
    * otherwise make song list for Up Next and begin with first song after playlist position.
    */
   if (span < 0)
     {
+      unsigned qcount = 0;
+      memset(&qp, 0, sizeof(struct query_params));
+
+      db_queue_get_count(&qcount);
+      if (qcount > 0 && status.status != PLAY_STOPPED)
+        {
+          /* get up to 'abs(span)' prev tems from the Q position
+           */
+          span = abs(span);
+          if (qcount < span)
+            {
+              span = qcount;
+              qp.offset = 0;
+            }
+          else
+            {
+              qp.offset = qcount - span;
+            }
+
+          qp.filter = db_mprintf("%s >= %d", status.shuffle ? "shuffle_pos" : "pos", qp.offset);
+
+          ret = db_queue_enum_start(&qp);
+          if (ret < 0)
+            goto error;
+
+          while ((db_queue_enum_fetch(&qp, &queue_item) == 0) && (queue_item.id > 0) && (count < span))
+            {
+              // ignore everything after what is currently playing
+              if (status.item_id == queue_item.id)
+                break;
+
+              ret = playqueuecontents_add_queue_item(songlist, &queue_item, count, status.plid);
+              if (ret < 0)
+                {
+                  db_queue_enum_end(&qp);
+                  goto error;
+                }
+
+              count++;
+            }
+
+          db_queue_enum_end(&qp);
+        }
+      else
+      {
       history = player_history_get();
       if (abs(span) > history->count)
 	{
@@ -1788,6 +1833,7 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
 
 	  count++;
 	}
+      }
     }
   else
     {
@@ -1883,6 +1929,7 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
   dmap_add_char(hreq->out_body, "aprm", status.repeat);  /*  9, daap.playlistrepeatmode  - not part of mlcl container */
 
   httpd_send_reply(hreq, HTTP_OK, "OK", 0);
+  free_query_params(&qp, 1);
 
   return 0;
 
@@ -1891,6 +1938,7 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
 
   evbuffer_free(songlist);
   dacp_send_error(hreq, "ceQR", "Database error");
+  free_query_params(&qp, 1);
 
   return -1;
 }
