@@ -473,6 +473,8 @@ playqueuecontents_add_queue_item(struct evbuffer *songlist, struct db_queue_item
   struct evbuffer *song;
   int ret;
 
+  DPRINTF(E_DBG, L_DACP, "contents add: pos=%d id=%d  artist=%s title=%s album=%s\n", queue_item->pos, queue_item->id, queue_item->artist, queue_item->title, queue_item->album);
+
   CHECK_NULL(L_DACP, song = evbuffer_new());
   CHECK_ERR(L_DACP, evbuffer_expand(song, 256));
 
@@ -1751,9 +1753,10 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
     {
       unsigned qcount = 0;
       memset(&qp, 0, sizeof(struct query_params));
+      DPRINTF(E_DBG, L_DACP, "lookup history  qcount=%d\n", qcount);
 
       db_queue_get_count(&qcount);
-      if (qcount > 0 && status.status != PLAY_STOPPED)
+      if (qcount > 0)
         {
           /* get up to 'abs(span)' prev tems from the Q position
            */
@@ -1776,8 +1779,9 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
 
           while ((db_queue_enum_fetch(&qp, &queue_item) == 0) && (queue_item.id > 0) && (count < span))
             {
+              DPRINTF(E_DBG, L_DACP, "  queue=%d  status=%d\n", queue_item.id, status.item_id);
               // ignore everything after what is currently playing
-              if (status.item_id == queue_item.id)
+              if (status.item_id == 0 || status.item_id == queue_item.id)
                 break;
 
               ret = playqueuecontents_add_queue_item(songlist, &queue_item, count, status.plid);
@@ -1816,6 +1820,7 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
     }
   else
     {
+      DPRINTF(E_DBG, L_DACP, "lookup up next\n");
       memset(&qp, 0, sizeof(struct query_params));
 
       if (status.shuffle)
@@ -1825,12 +1830,21 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
       if (ret < 0)
 	goto error;
 
+      bool foundstopped = false;
       while ((db_queue_enum_fetch(&qp, &queue_item) == 0) && (queue_item.id > 0) && (count < span))
 	{
+          DPRINTF(E_DBG, L_DACP, "  queue=%d  status=%d\n", queue_item.id, status.item_id);
 	  // if we're not playing, the "up next" is empty even if the web ui has it
 	  if (status.status == PLAY_STOPPED)
 	    {
-	      if (count > 0 && playqueuecontents_add_queue_item(songlist, &queue_item, count, status.plid) < 0)
+              if (!foundstopped)
+                {
+                  // ignore everything on Q before the play head
+                  foundstopped = status.item_id == 0 ? true : status.item_id == queue_item.id;
+                  continue;
+                }
+
+	      if (playqueuecontents_add_queue_item(songlist, &queue_item, count, status.plid) < 0)
 	      	{
 		  db_queue_enum_end(&qp);
 		  goto error;
@@ -2474,7 +2488,9 @@ dacp_reply_getproperty(struct httpd_request *hreq)
   else
     {
       // try to get the first item of Q
-      queue_item = db_queue_fetch_bypos(0, status.shuffle);
+      queue_item = status.item_id > 0 ?
+                       db_queue_fetch_byitemid(status.item_id) :
+                       db_queue_fetch_bypos(0, status.shuffle);
       if (!queue_item)
        	{
 	  dmap_send_error(hreq->req, "cmgt", "Server error");
