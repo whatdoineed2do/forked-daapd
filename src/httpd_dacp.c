@@ -2146,7 +2146,9 @@ dacp_reply_playqueueedit_move(struct httpd_request *hreq)
     if (status.status == PLAY_STOPPED)
       {
 	 // if stopped the item_id == 0, grab the first item from q
-	struct db_queue_item  *qi = db_queue_fetch_bypos(0, status.shuffle);
+	struct db_queue_item  *qi = status.item_id > 0 ?
+                                        db_queue_fetch_byitemid(status.item_id) :
+                                        db_queue_fetch_bypos(0, status.shuffle);
 	status.item_id = qi->id;
 	free_queue_item(qi, 0);
       }
