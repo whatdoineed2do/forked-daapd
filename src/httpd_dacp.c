@@ -2134,10 +2134,10 @@ dacp_reply_playqueueedit_add(struct httpd_request *hreq)
   else
     queue_item = NULL;
 
+  player_get_status(&status);
+
   if (queue_item)
     {
-      player_get_status(&status);
-
       if (status.shuffle)
 	{
 	  DPRINTF(E_DBG, L_DACP, "Start shuffle queue with item %d\n", queue_item->id);
@@ -2145,12 +2145,14 @@ dacp_reply_playqueueedit_add(struct httpd_request *hreq)
 	}
 
       DPRINTF(E_DBG, L_DACP, "Song queue built, starting playback at index %d\n", queue_item->pos);
+    if (status.status != PLAY_STOPPED)
       ret = player_playback_start_byitem(queue_item);
       free_queue_item(queue_item, 0);
     }
   else
     {
       DPRINTF(E_DBG, L_DACP, "Song queue built, starting playback\n");
+    if (status.status != PLAY_STOPPED)
       ret = player_playback_start();
     }
 
