@@ -420,7 +420,10 @@ dacp_queueitem_add(const char *query, const char *queuefilter, const char *sort,
         }
     }
 
-  if (mode == 3)
+  uint32_t queue_count = 0;
+  db_queue_get_count(&queue_count);
+
+  if (mode == 3 && queue_count > 0)
     ret = db_queue_add_by_queryafteritemid(&qp, status.item_id);
   else
     ret = db_queue_add_by_query(&qp, status.shuffle, status.item_id, -1, NULL, NULL);
@@ -2148,16 +2151,22 @@ dacp_reply_playqueueedit_add(struct httpd_request *hreq)
 	  db_queue_move_byitemid(queue_item->id, 0, status.shuffle);
 	}
 
+      if (status.status != PLAY_STOPPED) {
       DPRINTF(E_DBG, L_DACP, "Song queue built, starting playback at index %d\n", queue_item->pos);
-    if (status.status != PLAY_STOPPED)
       ret = player_playback_start_byitem(queue_item);
+      }
+      else
+      DPRINTF(E_DBG, L_DACP, "Song queue built, but STOPPED not starting playback at index %d\n", queue_item->pos);
       free_queue_item(queue_item, 0);
     }
   else
     {
+      if (status.status != PLAY_STOPPED) {
       DPRINTF(E_DBG, L_DACP, "Song queue built, starting playback\n");
-    if (status.status != PLAY_STOPPED)
       ret = player_playback_start();
+      }
+      else
+      DPRINTF(E_DBG, L_DACP, "Song queue built, but STOPPED not starting playback\n");
     }
 
   if (ret < 0)
