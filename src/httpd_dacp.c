@@ -400,7 +400,9 @@ dacp_queueitem_add(const char *query, const char *queuefilter, const char *sort,
     }
 
   player_get_status(&status);
-  if (status.status == PLAY_STOPPED)
+  uint32_t queue_count = 0;
+  db_queue_get_count(&queue_count);
+  if (queue_count > 0 && status.status == PLAY_STOPPED)
     {
        // if stopped the item_id == 0, grab the first item from q
       struct db_queue_item  *qi = status.item_id > 0 ?
@@ -412,9 +414,6 @@ dacp_queueitem_add(const char *query, const char *queuefilter, const char *sort,
           free_queue_item(qi, 0);
         }
     }
-
-  uint32_t queue_count = 0;
-  db_queue_get_count(&queue_count);
 
   if (mode == 3 && queue_count > 0)
     ret = db_queue_add_by_queryafteritemid(&qp, status.item_id);
