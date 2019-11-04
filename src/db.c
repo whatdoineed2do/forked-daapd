@@ -1944,7 +1944,7 @@ db_build_query_group_albums(struct query_params *qp, struct query_clause *qc)
 		 "COUNT(f.id) as track_count, "
 	         "COUNT(DISTINCT f.songartistid) as artist_count, "
 		 "COUNT(DISTINCT f.songalbumid) as album_count, "
-	         "CASE WHEN COUNT(DISTINCT f.songartistid) > 1 THEN '--' ELSE f.album_artist END as album_artist, "
+	         "CASE WHEN COUNT(DISTINCT f.songartistid) > 1 THEN 'Various Artists' ELSE f.album_artist END as album_artist, "
 	         "GROUP_CONCAT(DISTINCT f.songartistid) as songartistid, "
 	         "SUM(f.song_length) "
 	    "FROM files f JOIN groups g ON f.songalbumid = g.persistentid %s "
