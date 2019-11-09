@@ -1321,9 +1321,15 @@ dacp_reply_cue_play(struct httpd_request *hreq)
       else
 	{
 	  /* Play from Up Next queue */
-	  if (status.status == PLAY_STOPPED && pos > 0)
-	    pos--;
-
+	  if (status.status == PLAY_STOPPED)
+          {
+            // expected if stopped... need head of Q
+            if (status.item_id == 0)
+              queue_item = db_queue_fetch_bypos(pos, status.shuffle);
+            else
+	      DPRINTF(E_LOG, L_DACP, "STOPPED, but status item_id=%d ???\n", status.item_id);
+          }
+          else
 	  queue_item = db_queue_fetch_byposrelativetoitem(pos, status.item_id, status.shuffle);
 	  if (!queue_item)
 	    {
