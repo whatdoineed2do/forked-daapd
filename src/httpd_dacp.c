@@ -1300,6 +1300,18 @@ dacp_reply_cue_play(struct httpd_request *hreq)
       param = evhttp_find_header(hreq->query, "mode");
       if (param && ((strcmp(param, "-1") == 0) || (strcmp(param, "1") == 0)))
 	{
+          unsigned qcount = 0;
+          db_queue_get_count(&qcount);
+          if (qcount > 0)
+          {
+            if ( (queue_item = db_queue_fetch_byposrelativetoitem(-pos, status.item_id, status.shuffle)) == NULL ) {
+              DPRINTF(E_LOG, L_DACP, "Could not start playback from earlier in queue, qcount=%d pos=%d\n", qcount, pos);
+
+              dmap_send_error(hreq->req, "cacr", "Playback failed to start");
+              return -1;
+            }
+          }
+          else {
 	  /* Play from history queue */
 	  history = player_history_get();
 	  if (history->count > pos)
@@ -1322,6 +1334,7 @@ dacp_reply_cue_play(struct httpd_request *hreq)
 	      dmap_send_error(hreq->req, "cacr", "Playback failed to start");
 	      return -1;
 	    }
+          }
 	}
       else
 	{
@@ -1830,9 +1843,9 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
     {
       unsigned qcount = 0;
       memset(&qp, 0, sizeof(struct query_params));
+      db_queue_get_count(&qcount);
       DPRINTF(E_DBG, L_DACP, "lookup history  qcount=%d\n", qcount);
 
-      db_queue_get_count(&qcount);
       if (qcount > 0)
         {
           /* get up to 'abs(span)' prev tems from the Q position
