@@ -1824,7 +1824,9 @@ dacp_reply_playqueuecontents(struct httpd_request *hreq)
             }
           else
             {
-              qp.offset = qcount - span;
+              qp.offset = db_queue_get_pos(status.item_id, status.shuffle);
+              if (qp.offset < span)
+                qp.offset = 0;
             }
 
           qp.filter = db_mprintf("%s >= %d", status.shuffle ? "shuffle_pos" : "pos", qp.offset);
