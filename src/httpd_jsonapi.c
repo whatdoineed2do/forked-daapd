@@ -5086,6 +5086,29 @@ jsonapi_reply_library_schema(struct httpd_request *hreq)
 
   return HTTP_OK;
 }
+
+extern int db_file_sync_timeadded(uint32_t, uint32_t);
+static int
+jsonapi_reply_library_sync_timeadded(struct httpd_request *hreq)
+{
+  const char*  param;
+  uint32_t  limit = 0;
+  uint32_t  batch = 100;
+
+  if ( (param = evhttp_find_header(hreq->query, "limit")) ) {
+    safe_atou32(param, &limit);
+  }
+  if ( (param = evhttp_find_header(hreq->query, "batch")) ) {
+    safe_atou32(param, &batch);
+  }
+
+  if (db_file_sync_timeadded(batch, limit) < 0) {
+    DPRINTF(E_LOG, L_WEB, "failed to sync file times\n");
+    return HTTP_INTERNAL;
+  }
+
+  return HTTP_OK;
+}
 ////////////////////////////////////////////////////////////////////////////////
 
 static struct httpd_uri_map adm_handlers[] =
@@ -5170,6 +5193,7 @@ static struct httpd_uri_map adm_handlers[] =
     { EVHTTP_REQ_GET,    "^/api/library/maint/dup$",                     jsonapi_reply_library_maint_dup},
     { EVHTTP_REQ_GET,    "^/api/library/maint/junkmeta$",                jsonapi_reply_library_maint_junkmeta},
     { EVHTTP_REQ_GET,    "^/api/schema$",                                jsonapi_reply_library_schema},
+    { EVHTTP_REQ_PUT,    "^/api/library/sync_timeadded$",                jsonapi_reply_library_sync_timeadded},
 
     { 0, NULL, NULL }
   };
