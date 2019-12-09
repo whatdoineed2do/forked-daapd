@@ -7379,6 +7379,7 @@ db_file_sync_timeadded()
   struct stat  st;
   unsigned  cn = 0;
   uint64_t  n = 0, N = 0;
+  struct timeval  start, end, diff;
 
   int ret;
 
@@ -7393,6 +7394,7 @@ db_file_sync_timeadded()
       return -1;
     }
 
+  gettimeofday(&start, NULL);
   while ((ret = sqlite3_step(res)) == SQLITE_ROW)
     {
       ++N;
@@ -7444,7 +7446,9 @@ db_file_sync_timeadded()
       return -1;
     }
   }
-  DPRINTF(E_LOG, L_DB, "time_added sync'd total %ld/%ld\n", n, N);
+  gettimeofday(&end, NULL);
+  timersub(&end, &start, &diff);
+  DPRINTF(E_LOG, L_DB, "time_added sync'd total %ld/%ld in %ld.%06ld secs\n", n, N, diff.tv_sec, diff.tv_usec);
 
   sqlite3_finalize(res);
 
