@@ -7566,7 +7566,7 @@ db_file_sync_timeadded(uint32_t batch_, uint32_t limit_)
   uint64_t  n = 0, N = 0;
   struct timeval  start, end, diff;
 
-  int ret;
+  int ret = 0;
 
   const char*  select_query = "SELECT id,path,time_added FROM files WHERE data_kind=0 AND time_added >= time_modified";
   query = limit_ == 0 ? sqlite3_mprintf("%s;", select_query) : 
@@ -7599,10 +7599,10 @@ db_file_sync_timeadded(uint32_t batch_, uint32_t limit_)
 
       ++n;
       if (cn == 0) {
-        if (sqlite3_exec(hdl, "BEGIN TRANSACTION", NULL, NULL, &errmsg) < 0) {
+        if ( (ret = sqlite3_exec(hdl, "BEGIN TRANSACTION", NULL, NULL, &errmsg)) < 0) {
           DPRINTF(E_LOG, L_DB, "DB error while running 'BEGIN TRANSACTION': %s\n", errmsg);
           sqlite3_free(errmsg);
-          return -1;
+          goto error;
         }
       }
 
@@ -7617,26 +7617,27 @@ db_file_sync_timeadded(uint32_t batch_, uint32_t limit_)
 
       if (++cn%batch_ == 0) {
         DPRINTF(E_LOG, L_DB, "time_added sync'd %lu\n", n);
-        if (sqlite3_exec(hdl, "COMMIT TRANSACTION;", NULL, NULL, &errmsg) < 0) {
+        if ( (ret = sqlite3_exec(hdl, "COMMIT TRANSACTION;", NULL, NULL, &errmsg)) < 0) {
 	  DPRINTF(E_LOG, L_DB, "DB error while running 'COMMIT TRANSACTION': %s\n", errmsg);
           sqlite3_free(errmsg);
-          return -1;
+          goto error;
         }
         cn = 0;
       }
     }
 
   if (cn > 0) {
-    if (sqlite3_exec(hdl, "COMMIT TRANSACTION;", NULL, NULL, &errmsg) < 0) {
+    if ( (ret = sqlite3_exec(hdl, "COMMIT TRANSACTION;", NULL, NULL, &errmsg)) < 0) {
       DPRINTF(E_LOG, L_DB, "DB error while running final 'COMMIT TRANSACTION': %s\n", errmsg);
       sqlite3_free(errmsg);
-      return -1;
+      goto error;
     }
   }
   gettimeofday(&end, NULL);
   timersub(&end, &start, &diff);
   DPRINTF(E_LOG, L_DB, "time_added sync'd total %lu/%lu in %ld.%06ld secs\n", n, N, diff.tv_sec, diff.tv_usec);
 
+error:
   sqlite3_finalize(res);
   sqlite3_free(query);
 
