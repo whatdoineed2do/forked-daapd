@@ -7547,7 +7547,7 @@ db_deinit(void)
 }
 
 int
-db_file_sync_timeadded()
+db_file_sync_timeadded(uint32_t batch_, uint32_t limit_)
 {
   sqlite3_stmt *res;
 
@@ -7565,7 +7565,9 @@ db_file_sync_timeadded()
 
   int ret;
 
-  query = "SELECT id,path,time_added FROM files WHERE data_kind=0 AND time_added >= time_modified;";
+  const char*  select_query = "SELECT id,path,time_added FROM files WHERE data_kind=0 AND time_added >= time_modified";
+  query = limit_ == 0 ? sqlite3_mprintf("%s;", select_query) : 
+                        sqlite3_mprintf("%s LIMIT %ld;", select_query, limit_);
 
   DPRINTF(E_DBG, L_DB, "Running query '%s'\n", query);
 
@@ -7610,7 +7612,7 @@ db_file_sync_timeadded()
       sqlite3_free(uquery);
       sqlite3_free(errmsg);
 
-      if (++cn%100 == 0) {
+      if (++cn%batch_ == 0) {
         DPRINTF(E_LOG, L_DB, "time_added sync'd %lu\n", n);
         if (sqlite3_exec(hdl, "COMMIT TRANSACTION;", NULL, NULL, &errmsg) < 0) {
 	  DPRINTF(E_LOG, L_DB, "DB error while running 'COMMIT TRANSACTION': %s\n", errmsg);
@@ -7633,6 +7635,7 @@ db_file_sync_timeadded()
   DPRINTF(E_LOG, L_DB, "time_added sync'd total %lu/%lu in %ld.%06ld secs\n", n, N, diff.tv_sec, diff.tv_usec);
 
   sqlite3_finalize(res);
+  sqlite3_free(query);
 
   return 0;
 }
