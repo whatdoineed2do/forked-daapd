@@ -7548,3 +7548,90 @@ db_deinit(void)
 {
   sqlite3_shutdown();
 }
+
+int
+db_file_sync_timeadded()
+{
+  sqlite3_stmt *res;
+
+  char *query;
+  char *uquery;
+  char *errmsg;
+
+  uint  id;
+  char *path;
+  uint  tadd;
+  struct stat  st;
+  unsigned  cn = 0;
+  uint64_t  n = 0, N = 0;
+
+  int ret;
+
+  query = "SELECT id,path,time_added FROM files WHERE data_kind=0 AND time_added >= time_modified;";
+
+  DPRINTF(E_DBG, L_DB, "Running query '%s'\n", query);
+
+  ret = sqlite3_prepare_v2(hdl, query, -1, &res, NULL);
+  if (ret != SQLITE_OK)
+    {
+      DPRINTF(E_LOG, L_DB, "Could not prepare statement: %s\n", sqlite3_errmsg(hdl));
+      return -1;
+    }
+
+  while ((ret = sqlite3_step(res)) == SQLITE_ROW)
+    {
+      ++N;
+      id   = sqlite3_column_int(res, 0);
+      path = (char*)sqlite3_column_text(res, 1);
+      tadd = sqlite3_column_int(res, 2);
+
+      if (stat(path, &st) < 0)
+        {
+	  DPRINTF(E_LOG, L_DB, "unable to obtain file info, id=%d path='%s' - %s\n", id, path, strerror(errno));
+          continue;
+        }
+      if (tadd == st.st_mtime)
+        continue;
+
+      ++n;
+      if (cn == 0) {
+        if (sqlite3_exec(hdl, "BEGIN TRANSACTION", NULL, NULL, &errmsg) < 0) {
+          DPRINTF(E_LOG, L_DB, "DB error while running 'BEGIN TRANSACTION': %s\n", errmsg);
+          sqlite3_free(errmsg);
+          return -1;
+        }
+      }
+
+      uquery = sqlite3_mprintf("UPDATE files SET time_added = %d WHERE id = %d;", st.st_mtime, id);
+      DPRINTF(E_DBG, L_DB, "Running query '%s' on %s\n", uquery, path);
+      ret = sqlite3_exec(hdl, uquery, NULL, NULL, &errmsg);
+      if (ret != SQLITE_OK)
+        DPRINTF(E_LOG, L_DB, "Error updating files..time_added id=%d - %s\n", id, errmsg);
+
+      sqlite3_free(uquery);
+      sqlite3_free(errmsg);
+
+      if (++cn%100 == 0) {
+        DPRINTF(E_LOG, L_DB, "time_added sync'd %lu\n", n);
+        if (sqlite3_exec(hdl, "COMMIT TRANSACTION;", NULL, NULL, &errmsg) < 0) {
+	  DPRINTF(E_LOG, L_DB, "DB error while running 'COMMIT TRANSACTION': %s\n", errmsg);
+          sqlite3_free(errmsg);
+          return -1;
+        }
+        cn = 0;
+      }
+    }
+
+  if (cn > 0) {
+    if (sqlite3_exec(hdl, "COMMIT TRANSACTION;", NULL, NULL, &errmsg) < 0) {
+      DPRINTF(E_LOG, L_DB, "DB error while running final 'COMMIT TRANSACTION': %s\n", errmsg);
+      sqlite3_free(errmsg);
+      return -1;
+    }
+  }
+  DPRINTF(E_LOG, L_DB, "time_added sync'd total %ld/%ld\n", n, N);
+
+  sqlite3_finalize(res);
+
+  return 0;
+}
