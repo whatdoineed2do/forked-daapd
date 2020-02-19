@@ -639,10 +639,26 @@ rss_add(const char *path)
   return LIBRARY_OK;
 }
 
+static int
+init()
+{
+  rss_refresh_interval.tv_sec = cfg_getint(cfg_getsec(cfg, "rss"), "refresh_period");
+  if (rss_refresh_interval.tv_sec < 60)
+    {
+      DPRINTF(E_LOG, L_LIB, "RSS 'refresh_period' too low, defaulting to 60 seconds\n");
+      rss_refresh_interval.tv_sec = 60;
+    }
+
+  DPRINTF(E_INFO, L_LIB, "RSS refresh_period: %lu seconds\n", rss_refresh_interval.tv_sec);
+
+  return 0;
+}
+
 struct library_source rssscanner =
 {
   .name = "RSS feeds",
   .disabled = 0,
+  .init = init,
   .initscan = rss_rescan,
   .rescan = rss_rescan,
   .metarescan = rss_metascan,
