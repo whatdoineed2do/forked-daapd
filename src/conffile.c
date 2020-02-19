@@ -209,6 +209,13 @@ static cfg_opt_t sec_spotify[] =
     CFG_END()
   };
 
+/* RSS section structure */
+static cfg_opt_t sec_rss[] =
+  {
+    CFG_INT("refresh_period", 3600, CFGF_NONE),
+    CFG_END()
+  };
+
 /* SQLite section structure */
 static cfg_opt_t sec_sqlite[] =
   {
@@ -258,6 +265,7 @@ static cfg_opt_t toplvl_cfg[] =
     CFG_SEC("sqlite", sec_sqlite, CFGF_NONE),
     CFG_SEC("mpd", sec_mpd, CFGF_NONE),
     CFG_SEC("streaming", sec_streaming, CFGF_NONE),
+    CFG_SEC("rss", sec_rss, CFGF_NONE),
     CFG_END()
   };
 
