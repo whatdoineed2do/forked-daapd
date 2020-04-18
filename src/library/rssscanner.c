@@ -640,14 +640,14 @@ rss_add(const char *path)
 static int
 init()
 {
-  rss_refresh_interval.tv_sec = cfg_getint(cfg_getsec(cfg, "rss"), "refresh_period");
+  rss_refresh_interval.tv_sec = cfg_getfloat(cfg_getsec(cfg, "rss"), "refresh_period") * 3600;
   if (rss_refresh_interval.tv_sec < 60)
     {
       DPRINTF(E_LOG, L_LIB, "RSS 'refresh_period' too low, defaulting to 60 seconds\n");
       rss_refresh_interval.tv_sec = 60;
     }
 
-  DPRINTF(E_INFO, L_LIB, "RSS refresh_period: %lu seconds\n", rss_refresh_interval.tv_sec);
+  DPRINTF(E_INFO, L_LIB, "RSS refresh_period: %.2f hrs\n", rss_refresh_interval.tv_sec/3600.0);
 
   return 0;
 }
