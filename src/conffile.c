@@ -217,7 +217,7 @@ static cfg_opt_t sec_spotify[] =
 /* RSS section structure */
 static cfg_opt_t sec_rss[] =
   {
-    CFG_INT("refresh_period", 3600, CFGF_NONE),
+    CFG_FLOAT("refresh_period", 1, CFGF_NONE),
     CFG_END()
   };
 
