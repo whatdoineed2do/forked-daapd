@@ -6,10 +6,7 @@
         <div class="modal-content fd-modal-card">
           <div class="card">
             <div class="card-content">
-              <figure class="image is-square fd-has-margin-bottom" v-show="artwork_visible">
-                <img :src="artwork_url" @load="artwork_loaded" @error="artwork_error" class="fd-has-shadow">
-              </figure>
-              <p class="title is-4">
+             <p class="title is-4">
                 <a class="has-text-link" @click="open_album">{{ album.name }}</a>
               </p>
               <div class="buttons" v-if="media_kind === 'podcast'">
@@ -30,7 +27,10 @@
                   <span class="title is-6">{{ album.track_count }}</span>
                 </p>
               </div>
-            </div>
+              <figure class="image is-square fd-has-margin-bottom" v-show="artwork_visible">
+                <img :src="artwork_url" @load="artwork_loaded" @error="artwork_error" class="fd-has-shadow">
+              </figure>
+             </div>
             <footer class="card-footer">
               <a class="card-footer-item has-text-dark" @click="queue_add">
                 <span class="icon"><i class="mdi mdi-playlist-plus"></i></span> <span class="is-size-7">Add</span>
