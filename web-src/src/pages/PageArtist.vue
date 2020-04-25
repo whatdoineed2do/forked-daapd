@@ -58,11 +58,11 @@ const artistData = {
     vm.albums = response[1].data
 
     vm.consolidated_artist = {
-      'id': vm.id,
-      'name': vm.name,
-      'album_count': vm.albums.items.length,
-      'track_count': vm.track_count,
-      'uri': vm.albums.items.map(a => a.uri).join(',')
+      id: vm.id,
+      name: vm.name,
+      album_count: vm.albums.items.length,
+      track_count: vm.track_count,
+      uri: vm.albums.items.map(a => a.uri).join(',')
     }
   }
 }

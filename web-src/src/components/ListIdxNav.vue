@@ -8,7 +8,7 @@
 export default {
   name: 'ListIdxNav',
 
-  props: [ 'name', 'anchor' ]
+  props: ['name', 'anchor']
 }
 </script>
 

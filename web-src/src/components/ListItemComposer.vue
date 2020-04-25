@@ -9,7 +9,7 @@
 <script>
 export default {
   name: 'ListItemComposer',
-  props: [ 'composer' ]
+  props: ['composer']
 }
 </script>
 

@@ -319,7 +319,8 @@ export default {
     },
 
     open_search_composers: function () {
-      this.$router.push({ path: '/search/library',
+      this.$router.push({
+        path: '/search/library',
         query: {
           type: 'tracks',
           query: this.$route.query.query
