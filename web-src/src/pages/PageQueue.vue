@@ -118,7 +118,7 @@ export default {
       var m = Math.floor(seconds % 3600 / 60)
       var s = Math.floor(seconds % 3600 % 60)
 
-      return [ h > 0 ? h + ':' : '' ] + ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2)
+      return [h > 0 ? h + ':' : ''] + ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2)
     },
     queue () {
       return this.$store.state.queue
