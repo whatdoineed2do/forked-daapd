@@ -1,15 +1,15 @@
 <template>
   <section>
     <div v-if="now_playing.id > 0" class="fd-is-fullheight">
+      <div class="has-text-centered fd-has-padding-left-right"><star-rating v-model="rating"
+        :star-size="17"
+        :padding="3"
+        :show-rating="false"
+        :max-rating="5"
+        :increment="0.5"
+        :inline="true"
+        @rating-selected="rate_track"></star-rating> </div>
       <div class="fd-is-expanded">
-        <div class="has-text-centered fd-has-padding-left-right"><star-rating v-model="rating"
-          :star-size="17"
-          :padding="3"
-          :show-rating="false"
-          :max-rating="5"
-          :increment="0.5"
-          :inline="true"
-          @rating-selected="rate_track"></star-rating></div>
         <cover-artwork @click="open_dialog(now_playing)"
           :artwork_url="now_playing.artwork_url"
           :artist="now_playing.artist"
