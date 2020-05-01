@@ -105,6 +105,7 @@ struct streaming_ctx
   int streaming_meta[2];
 
   char *icy_title;
+  bool icy_disabled;  // this stream ignores ICY requests
 };
 
 static struct streaming_ctx streaming_ctxs[] = {
@@ -122,6 +123,7 @@ static struct streaming_ctx streaming_ctxs[] = {
     .streamingev = NULL,
     .metaev = NULL,
     .player_changed = 0,
+    .icy_disabled = false,
     .icy_title = NULL
   },
   {
@@ -138,6 +140,7 @@ static struct streaming_ctx streaming_ctxs[] = {
     .streamingev = NULL,
     .metaev = NULL,
     .player_changed = 0,
+    .icy_disabled = false,
     .icy_title = NULL
   },
   {
@@ -154,6 +157,41 @@ static struct streaming_ctx streaming_ctxs[] = {
     .streamingev = NULL,
     .metaev = NULL,
     .player_changed = 0,
+    .icy_disabled = false,
+    .icy_title = NULL
+  },
+  {
+    .name = "PCM16 44.1 (no ICY)",
+    .endpoint = "/stream.wav",
+    .mime = "audio/wav",
+    .xcode = XCODE_PCM16_HEADER,
+    .sessions = NULL,
+    .not_supported = 0,
+    .icy_clients = 0,
+    .encode_ctx = NULL,
+    .encoded_data = NULL,
+    .quality_out = { 44100, 16, 2, 0 },
+    .streamingev = NULL,
+    .metaev = NULL,
+    .player_changed = 0,
+    .icy_disabled = true,
+    .icy_title = NULL
+  },
+  {
+    .name = "PCM16 48 (no ICY)",
+    .endpoint = "/stream48k.wav",
+    .mime = "audio/wav",
+    .xcode = XCODE_PCM16_HEADER,
+    .sessions = NULL,
+    .not_supported = 0,
+    .icy_clients = 0,
+    .encode_ctx = NULL,
+    .encoded_data = NULL,
+    .quality_out = { 48000, 16, 2, 0 },
+    .streamingev = NULL,
+    .metaev = NULL,
+    .player_changed = 0,
+    .icy_disabled = true,
     .icy_title = NULL
   },
   {
@@ -697,7 +735,13 @@ streaming_request(struct evhttp_request *req, struct httpd_uri_parsed *uri_parse
   if (param && strcmp(param, "1") == 0)
     require_icy = true;
 
-  DPRINTF(E_INFO, L_STREAMING, "Beginning %s streaming (with icy=%d, icy_metaint=%d) to %s:%d\n", ctx->name, require_icy, streaming_icy_metaint, address, (int)port);
+  if (require_icy && ctx->icy_disabled)
+    {
+      require_icy = false;
+      DPRINTF(E_INFO, L_STREAMING, "Beginning %s streaming (icy disabled) to %s:%d\n", ctx->name, address, (int)port);
+    }
+  else
+    DPRINTF(E_INFO, L_STREAMING, "Beginning %s streaming (with icy=%d, icy_metaint=%d) to %s:%d\n", ctx->name, require_icy, streaming_icy_metaint, address, (int)port);
 
   lib = cfg_getsec(cfg, "library");
   name = cfg_getstr(lib, "name");
