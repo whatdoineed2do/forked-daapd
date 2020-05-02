@@ -127,6 +127,38 @@ static struct streaming_ctx streaming_ctxs[] = {
     .icy_title = NULL
   },
   {
+    .name = "WMA",
+    .endpoint = "/stream.asf",
+    .mime = "video/x-ms-asf",
+    .xcode = XCODE_WMA,
+    .sessions = NULL,
+    .not_supported = 0,
+    .icy_clients = 0,
+    .encode_ctx = NULL,
+    .encoded_data = NULL,
+    .quality_out = { STREAMING_MP3_SAMPLE_RATE, 32, STREAMING_MP3_CHANNELS, 128000 },
+    .streamingev = NULL,
+    .metaev = NULL,
+    .player_changed = 0,
+    .icy_title = NULL
+  },
+  {
+    .name = "AAC",
+    .endpoint = "/stream.aac",
+    .mime = "audio/aac",
+    .xcode = XCODE_AAC_HE,
+    .sessions = NULL,
+    .not_supported = 0,
+    .icy_clients = 0,
+    .encode_ctx = NULL,
+    .encoded_data = NULL,
+    .quality_out = { STREAMING_MP3_SAMPLE_RATE, 32, STREAMING_MP3_CHANNELS, STREAMING_MP3_BIT_RATE },
+    .streamingev = NULL,
+    .metaev = NULL,
+    .player_changed = 0,
+    .icy_title = NULL
+  },
+  {
     .name = "PCM16 44.1",
     .endpoint = "/stream.pcm",
     .mime = "audio/wav",
