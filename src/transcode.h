@@ -23,6 +23,8 @@ enum transcode_profile
   XCODE_MP3,
   // Transcodes the best audio stream into OPUS
   XCODE_OPUS,
+  XCODE_AAC_HE,
+  XCODE_WMA,
   // Transcodes the best video stream into JPEG/PNG
   XCODE_JPEG,
   XCODE_PNG,

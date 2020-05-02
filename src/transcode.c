@@ -80,6 +80,7 @@ struct settings_ctx
   uint64_t channel_layout;
   int channels;
   int bit_rate;
+  int profile;
   enum AVSampleFormat sample_format;
   bool wavheader;
   bool icy;
@@ -230,6 +231,21 @@ init_settings(struct settings_ctx *settings, enum transcode_profile profile, str
 	settings->sample_format = AV_SAMPLE_FMT_S16; // Only libopus support
 	break;
 
+      case XCODE_WMA:
+	settings->encode_audio = 1;
+	settings->format = "asf";
+	settings->audio_codec = AV_CODEC_ID_WMAV2;
+	settings->sample_format = AV_SAMPLE_FMT_FLTP;
+	break;
+
+      case XCODE_AAC_HE:
+	settings->encode_audio = 1;
+	settings->format = "adts";
+	settings->audio_codec = AV_CODEC_ID_AAC;
+	settings->sample_format = AV_SAMPLE_FMT_FLTP;
+	settings->profile = FF_PROFILE_AAC_HE_V2;
+	break;
+
       case XCODE_JPEG:
 	settings->encode_video = 1;
 	settings->silent = 1;
@@ -270,7 +286,7 @@ init_settings(struct settings_ctx *settings, enum transcode_profile profile, str
 
   if (quality && quality->bits_per_sample && (quality->bits_per_sample != 8 * av_get_bytes_per_sample(settings->sample_format)))
     {
-      DPRINTF(E_LOG, L_XCODE, "Bug! Mismatch between profile and media quality\n");
+      DPRINTF(E_LOG, L_XCODE, "Bug! Mismatch between profile and media quality: profile bps: %d required: %d\n", quality->bits_per_sample, 8 * av_get_bytes_per_sample(settings->sample_format));
       return -1;
     }
 
@@ -288,6 +304,8 @@ stream_settings_set(struct stream_ctx *s, struct settings_ctx *settings, enum AV
       s->codec->sample_fmt     = settings->sample_format;
       s->codec->time_base      = (AVRational){1, settings->sample_rate};
       s->codec->bit_rate       = settings->bit_rate;
+      if (settings->profile > 0)
+        s->codec->profile      = settings->profile;
     }
   else if (type == AVMEDIA_TYPE_VIDEO)
     {
