@@ -23,6 +23,7 @@
 # include <config.h>
 #endif
 
+#include <sys/utsname.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -856,6 +857,16 @@ main(int argc, char **argv)
   if (!mdns_no_cname)
     {
       mdns_cname("owntone.local");
+
+      struct utsname sysinfo;
+      uname(&sysinfo);
+      char *cname = malloc(strlen(sysinfo.nodename) + 7);
+      sprintf(cname, "%s.local", sysinfo.nodename);
+
+      DPRINTF(E_LOG, L_MAIN, "Registering mdns name '%s'\n", cname);
+      mdns_cname(cname);
+
+      free(cname);
     }
 
 #ifdef HAVE_SIGNALFD
