@@ -16,6 +16,7 @@ var app = new Vue({
   },
 
   created: function () {
+    moment.locale(navigator.language)
     this.loadConfig();
     this.loadLibrary();
     this.loadOutputs();
@@ -186,6 +187,17 @@ var app = new Vue({
       var s = Math.floor(seconds % 3600 % 60);
 
       return h + ":" + ('0' + m).slice(-2) + ":" + ('0' + s).slice(-2);
+    },
+
+    time: function(value, format) {
+      if (format) {
+        return moment(value).format(format)
+      }
+      return moment(value).format()
+    },
+
+    timeFromNow: function(value, withoutSuffix) {
+      return moment(value).fromNow(withoutSuffix)
     },
 
     join: function(array) {
