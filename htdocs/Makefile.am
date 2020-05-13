@@ -37,6 +37,11 @@ dist_htdocsvendoraxios_DATA = \
 	admin/vendor/axios/axios.js \
 	admin/vendor/axios/axios.map
 
+htdocsvendormomentdir = $(datadir)/forked-daapd/htdocs/admin/vendor
+
+dist_htdocsvendormoment_DATA = \
+	admin/vendor/moment-with-locales.min.js
+
 htdocsvendorbulmadir = $(datadir)/forked-daapd/htdocs/admin/vendor/bulma
 
 dist_htdocsvendorbulma_DATA = \

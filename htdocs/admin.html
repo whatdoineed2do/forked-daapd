@@ -264,6 +264,24 @@
 <footer class="footer">
   <div class="container">
     <div class="content has-text-centered">
+      <div class="columns">
+        <div class="column">
+          <nav class="level is-mobile">
+            <div class="level-item has-text-centered">
+              <div>
+                <p class="heading">Library updated</p>
+                <p class="is-size-7-mobile">{{ library.updated_at | time('lll') }}</p>
+              </div>
+            </div>
+            <div class="level-item has-text-centered">
+              <div>
+                <p class="heading">Uptime</p>
+                <p class="is-size-7-mobile">{{ library.started_at | timeFromNow(true) }} | {{ library.started_at | time('lll') }}</p>
+              </div>
+            </div>
+          </nav>
+        </div>
+      </div>
       <p>
         <strong>forked-daapd</strong> - version {{ config.version }}
       </p>
@@ -283,6 +301,7 @@
 <!-- Local libraries -->
 <script src="/admin/vendor/vue/vue.min.js"></script>
 <script src="/admin/vendor/axios/axios.min.js"></script>
+<script src="/admin/vendor/moment-with-locales.min.js"></script>
 <script src="/admin/js/forked-daapd.js"></script>
 
 </body>
