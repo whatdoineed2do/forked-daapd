@@ -27,6 +27,8 @@ enum transcode_profile
   XCODE_ALAC,
   // Transcodes the best audio stream from OGG
   XCODE_OGG,
+  // Transcodes the best audio stream into FLAC
+  XCODE_FLAC,
   // Transcodes the best video stream to JPEG/PNG/VP8
   XCODE_JPEG,
   XCODE_PNG,
