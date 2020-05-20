@@ -132,6 +132,23 @@ static struct streaming_ctx streaming_ctxs[] = {
     .icy_title[0] = '\0'
   },
   {
+    .name = "FLAC",
+    .endpoint = "/stream.flac",
+    .mime = "audio/x-flac",
+    .xcode = XCODE_FLAC,
+    .sessions = NULL,
+    .available_sessions = STREAMING_SESSIONS_MAX,
+    .not_supported = 0,
+    .icy_clients = 0,
+    .encode_ctx = NULL,
+    .encoded_data = NULL,
+    .quality_out = { STREAMING_MP3_SAMPLE_RATE, 16, 2, 0 },
+    .streamingev = NULL,
+    .metaev = NULL,
+    .player_changed = 0,
+    .icy_title[0] = '\0'
+  },
+  {
     .name = NULL
   }
 };
