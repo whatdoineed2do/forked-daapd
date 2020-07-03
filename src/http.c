@@ -51,10 +51,12 @@
 #define PLAYLIST_PLS 1
 #define PLAYLIST_M3U 2
 
-/* ======================= libevent HTTP client  =============================*/
-
 // Number of seconds the client will wait for a response before aborting
 #define HTTP_CLIENT_TIMEOUT 8
+
+#ifndef HAVE_LIBCURL
+
+/* ======================= libevent HTTP client  =============================*/
 
 /* The strict libevent api does not permit walking through an evkeyvalq and saving
  * all the http headers, so we predefine what we are looking for. You can add 
@@ -307,7 +309,7 @@ http_client_request_impl(struct http_client_ctx *ctx)
   return ctx->ret;
 }
 
-#ifdef HAVE_LIBCURL
+#else
 
 static void
 curl_headers_save(struct keyval *kv, CURL *curl)
@@ -349,7 +351,7 @@ curl_request_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
 }
 
 static int
-https_client_request_impl(struct http_client_ctx *ctx)
+http_client_request_impl(struct http_client_ctx *ctx)
 {
   CURL *curl;
   CURLcode res;
@@ -419,15 +421,15 @@ https_client_request_impl(struct http_client_ctx *ctx)
 int
 http_client_request(struct http_client_ctx *ctx)
 {
+#ifdef HAVE_LIBCURL
+    return http_client_request_impl(ctx);
+#else
   if (strncmp(ctx->url, "http:", strlen("http:")) == 0)
     return http_client_request_impl(ctx);
-#ifdef HAVE_LIBCURL
-  if (strncmp(ctx->url, "https:", strlen("https:")) == 0)
-    return https_client_request_impl(ctx);
-#endif
 
   DPRINTF(E_LOG, L_HTTP, "Request for %s is not supported (not built with libcurl?)\n", ctx->url);
   return -1;
+#endif
 }
 
 char *
