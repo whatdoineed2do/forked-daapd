@@ -18,6 +18,9 @@
       </div>
       <div class="fd-has-padding-left-right">
         <div class="container has-text-centered">
+          <p class="subtitle has-text-grey is-7" v-show="now_playing.samplerate > 0">
+          {{ now_playing.type }} | {{ now_playing.samplerate }} Hz | {{ now_playing.channels }} | {{ now_playing.bitrate }} Kb/s
+          </p>
           <p class="control has-text-centered fd-progress-now-playing">
             <range-slider
               class="seek-slider fd-has-action"
