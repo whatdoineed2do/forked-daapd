@@ -18,6 +18,9 @@
       </div>
       <div class="fd-has-padding-left-right">
         <div class="container has-text-centered">
+          <p class="subtitle has-text-grey is-7" v-show="now_playing.samplerate > 0">
+          {{ now_playing.type }} | {{ now_playing.samplerate }} Hz | {{ now_playing_channels }} | {{ now_playing.bitrate }} Kb/s
+          </p>
           <p class="control has-text-centered fd-progress-now-playing">
             <range-slider
               class="seek-slider fd-has-action"
@@ -124,6 +127,15 @@ export default {
       return webapi.artwork_url_append_size_params(this.now_playing.artwork_url)
     },
 
+    now_playing_channels () {
+      if (this.now_playing.channels === 2) {
+        return 'stereo'
+      }
+      if (this.now_playing.channels === 1) {
+        return 'mono'
+      }
+      return this.now_playing.channels
+    },
     seeking: function () {
       return this.is_seeking
     },
