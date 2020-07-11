@@ -4540,6 +4540,23 @@ jsonapi_reply_search(struct httpd_request *hreq)
   return HTTP_OK;
 }
 
+static int
+jsonapi_reply_library_backup(struct httpd_request *hreq)
+{
+  int ret;
+  ret = db_backup();
+
+  if (ret < 0)
+  {
+    if (ret == -2)
+      return HTTP_SERVUNAVAIL;  // not enabled by config
+
+    return HTTP_INTERNAL;
+  }
+
+  return HTTP_OK;
+}
+
 // MAINT ///////////////////////////////////////////////////////////////////////
 static int
 fetch_dup(struct query_params *query_params, json_object *items, int *total, int *groupttl)
@@ -4955,6 +4972,7 @@ static struct httpd_uri_map adm_handlers[] =
     { EVHTTP_REQ_GET,    "^/api/library/count$",                         jsonapi_reply_library_count },
     { EVHTTP_REQ_GET,    "^/api/library/files$",                         jsonapi_reply_library_files },
     { EVHTTP_REQ_POST,   "^/api/library/add$",                           jsonapi_reply_library_add },
+    { EVHTTP_REQ_PUT,    "^/api/library/backup$",                        jsonapi_reply_library_backup },
 
     { EVHTTP_REQ_GET,    "^/api/search$",                                jsonapi_reply_search },
 
@@ -5019,6 +5037,9 @@ jsonapi_request(struct evhttp_request *req, struct httpd_uri_parsed *uri_parsed)
 	break;
       case HTTP_NOTFOUND:            /* 404 Not Found */
 	httpd_send_error(req, status_code, "Not Found");
+	break;
+      case HTTP_SERVUNAVAIL:            /* 503 */
+	httpd_send_error(req, status_code, "Service Unavailable");
 	break;
       case HTTP_INTERNAL:            /* 500 Internal Server Error */
       default:
