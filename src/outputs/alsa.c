@@ -433,12 +433,13 @@ mixer_close(struct alsa_mixer *mixer, const char *mixer_device_name)
 }
 
 static int
-pcm_open(snd_pcm_t **pcm, const char *device_name, struct media_quality *quality)
+pcm_open(snd_pcm_t **pcm, const char *device_name, struct media_quality *quality, struct media_quality *fallback_quality)
 {
   snd_pcm_t *hdl;
   snd_pcm_hw_params_t *hw_params;
   snd_pcm_uframes_t bufsize;
   int ret;
+  bool quality_failed = false;
 
   ret = snd_pcm_open(&hdl, device_name, SND_PCM_STREAM_PLAYBACK, 0);
   if (ret < 0)
@@ -475,23 +476,77 @@ pcm_open(snd_pcm_t **pcm, const char *device_name, struct media_quality *quality
   ret = snd_pcm_hw_params_set_format(hdl, hw_params, bps2format(quality->bits_per_sample));
   if (ret < 0)
     {
+      quality_failed = true;
+      if (fallback_quality)
+        {
+          // use snd_pcm_hw_params_test_format() to verify h/w support for given fmts
+          const snd_pcm_format_t backup_fmts[] = {
+            SND_PCM_FORMAT_S32_LE,
+            SND_PCM_FORMAT_U24_LE,
+            SND_PCM_FORMAT_U16_LE,
+
+            SND_PCM_FORMAT_UNKNOWN
+          };
+          int i = 0;
+
+          while (backup_fmts[i] != SND_PCM_FORMAT_UNKNOWN)
+            {
+              if (snd_pcm_hw_params_test_format(hdl, hw_params, backup_fmts[i]) == 0)
+                {
+                  fallback_quality->bits_per_sample = snd_pcm_format_width(backup_fmts[i]);
+                  break;
+                }
+              ++i;
+            }
+        }
+
       DPRINTF(E_LOG, L_LAUDIO, "Could not set format (bits per sample %d): %s\n", quality->bits_per_sample, snd_strerror(ret));
-      goto out_fail;
+    }
+  else
+    {
+      if (fallback_quality)
+        fallback_quality->bits_per_sample = quality->bits_per_sample;
     }
 
   ret = snd_pcm_hw_params_set_channels(hdl, hw_params, quality->channels);
   if (ret < 0)
     {
-      DPRINTF(E_LOG, L_LAUDIO, "Could not set stereo output: %s\n", snd_strerror(ret));
-      goto out_fail;
-    }
+      quality_failed = true;
+      if (fallback_quality)
+        {
+          // TODO: use snd_pcm_hw_params_test_channels() to verify against compile time options
+          fallback_quality->channels = alsa_fallback_quality.channels;
+        }
 
+      DPRINTF(E_LOG, L_LAUDIO, "Could not set stereo output: %s\n", snd_strerror(ret));
+    }
+  else
+    {
+      if (fallback_quality)
+        fallback_quality->channels = quality->channels;
+    }
+ 
   ret = snd_pcm_hw_params_set_rate(hdl, hw_params, quality->sample_rate, 0);
   if (ret < 0)
     {
+      quality_failed = true;
+      if (fallback_quality)
+        {
+          // TODO: use snd_pcm_hw_params_test_rate() to verify against compile time options
+          fallback_quality->sample_rate = alsa_fallback_quality.sample_rate;
+        }
+
       DPRINTF(E_LOG, L_LAUDIO, "Hardware doesn't support %u Hz: %s\n", quality->sample_rate, snd_strerror(ret));
-      goto out_fail;
     }
+  else
+    {
+      if (fallback_quality)
+        fallback_quality->sample_rate = quality->sample_rate;
+    }
+
+  // setting sample rate/bps/channels failed
+  if (quality_failed)
+    goto out_fail;
 
   ret = snd_pcm_hw_params_get_buffer_size_max(hw_params, &bufsize);
   if (ret < 0)
@@ -653,6 +708,7 @@ playback_session_add(struct alsa_session *as, struct media_quality *quality, str
   snd_pcm_sframes_t offset_nsamp;
   size_t size;
   int ret;
+  struct media_quality fallback_quality = { };
 
   DPRINTF(E_DBG, L_LAUDIO, "Adding playback session (quality %d/%d/%d) to ALSA device '%s'\n",
     quality->sample_rate, quality->bits_per_sample, quality->channels, as->devname);
@@ -660,12 +716,12 @@ playback_session_add(struct alsa_session *as, struct media_quality *quality, str
   CHECK_NULL(L_LAUDIO, pb = calloc(1, sizeof(struct alsa_playback_session)));
   CHECK_NULL(L_LAUDIO, pb->latency_history = calloc(alsa_latency_history_size, sizeof(double)));
 
-  ret = pcm_open(&pb->pcm, as->devname, quality);
+  ret = pcm_open(&pb->pcm, as->devname, quality, &fallback_quality);
   if (ret == ALSA_ERROR_DEVICE_BUSY)
     {
       DPRINTF(E_LOG, L_LAUDIO, "ALSA device '%s' won't open due to existing session (no support for concurrent audio), truncating audio\n", as->devname);
       playback_session_remove_all(as);
-      ret = pcm_open(&pb->pcm, as->devname, quality);
+      ret = pcm_open(&pb->pcm, as->devname, quality, &fallback_quality);
       if (ret == ALSA_ERROR_DEVICE_BUSY)
 	{
 	  DPRINTF(E_LOG, L_LAUDIO, "ALSA device '%s' failed: Device still busy after closing previous sessions\n", as->devname);
@@ -675,15 +731,15 @@ playback_session_add(struct alsa_session *as, struct media_quality *quality, str
 
   if (ret < 0)
     {
-      DPRINTF(E_LOG, L_LAUDIO, "Device '%s' does not support quality (%d/%d/%d), falling back to default\n", as->devname, quality->sample_rate, quality->bits_per_sample, quality->channels);
-      ret = pcm_open(&pb->pcm, as->devname, &alsa_fallback_quality);
+      DPRINTF(E_LOG, L_LAUDIO, "Device '%s' does not support quality (%d/%d/%d), falling back to device supported/default (%d/%d/%d)\n", as->devname, quality->sample_rate, quality->bits_per_sample, quality->channels, fallback_quality.sample_rate, fallback_quality.bits_per_sample, fallback_quality.channels);
+      ret = pcm_open(&pb->pcm, as->devname, &fallback_quality, NULL);
       if (ret < 0)
 	{
 	  DPRINTF(E_LOG, L_LAUDIO, "ALSA device failed setting fallback quality\n");
 	  goto error;
 	}
 
-      pb->quality = alsa_fallback_quality;
+      pb->quality = fallback_quality;
     }
   else
     pb->quality = *quality;
