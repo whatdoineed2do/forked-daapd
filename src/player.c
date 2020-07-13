@@ -105,14 +105,14 @@
 // tick. However, at some point we will owe the outputs so much data that we
 // have to suspend playback and wait for the input to get its act together.
 // (value is in milliseconds and should be low enough to avoid output underrun)
-#define PLAYER_READ_BEHIND_MAX 1500
+#define PLAYER_READ_BEHIND_MAX 2000
 
 // Generally, an output must not block (for long) when outputs_write() is
 // called. If an output does that anyway, the next tick event will be late, and
 // by extension playback_cb(). We will try to catch up, but if the delay
 // gets above this value, we will suspend playback and reset the output.
 // (value is in milliseconds)
-#define PLAYER_WRITE_BEHIND_MAX 1500
+#define PLAYER_WRITE_BEHIND_MAX 2000
 
 // If a speaker fails during playback we try to bring it back by reconnecting
 // after this number of seconds. When this feature was added, we had an issue
