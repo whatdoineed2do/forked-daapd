@@ -316,6 +316,48 @@ rescan(void *arg, int *ret)
 }
 
 static enum command_state
+partialrescan(void *arg, int *ret)
+{
+  time_t starttime;
+  time_t endtime;
+  int i;
+
+  DPRINTF(E_LOG, L_LIB, "Library partial rescan triggered\n");
+  listener_notify(LISTENER_UPDATE);
+  starttime = time(NULL);
+
+  for (i = 0; sources[i]; i++)
+    {
+      if (!sources[i]->disabled && sources[i]->partialrescan)
+	{
+	  DPRINTF(E_INFO, L_LIB, "Partial rescan library source '%s'\n", sources[i]->name);
+	  sources[i]->partialrescan((char*)arg);
+	}
+      else
+	{
+	  DPRINTF(E_INFO, L_LIB, "Library source '%s' is disabled\n", sources[i]->name);
+	}
+    }
+
+  purge_cruft(starttime);
+
+  DPRINTF(E_DBG, L_LIB, "Running post library scan jobs\n");
+  db_hook_post_scan();
+
+  endtime = time(NULL);
+  DPRINTF(E_LOG, L_LIB, "Library rescan completed in %.f sec (%d changes)\n", difftime(endtime, starttime), deferred_update_notifications);
+  scanning = false;
+
+  if (handle_deferred_update_notifications())
+    listener_notify(LISTENER_UPDATE | LISTENER_DATABASE);
+  else
+    listener_notify(LISTENER_UPDATE);
+
+  *ret = 0;
+  return COMMAND_END;
+}
+
+static enum command_state
 metarescan(void *arg, int *ret)
 {
   time_t starttime;
@@ -600,6 +642,21 @@ library_rescan()
 
   scanning = true; // TODO Guard "scanning" with a mutex
   commands_exec_async(cmdbase, rescan, NULL);
+}
+
+void
+library_partialrescan(const char *path)
+{
+  char *arg;
+  if (scanning)
+    {
+      DPRINTF(E_INFO, L_LIB, "Scan already running, ignoring request to trigger a partial scan\n");
+      return;
+    }
+  arg = strdup(path);
+
+  scanning = true;
+  commands_exec_async(cmdbase, partialrescan, (void*)arg);
 }
 
 void

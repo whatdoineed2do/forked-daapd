@@ -79,6 +79,11 @@ struct library_source
   int (*rescan)(void);
 
   /*
+   * Run rescan on given path (called from the library thread)
+   */
+  int (*partialrescan)(char *path);
+
+  /*
    * Run a metadata rescan of library even if files not changed (called from the library thread)
    */
   int (*metarescan)(void);
@@ -155,6 +160,9 @@ library_is_exiting();
 
 void
 library_rescan();
+
+void
+library_partialrescan(const char *path);
 
 void
 library_metarescan();
