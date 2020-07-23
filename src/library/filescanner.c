@@ -152,7 +152,7 @@ static uint32_t incomingfiles_buffer[INCOMINGFILES_BUFFER_SIZE];
 
 /* Forward */
 static void
-bulk_scan(int flags, char *path);
+bulk_scan(int flags);
 static int
 inofd_event_set(void);
 static void
@@ -1013,37 +1013,53 @@ process_directories(char *root, int parent_id, int flags)
 
 /* Thread: scan */
 static void
-bulk_scan_protect(char *path, bool disable)
+process_path(char *path, int flags)
 {
+  int parent_id;
+  char *deref;
   char virtual_path[PATH_MAX];
   int ret;
 
-  if (disable)
+
+  parent_id = process_parent_directories(path);
+
+  deref = realpath(path, NULL);
+  if (!deref)
     {
+      DPRINTF(E_LOG, L_SCAN, "Skipping library directory %s, could not dereference: %s\n", path, strerror(errno));
+
+      /* Assume dir is mistakenly not mounted, so just disable everything and update timestamps */
       db_file_disable_bymatch(path, STRIP_NONE, 0);
       db_pl_disable_bymatch(path, STRIP_NONE, 0);
       db_directory_disable_bymatch(path, STRIP_NONE, 0);
+
+      db_file_ping_bymatch(path, 1);
+      db_pl_ping_bymatch(path, 1);
+      ret = snprintf(virtual_path, sizeof(virtual_path), "/file:%s", path);
+      if ((ret < 0) || (ret >= sizeof(virtual_path)))
+	DPRINTF(E_LOG, L_SCAN, "Virtual path exceeds PATH_MAX (/file:%s)\n", path);
+      else
+	db_directory_ping_bymatch(virtual_path);
+
+      return;
     }
 
-  db_file_ping_bymatch(path, 1);
-  db_pl_ping_bymatch(path, 1);
-  ret = snprintf(virtual_path, sizeof(virtual_path), "/file:%s", path);
-  if ((ret < 0) || (ret >= sizeof(virtual_path)))
-    DPRINTF(E_LOG, L_SCAN, "Virtual path exceeds PATH_MAX (/file:%s)\n", path);
-  else
-    db_directory_ping_bymatch(virtual_path);
+  db_transaction_begin();
+
+  process_directories(deref, parent_id, flags);
+  db_transaction_end();
+
+  free(deref);
 }
 
 static void
-bulk_scan(int flags, char *requested_path)
+bulk_scan(int flags)
 {
   cfg_t *lib;
   int ndirs;
   char *path;
-  char *deref;
   time_t start;
   time_t end;
-  int parent_id;
   int i;
 
   start = time(NULL);
@@ -1052,69 +1068,17 @@ bulk_scan(int flags, char *requested_path)
   dirstack = NULL;
 
   lib = cfg_getsec(cfg, "library");
+
   ndirs = cfg_size(lib, "directories");
   counter = 0;
-
-  if (requested_path)
+  for (i = 0; i < ndirs; i++)
     {
-      // protect the existing paths
-      for (i = 0; i < ndirs; i++)
-        {
-          path = cfg_getnstr(lib, "directories", i);
-          bulk_scan_protect(path, false);
+      path = cfg_getnstr(lib, "directories", i);
 
-          if (library_is_exiting())
-            return;
-        }
-
-      parent_id = process_parent_directories(requested_path);
-
-      deref = realpath(requested_path, NULL);
-      if (!deref)
-	{
-	  DPRINTF(E_LOG, L_SCAN, "Skipping library directory %s, could not dereference: %s\n", requested_path, strerror(errno));
-          bulk_scan_protect(requested_path, true);
-	}
-      else
-        {
-          db_transaction_begin();
-          process_directories(deref, parent_id, flags);
-          db_transaction_end();
-
-          free(deref);
-        }
+      process_path(path, flags);
 
       if (library_is_exiting())
 	return;
-    }
-  else
-    {
-      for (i = 0; i < ndirs; i++)
-        {
-          path = cfg_getnstr(lib, "directories", i);
-
-          parent_id = process_parent_directories(path);
-
-          deref = realpath(path, NULL);
-          if (!deref)
-            {
-              DPRINTF(E_LOG, L_SCAN, "Skipping library directory %s, could not dereference: %s\n", path, strerror(errno));
-
-              /* Assume dir is mistakenly not mounted, so just disable everything and update timestamps */
-              bulk_scan_protect(path, true);
-              continue;
-            }
-
-          db_transaction_begin();
-
-          process_directories(deref, parent_id, flags);
-          db_transaction_end();
-
-          free(deref);
-
-          if (library_is_exiting())
-            return;
-        }
     }
 
   if (!(flags & F_SCAN_FAST) && playlists)
@@ -1713,9 +1677,9 @@ filescanner_initscan()
     }
 
   if (cfg_getbool(cfg_getsec(cfg, "library"), "filescan_disable"))
-    bulk_scan(F_SCAN_BULK | F_SCAN_FAST, NULL);
+    bulk_scan(F_SCAN_BULK | F_SCAN_FAST);
   else
-    bulk_scan(F_SCAN_BULK, NULL);
+    bulk_scan(F_SCAN_BULK);
 
   if (!library_is_exiting())
     {
@@ -1733,7 +1697,7 @@ filescanner_rescan()
   inofd_event_unset(); // Clears all inotify watches
   db_watch_clear();
   inofd_event_set();
-  bulk_scan(F_SCAN_BULK | F_SCAN_RESCAN, NULL);
+  bulk_scan(F_SCAN_BULK | F_SCAN_RESCAN);
 
   if (!library_is_exiting())
     {
@@ -1748,11 +1712,15 @@ filescanner_partialrescan(char *path)
 {
   DPRINTF(E_LOG, L_SCAN, "Partial rescan (%s) triggered\n", path);
 
-  inofd_event_unset(); // Clears inotify watches under this path
+  // Process this given path and then use 'FAST_SCAN' to rebuild watchers
   db_watch_delete_bypath(path);
   db_watch_delete_bymatch(path);
+  process_path(path, F_SCAN_BULK | F_SCAN_RESCAN);
+
+  inofd_event_unset();
+  db_watch_clear();
   inofd_event_set();
-  bulk_scan(F_SCAN_BULK | F_SCAN_RESCAN, path);
+  bulk_scan(F_SCAN_BULK | F_SCAN_FAST);
 
   if (!library_is_exiting())
     {
@@ -1770,7 +1738,7 @@ filescanner_metarescan()
   inofd_event_unset(); // Clears all inotify watches
   db_watch_clear();
   inofd_event_set();
-  bulk_scan(F_SCAN_BULK | F_SCAN_METARESCAN, NULL);
+  bulk_scan(F_SCAN_BULK | F_SCAN_METARESCAN);
 
   if (!library_is_exiting())
     {
@@ -1787,7 +1755,7 @@ filescanner_fullrescan()
 
   inofd_event_unset(); // Clears all inotify watches
   inofd_event_set();
-  bulk_scan(F_SCAN_BULK, NULL);
+  bulk_scan(F_SCAN_BULK);
 
   if (!library_is_exiting())
     {
