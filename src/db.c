@@ -6953,6 +6953,7 @@ db_backup()
   sqlite3 *backup_hdl;
   sqlite3_backup *backup;
   const char *backup_path;
+  char *backup_dir;
 
   char resolved_bp[PATH_MAX];
   char resolved_dbp[PATH_MAX];
@@ -6964,9 +6965,15 @@ db_backup()
       return -2;
     }
 
-  if (realpath(db_path, resolved_dbp) == NULL || realpath(backup_path, resolved_bp) == NULL)
+  strncpy(resolved_bp, backup_path, PATH_MAX-1);
+  backup_dir = strrchr(resolved_bp, '/');
+  if (backup_dir)
+    *backup_dir = '\0';
+  backup_dir = resolved_bp;
+
+  if (realpath(db_path, resolved_dbp) == NULL || realpath(backup_dir, resolved_bp) == NULL)
     {
-      DPRINTF(E_LOG, L_DB, "Failed to resolve real path of db/backup path: %s\n", strerror(errno));
+      DPRINTF(E_LOG, L_DB, "Failed to resolve real path of db (%s) or backup path (%s): %s\n", db_path, backup_path, strerror(errno));
       goto error;
     }
 
