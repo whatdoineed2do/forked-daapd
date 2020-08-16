@@ -48,6 +48,10 @@ options {
 		{
 			result->append8(result, "strftime('\%s', datetime('now', 'start of day', '-1 day'");
 		}
+		else if (strcmp((char *)datval, "this week") == 0)
+		{
+			result->append8(result, "strftime('\%s', datetime('now', 'weekday 0', '-7 days'");
+		}
 		else if (strcmp((char *)datval, "last week") == 0)
 		{
 			result->append8(result, "strftime('\%s', datetime('now', 'start of day', 'weekday 0', '-13 days'");
