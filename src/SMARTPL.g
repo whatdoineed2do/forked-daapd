@@ -190,6 +190,7 @@ RPAR		:	')'
 DATE		:	('0'..'9')('0'..'9')('0'..'9')('0'..'9')'-'('0'..'1')('0'..'9')'-'('0'..'3')('0'..'9')
 			|	'today'
 			|	'yesterday'
+			|	'this week'
 			|	'last week'
 			|	'last month'
 			|	'last year'
