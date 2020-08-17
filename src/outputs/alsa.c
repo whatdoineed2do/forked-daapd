@@ -288,35 +288,29 @@ bps2format(int bits_per_sample)
     return SND_PCM_FORMAT_UNKNOWN;
 }
 
+
+extern int
+alsa_cubic_set_volume(snd_mixer_elem_t *elem, int volume) ;
+
 static int
 volume_set(struct alsa_mixer *mixer, int volume)
 {
   int pcm_vol;
+  int ret;
 
   snd_mixer_handle_events(mixer->hdl);
 
   if (!snd_mixer_selem_is_active(mixer->vol_elem))
     return -1;
 
-  switch (volume)
+  DPRINTF(E_DBG, L_LAUDIO, "Setting ALSA volume to %d\n", volume);
+
+  ret = alsa_cubic_set_volume(mixer->vol_elem, volume);
+  if (ret < 0)
     {
-      case 0:
-	pcm_vol = mixer->vol_min;
-	break;
-
-      case 100:
-	pcm_vol = mixer->vol_max;
-	break;
-
-      default:
-	pcm_vol = mixer->vol_min + (volume * (mixer->vol_max - mixer->vol_min)) / 100;
-	break;
+      DPRINTF(E_LOG, L_LAUDIO, "Failed to set ALSA volume to %d\n: %s", volume, snd_strerror(ret));
+      return -1;
     }
-
-  DPRINTF(E_DBG, L_LAUDIO, "Setting ALSA volume to %d (%d)\n", pcm_vol, volume);
-
-  snd_mixer_selem_set_playback_volume_all(mixer->vol_elem, pcm_vol);
-
   return 0;
 }
 
