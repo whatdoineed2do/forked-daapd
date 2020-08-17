@@ -145,6 +145,7 @@ static struct alsa_session *sessions;
 
 static bool alsa_sync_disable;
 static int alsa_latency_history_size;
+static enum { ALSA_VOL_ADJ_ALSAMIXER, ALSA_VOL_ADJ_MPV, ALSA_VOL_ADJ_TRADITIONAL } alsa_volume_adjust_type;
 
 // We will try to play the music with the source quality, but if the card
 // doesn't support that we resample to the fallback quality
@@ -303,9 +304,41 @@ volume_set(struct alsa_mixer *mixer, int volume)
   if (!snd_mixer_selem_is_active(mixer->vol_elem))
     return -1;
 
-  DPRINTF(E_DBG, L_LAUDIO, "Setting ALSA volume to %d\n", volume);
+  if (volume < 0)
+    volume = 0;
+  else if (volume > 100)
+    volume = 100;
 
-  ret = alsa_cubic_set_volume(mixer->vol_elem, volume);
+  DPRINTF(E_DBG, L_LAUDIO, "Setting ALSA volume to %d via method %d\n", volume, alsa_volume_adjust_type);
+
+  if (alsa_volume_adjust_type == ALSA_VOL_ADJ_ALSAMIXER)
+    {
+      ret = alsa_cubic_set_volume(mixer->vol_elem, volume);
+    }
+  else
+    {
+      switch (volume)
+	{
+	  case 0:
+	    pcm_vol = mixer->vol_min;
+	    break;
+
+	  case 100:
+	    pcm_vol = mixer->vol_max;
+	    break;
+
+	  default:
+	    if (alsa_volume_adjust_type == ALSA_VOL_ADJ_MPV)
+	      pcm_vol = volume / (100/(float)(mixer->vol_max - mixer->vol_min)) + mixer->vol_min + 0.5;
+	    else
+	      pcm_vol = mixer->vol_min + (volume * (mixer->vol_max - mixer->vol_min)) / 100;
+	}
+
+      DPRINTF(E_DBG, L_LAUDIO, "Setting ALSA volume to %d (%d)\n", pcm_vol, volume);
+
+      ret = snd_mixer_selem_set_playback_volume_all(mixer->vol_elem, pcm_vol);
+    }
+
   if (ret < 0)
     {
       DPRINTF(E_LOG, L_LAUDIO, "Failed to set ALSA volume to %d\n: %s", volume, snd_strerror(ret));
@@ -1336,6 +1369,18 @@ alsa_init(void)
 
   alsa_sync_disable = cfg_getbool(cfg_audio, "sync_disable");
   alsa_latency_history_size = cfg_getint(cfg_audio, "adjust_period_seconds");
+  i = cfg_getint(cfg_audio, "volume_adjust_method");
+  switch (i)
+  {
+      case 1:
+	alsa_volume_adjust_type = ALSA_VOL_ADJ_ALSAMIXER;
+	break;
+      case 2:
+	alsa_volume_adjust_type = ALSA_VOL_ADJ_MPV;
+	break;
+      default:
+	alsa_volume_adjust_type = ALSA_VOL_ADJ_TRADITIONAL;
+  }
 
   alsa_cfg_secn = cfg_size(cfg, "alsa");
   if (alsa_cfg_secn == 0)
