@@ -21,6 +21,7 @@ enum sort_type {
   S_NONE = 0,
   S_NAME,
   S_ALBUM,
+  S_ALBUMS,
   S_ARTIST,
   S_PLAYLIST,
   S_YEAR,
