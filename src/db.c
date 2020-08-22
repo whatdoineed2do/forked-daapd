@@ -505,6 +505,7 @@ static const char *sort_clause[] =
   {
     "",
     "f.title_sort",
+    "f.title_sort, f.artist_sort, f.album_artist_sort",
     "f.album_sort, f.disc, f.track, f.title_sort, f.album_artist_sort",
     "f.album_sort, f.album_artist_sort",
     "f.album_artist_sort, f.album_sort, f.disc, f.track, f.title_sort",
