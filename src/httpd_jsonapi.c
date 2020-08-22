@@ -4367,7 +4367,7 @@ search_tracks(json_object *reply, struct httpd_request *hreq, const char *param_
   json_object_object_add(type, "items", items);
 
   query_params.type = Q_ITEMS;
-  query_params.sort = S_NAME;
+  query_params.sort = S_NAME_ARTIST_ALBUM;
 
   ret = query_params_limit_set(&query_params, hreq);
   if (ret < 0)
