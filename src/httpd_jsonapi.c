@@ -3262,7 +3262,7 @@ jsonapi_reply_library_albums(struct httpd_request *hreq)
     goto error;
 
   query_params.type = Q_GROUP_ALBUMS;
-  query_params.sort = S_ALBUM;
+  query_params.sort = S_ALBUMS;
 
   if (media_kind)
     query_params.filter = db_mprintf("(f.media_kind = %d)", media_kind);
@@ -4503,7 +4503,7 @@ search_albums(json_object *reply, struct httpd_request *hreq, const char *param_
   json_object_object_add(type, "items", items);
 
   query_params.type = Q_GROUP_ALBUMS;
-  query_params.sort = S_ALBUM;
+  query_params.sort = S_ALBUMS;
 
   ret = query_params_limit_set(&query_params, hreq);
   if (ret < 0)
