@@ -43,7 +43,7 @@ import webapi from '@/webapi'
 
 const tracksData = {
   load: function (to) {
-    return webapi.search({ type: 'track', expression: (to.params.condition ? to.params.condition : 'media_kind is music') + ' order by play_count desc', limit: 10 })
+    return webapi.search({ type: 'track', expression: (to.params.condition ? to.params.condition : 'media_kind is music') + ' and play_count > 0 order by play_count desc', limit: 10 })
   },
 
   set: function (vm, response) {
