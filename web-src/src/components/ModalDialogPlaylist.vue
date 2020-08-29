@@ -44,22 +44,34 @@ import webapi from '@/webapi'
 
 export default {
   name: 'ModalDialogPlaylist',
-  props: ['show', 'playlist'],
+  props: ['show', 'playlist', 'tracks'],
 
   methods: {
     play: function () {
       this.$emit('close')
-      webapi.player_play_uri(this.playlist.uri, false)
+      if (this.tracks) {
+        webapi.player_play_uri(this.tracks.map(a => a.uri).join(','), false)
+      } else {
+        webapi.player_play_uri(this.playlist.uri, false)
+      }
     },
 
     queue_add: function () {
       this.$emit('close')
-      webapi.queue_add(this.playlist.uri)
+      if (this.tracks) {
+        webapi.queue_add(this.tracks.map(a => a.uri).join(','))
+      } else {
+        webapi.queue_add(this.playlist.uri)
+      }
     },
 
     queue_add_next: function () {
       this.$emit('close')
-      webapi.queue_add_next(this.playlist.uri)
+      if (this.tracks) {
+        webapi.queue_add_next(this.tracks.map(a => a.uri).join(','))
+      } else {
+        webapi.queue_add_next(this.playlist.uri)
+      }
     },
 
     open_playlist: function () {
