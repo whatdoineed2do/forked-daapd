@@ -2240,6 +2240,29 @@ static struct httpd_uri_map daap_handlers[] =
     }
   };
 
+/* Some requests should never be cached, like (smart) playlists which may
+ * change between requests
+ */
+static struct httpd_uri_map daap_non_cachable_handlers[] =
+  {
+    { .handler = daap_reply_plsonglist },
+    { .handler = NULL }
+  };
+
+static inline bool
+daap_request_cachable(int (*handler)(struct httpd_request *))
+{
+  struct httpd_uri_map *ptr = daap_non_cachable_handlers;
+  while (ptr->handler)
+    {
+      if (ptr->handler == handler) 
+        return false;
+
+      ++ptr;
+    }
+  return true;
+}
+
 
 /* ------------------------------- DAAP API --------------------------------- */
 
@@ -2260,6 +2283,7 @@ daap_request(struct evhttp_request *req, struct httpd_uri_parsed *uri_parsed)
   int32_t id;
   int ret;
   int msec;
+  bool cachable;
 
   DPRINTF(E_DBG, L_DAAP, "DAAP request: '%s'\n", uri_parsed->uri);
 
@@ -2323,6 +2347,32 @@ daap_request(struct evhttp_request *req, struct httpd_uri_parsed *uri_parsed)
       return;
     }
 
+  if (!(cachable = daap_request_cachable(hreq->handler)))
+    {
+      struct evkeyvalq *output_headers;
+
+      output_headers = evhttp_request_get_output_headers(hreq->req);
+      if (output_headers)
+        {
+          const char *remove[] = { 
+            "Cache-Control",
+            "Last-Modified",
+            "Cache-Control",
+            NULL
+          };
+          const char **pptr = remove;
+          while (*pptr)
+            {
+              if (evhttp_find_header(output_headers, *pptr))
+                evhttp_remove_header(output_headers, *pptr);
+
+              ++pptr;
+            }
+        }
+
+      evhttp_add_header(output_headers, "Cache-Control", "no-store");
+    }
+
   // No dice, let's call the handler so it can construct a reply and then send it (note that the reply may be an error)
   clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -2333,9 +2383,9 @@ daap_request(struct evhttp_request *req, struct httpd_uri_parsed *uri_parsed)
   clock_gettime(CLOCK_MONOTONIC, &end);
   msec = (end.tv_sec * 1000 + end.tv_nsec / 1000000) - (start.tv_sec * 1000 + start.tv_nsec / 1000000);
 
-  DPRINTF(E_DBG, L_DAAP, "DAAP request handled in %d milliseconds\n", msec);
+  DPRINTF(E_DBG, L_DAAP, "DAAP request (via %x) handled in %d milliseconds\n", hreq->handler, msec);
 
-  if (ret == DAAP_REPLY_OK && msec > cache_daap_threshold() && hreq->user_agent)
+  if (ret == DAAP_REPLY_OK && cachable && msec > cache_daap_threshold() && hreq->user_agent)
     cache_daap_add(uri_parsed->uri, hreq->user_agent, ((struct daap_session *)hreq->extra_data)->is_remote, msec);
 
   evbuffer_free(hreq->reply);
