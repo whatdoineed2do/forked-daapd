@@ -41,6 +41,10 @@
 #include <uninorm.h>
 #include <unistd.h>
 
+#ifdef HAVE_EVENTFD
+# include <sys/eventfd.h>
+#endif
+
 #include <event2/event.h>
 #include <event2/bufferevent.h>
 
@@ -54,6 +58,7 @@
 #include "daap_query.h"
 #include "dmap_common.h"
 #include "cache.h"
+#include "listener.h"
 
 
 /* httpd event base, from httpd.c */
@@ -124,6 +129,14 @@ static char *default_meta_group = "dmap.itemname,dmap.persistentid,daap.songalbu
 
 /* DAAP session tracking */
 static struct daap_session *daap_sessions;
+
+/* Playlist update */
+#ifdef HAVE_EVENTFD
+static int update_efd;
+#else
+static int update_pipe[2];
+#endif
+static struct event *updateev;
 
 /* Update requests */
 static int current_rev;
@@ -330,6 +343,118 @@ update_fail_cb(struct evhttp_connection *evcon, void *arg)
   evhttp_request_free(ur->req);
   update_remove(ur);
 }
+
+static int
+make_playlists_update(struct evbuffer *evbuf)
+{
+  struct evbuffer *psu;
+
+  CHECK_NULL(L_DAAP, psu = evbuffer_new());
+  CHECK_ERR(L_DAAP, evbuffer_expand(psu, 256));
+
+  CHECK_ERR(L_DAAP, evbuffer_add_buffer(evbuf, psu));
+
+  evbuffer_free(psu);
+
+  DPRINTF(E_DBG, L_DACP, "Replying to playlists update with current_rev %d\n", current_rev);
+
+  return 0;
+}
+
+
+static void
+playlists_update_cb(int fd, short what, void *arg)
+{
+  struct daap_update_request *ur;
+  struct evbuffer *evbuf;
+  struct evbuffer *update;
+  struct evhttp_connection *evcon;
+  uint8_t *buf;
+  size_t len;
+  int ret;
+
+#ifdef HAVE_EVENTFD
+  eventfd_t count;
+
+  ret = eventfd_read(update_efd, &count);
+  if (ret < 0)
+    {
+      DPRINTF(E_LOG, L_DAAP, "Could not read playlists update event counter: %s\n", strerror(errno));
+
+      goto readd;
+    }
+#else
+  int dummy;
+
+  read(update_pipe[0], &dummy, sizeof(dummy));
+#endif
+
+  current_rev++;
+
+  if (!update_requests)
+    goto readd;
+
+  CHECK_NULL(L_DAAP, evbuf = evbuffer_new());
+  CHECK_NULL(L_DAAP, update = evbuffer_new());
+
+  ret = make_playlists_update(update);
+  if (ret < 0)
+    goto out_free_update;
+
+  len = evbuffer_get_length(update);
+
+  for (ur = update_requests; update_requests; ur = update_requests)
+    {
+      update_requests = ur->next;
+
+      evcon = evhttp_request_get_connection(ur->req);
+      if (evcon)
+	evhttp_connection_set_closecb(evcon, NULL, NULL);
+
+      // Only copy buffer if we actually need to reuse it
+      if (ur->next)
+	{
+	  buf = evbuffer_pullup(update, -1);
+	  evbuffer_add(evbuf, buf, len);
+	  httpd_send_reply(ur->req, HTTP_OK, "OK", evbuf, 0);
+	}
+      else
+	httpd_send_reply(ur->req, HTTP_OK, "OK", update, 0);
+
+      free(ur);
+    }
+
+ out_free_update:
+  evbuffer_free(update);
+  evbuffer_free(evbuf);
+ readd:
+  ret = event_add(updateev, NULL);
+  if (ret < 0)
+    DPRINTF(E_LOG, L_DAAP, "Couldn't re-add event for playstatusupdate\n");
+}
+
+static void
+daap_playlists_update_handler(short event_mask)
+{
+  int ret;
+
+  // Only send status update on player change events
+  if (!(event_mask & LISTENER_STORED_PLAYLIST))
+    return;
+
+#ifdef HAVE_EVENTFD
+  ret = eventfd_write(update_efd, 1);
+  if (ret < 0)
+    DPRINTF(E_LOG, L_DAAP, "Could not send update event: %s\n", strerror(errno));
+#else
+  int dummy = 42;
+
+  ret = write(update_pipe[1], &dummy, sizeof(dummy));
+  if (ret != sizeof(dummy))
+    DPRINTF(E_LOG, L_DAAP, "Could not write to status update fd: %s\n", strerror(errno));
+#endif
+}
+
 
 
 /* ------------------------- SORT HEADERS HELPERS --------------------------- */
@@ -2457,6 +2582,41 @@ daap_init(struct event_base* evbase)
         }
     }
 
+#ifdef HAVE_EVENTFD
+  update_efd = eventfd(0, EFD_CLOEXEC);
+  if (update_efd < 0)
+    {
+      DPRINTF(E_LOG, L_DAAP, "Could not create update eventfd: %s\n", strerror(errno));
+
+      return -1;
+    }
+  updateev = event_new(evbase_httpd, update_efd, EV_READ, playlists_update_cb, NULL);
+#else
+# ifdef HAVE_PIPE2
+  ret = pipe2(update_pipe, O_CLOEXEC);
+# else
+  ret = pipe(update_pipe);
+# endif
+  if (ret < 0)
+    {
+      DPRINTF(E_LOG, L_DAAP, "Could not create update pipe: %s\n", strerror(errno));
+
+      return -1;
+    }
+
+  updateev = event_new(evbase_httpd, update_pipe[0], EV_READ, playlists_update_cb, NULL);
+#endif /* HAVE_EVENTFD */
+
+  if (!updateev)
+    {
+      DPRINTF(E_LOG, L_DAAP, "Could not create update event\n");
+
+      return -1;
+    }
+  event_add(updateev, NULL);
+
+  listener_add(daap_playlists_update_handler, LISTENER_STORED_PLAYLIST);
+
   return 0;
 }
 
@@ -2490,4 +2650,13 @@ daap_deinit(void)
 
       update_free(ur);
     }
+
+  event_free(updateev);
+
+#ifdef HAVE_EVENTFD
+  close(update_efd);
+#else
+  close(update_pipe[0]);
+  close(update_pipe[1]);
+#endif
 }
