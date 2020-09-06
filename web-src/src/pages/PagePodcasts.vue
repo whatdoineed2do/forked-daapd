@@ -146,6 +146,19 @@ export default {
       })
     },
 
+    update_podcasts: function () {
+      webapi.library_podcast_update()
+
+      setTimeout(function (obj) {
+        webapi.library_podcasts_new_episodes().then(({ data }) => {
+          obj.splice(0, obj.length)
+          data.tracks.items.forEach((e) => {
+            obj.push(e)
+          })
+        })
+      }, 5000, this.new_episodes.items)
+    },
+
     reload_podcasts: function () {
       webapi.library_albums('podcast').then(({ data }) => {
         this.albums = data
