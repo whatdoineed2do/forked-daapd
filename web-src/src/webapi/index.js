@@ -332,6 +332,10 @@ export default {
     })
   },
 
+  library_podcast_update () {
+    return axios.put('/api/update/rss')
+  },
+
   library_add (url) {
     return axios.post('/api/library/add', undefined, { params: { url: url } })
   },
