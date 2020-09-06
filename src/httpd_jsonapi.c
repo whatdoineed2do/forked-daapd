@@ -5336,6 +5336,14 @@ jsonapi_reply_library_sync_timeadded(struct httpd_request *hreq)
 
   return HTTP_OK;
 }
+
+extern struct library_source rssscanner;
+static int
+jsonapi_reply_update_rss(struct httpd_request *hreq)
+{
+  rssscanner.rescan();
+  return HTTP_OK;
+}
 ////////////////////////////////////////////////////////////////////////////////
 
 static struct httpd_uri_map adm_handlers[] =
@@ -5421,6 +5429,7 @@ static struct httpd_uri_map adm_handlers[] =
     { EVHTTP_REQ_GET,    "^/api/library/maint/junkmeta$",                jsonapi_reply_library_maint_junkmeta},
     { EVHTTP_REQ_GET,    "^/api/schema$",                                jsonapi_reply_library_schema},
     { EVHTTP_REQ_PUT,    "^/api/library/sync_timeadded$",                jsonapi_reply_library_sync_timeadded},
+    { EVHTTP_REQ_PUT,    "^/api/update/rss$",                            jsonapi_reply_update_rss },
 
     { 0, NULL, NULL }
   };
