@@ -2,7 +2,7 @@
   <div>
     <tabs-music></tabs-music>
 
-    <index-list :index="index_list"></index-list>
+    <index-list :index="artists_list.indexList"></index-list>
 
     <content-with-heading>
       <template slot="options">
@@ -85,12 +85,6 @@ export default {
   },
 
   computed: {
-    index_list () {
-      return [...new Set(this.artists.items
-        .filter(artist => !this.$store.state.hide_singles || artist.track_count > (artist.album_count * 2))
-        .map(artist => artist.name_sort.charAt(0).toUpperCase()))]
-    },
-
     artists_list () {
       return new Artists(this.artists.items, {
         hideSingles: this.hide_singles,
