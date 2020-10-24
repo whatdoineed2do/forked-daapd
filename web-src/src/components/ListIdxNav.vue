@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a href="#" v-scroll-to="{ el: '#index_' + anchor, offset: -80 }">{{ name }}</a>
+    <a href="#" v-scroll-to="{ el: '#index_' + anchor, offset: -100 }">{{ name }}</a>
   </div>
 </template>
 
