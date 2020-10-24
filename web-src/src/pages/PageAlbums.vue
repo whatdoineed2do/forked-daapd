@@ -78,7 +78,6 @@ export default {
 
   data () {
     return {
-      index_list: [],
       tracks: 0,
       albums: { items: [] },
       sort_options: ['Name', 'Recently added', 'Recently released']
