@@ -2,6 +2,8 @@
   <div>
     <tabs-music></tabs-music>
 
+    <index-list :index="artists_list.indexList"></index-list>
+
     <content-with-heading>
       <template slot="options">
         <index-button-list :index="artists_list.indexList"></index-button-list>
