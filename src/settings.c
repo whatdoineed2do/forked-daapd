@@ -25,6 +25,11 @@
 #include "conffile.h"
 
 
+static struct settings_option custom_options[] =
+  {
+      { "queue_add_replace_tracks", SETTINGS_TYPE_BOOL, { true } },
+  };
+
 static struct settings_option webinterface_options[] =
   {
       { "show_composer_now_playing", SETTINGS_TYPE_BOOL },
@@ -71,6 +76,7 @@ static struct settings_category categories[] =
       { "artwork", artwork_options, ARRAY_SIZE(artwork_options) },
       { "misc", misc_options, ARRAY_SIZE(misc_options) },
       { "player", player_options, ARRAY_SIZE(player_options) },
+      { "custom", custom_options, ARRAY_SIZE(custom_options) },
   };
 
 
