@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
 
 #include "httpd_internal.h"
 #include "conffile.h"
@@ -79,6 +80,153 @@ static const struct track_attribs track_attribs[] =
 static bool allow_modifying_stored_playlists;
 static char *default_playlist_directory;
 
+/* *** ray *** ************************************************************** */
+struct item_id_elem {
+  uint32_t  iid;
+  struct item_id_elem*  next;
+};
+
+struct file_id_elem {
+  uint32_t  fid;
+  struct item_id_elem*  iids;
+  struct file_id_elem*  next;
+};
+
+// keeps the largest item_id (iid_) at the start - this represents the most
+// recent item addded to the q
+static void  iid_add(struct item_id_elem** list_, uint32_t iid_)
+{
+  struct item_id_elem*  elem = malloc(sizeof(struct item_id_elem));
+  memset(elem, 0, sizeof(struct item_id_elem));
+  elem->iid = iid_;
+
+  struct item_id_elem*  tmp = *list_;
+  struct item_id_elem*  ptr = elem;
+  struct item_id_elem*  prev = NULL;
+
+  if (tmp == NULL) {
+    *list_ = ptr;
+    return;
+  }
+
+  // iid goes to front, its biggest
+  if (iid_ > tmp->iid)
+  {
+    ptr->next = *list_;
+    *list_ = ptr;
+    return;
+  }
+
+
+  // walk the sorted list and insert iid .. iid are all unique
+  while (tmp)
+  {
+    if (iid_ < tmp->iid) {
+      prev = tmp;
+      tmp = tmp->next;
+      continue;
+    }
+
+    assert(prev != NULL);
+
+    prev->next = ptr;
+    ptr->next = tmp;
+    return;
+  }
+
+  prev->next = ptr;
+}
+
+static void  iid_free(struct item_id_elem* list_)
+{
+  struct item_id_elem*  ptr = list_;
+  struct item_id_elem*  next;
+
+  while (ptr) {
+    next = ptr->next;
+    free(ptr);
+    ptr = next;
+  }
+}
+
+static void  fid_add(struct file_id_elem** list_, struct db_queue_item* qi_)
+{
+  if (qi_ == NULL)
+    return;
+
+  struct file_id_elem*  ptr = *list_;
+  struct file_id_elem*  prev = *list_;
+
+  if (ptr == NULL) {
+    ptr = malloc(sizeof(struct file_id_elem));
+    memset(ptr, 0, sizeof(struct file_id_elem));
+
+    ptr->fid = qi_->file_id;
+    iid_add(&ptr->iids, qi_->id);
+
+    *list_ = ptr;
+    return;
+  }
+
+  while (ptr)
+  {
+    if (ptr->fid == qi_->file_id) {
+      iid_add(&ptr->iids, qi_->id);
+      return;
+    }
+
+    prev = ptr;
+    ptr  = ptr->next;
+  }
+
+  // never seen this before: qi_->file_id
+  if (ptr == NULL) {
+    prev->next = malloc(sizeof(struct file_id_elem));
+    memset(prev->next, 0, sizeof(struct file_id_elem));
+
+    prev->next->fid = qi_->file_id;
+    iid_add(&prev->next->iids, qi_->id);
+  }
+}
+
+static void fid_free(struct file_id_elem* list_)
+{
+  struct file_id_elem*  ptr = list_;
+  struct file_id_elem*  next;
+
+  while (ptr) {
+    next = ptr->next;
+    iid_free(ptr->iids);
+    free(ptr);
+    ptr = next;
+  }
+}
+
+#ifdef DEBUG
+static void  dump_iids(struct item_id_elem* iids_)
+{
+  struct item_id_elem*  ptr = iids_;
+  printf("iid=%x [", iids_);
+  while (ptr) {
+    printf(" %d ", ptr->iid);
+    ptr = ptr->next;
+  }
+  printf("]\n");
+}
+
+static void  dump_fids(struct file_id_elem* fids_)
+{
+  struct file_id_elem*  ptr = fids_;
+  printf("fid=%x [\n", fids_);
+  while (ptr) {
+    printf("  %d -> ", ptr->fid);
+    dump_iids(ptr->iids);
+    ptr = ptr->next;
+  }
+  printf("]\n");
+}
+#endif
+/* ************************************************************************** */
 
 /* -------------------------------- HELPERS --------------------------------- */
 
@@ -2468,6 +2616,9 @@ jsonapi_reply_queue_tracks_add(struct httpd_request *hreq)
 
   player_get_status(&status);
 
+  uint32_t queue_count = 0;
+  db_queue_get_count(&queue_count);
+
   if (param_uris)
     {
       ret = queue_tracks_add_byuris(param_uris, status.shuffle, status.item_id, pos, &total_count, &new_item_id);
@@ -2480,6 +2631,61 @@ jsonapi_reply_queue_tracks_add(struct httpd_request *hreq)
 	ret = queue_tracks_add_byexpression(param_expression, status.shuffle, status.item_id, pos, limit, &total_count, &new_item_id);
       else
 	ret = queue_tracks_add_byexpression(param_expression, status.shuffle, status.item_id, pos, -1, &total_count, &new_item_id);
+    }
+
+  if (ret == 0)
+    {
+      if (queue_count > 0)
+      {
+        struct settings_category*  category = settings_category_get("custom");
+        bool replace = settings_option_getbool(settings_option_get(category, "queue_add_replace_tracks"));
+
+        // if the uri (track) already exists, do we want to replace (remove and
+        // requeue)
+        param = evhttp_find_header(hreq->query, "replace");
+        if (param) {
+          replace = strcasecmp(param, "true") == 0;
+        }
+
+        if (replace)
+        {
+          struct query_params query_params;
+          struct db_queue_item queue_item;
+
+          memset(&query_params, 0, sizeof(struct query_params));
+          if (db_queue_enum_start(&query_params) < 0) {
+            DPRINTF(E_WARN, L_WEB, "failed to find queue items to replace on add\n");
+          }
+          else
+          {
+            struct file_id_elem*  qitems = NULL;
+            while (db_queue_enum_fetch(&query_params, &queue_item) == 0 && queue_item.id > 0) {
+              fid_add(&qitems, &queue_item);
+            }
+            db_queue_enum_end(&query_params);
+
+            struct file_id_elem*  q = qitems;
+            while (q)
+            {
+	      if (q->iids) {
+		struct item_id_elem*  iid = q->iids->next;
+		while (iid)
+		{
+		  db_queue_delete_byitemid(iid->iid);
+		  iid = iid->next;
+		}
+	      }
+              q = q->next;
+            }
+            fid_free(qitems);
+          }
+        }
+      }
+      reply = json_object_new_object();
+      json_object_object_add(reply, "count", json_object_new_int(total_count));
+
+      ret = evbuffer_add_printf(hreq->out_body, "%s", json_object_to_json_string(reply));
+      jparse_free(reply);
     }
   if (ret < 0)
     return HTTP_INTERNAL;
