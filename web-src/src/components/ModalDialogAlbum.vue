@@ -16,7 +16,7 @@
               </p>
               <div class="buttons" v-if="media_kind_resolved === 'podcast'">
                 <a class="button is-small" @click="mark_played">Mark as played</a>
-                <a class="button is-small" @click="$emit('remove-podcast')">Remove podcast</a>
+                <a class="button is-small" v-if="show_remove_button" @click="$emit('remove-podcast')">Remove podcast</a>
               </div>
               <div class="content is-small">
                 <p v-if="album.artist">
@@ -75,7 +75,7 @@ import webapi from '@/webapi'
 export default {
   name: 'ModalDialogAlbum',
   components: { CoverArtwork },
-  props: ['show', 'album', 'media_kind', 'new_tracks'],
+  props: ['show', 'album', 'media_kind', 'request_remove_button', 'new_tracks'],
 
   data () {
     return {
@@ -86,6 +86,10 @@ export default {
   computed: {
     artwork_url: function () {
       return webapi.artwork_url_append_size_params(this.album.artwork_url)
+    },
+
+    show_remove_button: function () {
+      return this.request_remove_button === undefined || this.request_remove_button
     },
 
     media_kind_resolved: function () {
