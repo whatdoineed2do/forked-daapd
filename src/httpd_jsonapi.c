@@ -3479,6 +3479,10 @@ jsonapi_reply_library_albums(struct httpd_request *hreq)
 	  DPRINTF(E_LOG, L_WEB, "Invalid media kind '%s'\n", param);
 	  return HTTP_BADREQUEST;
 	}
+ 
+      // Ask client not to cache this type of media since it can change
+      if (media_kind == MEDIA_KIND_PODCAST)
+        httpd_response_not_cachable(hreq->req);
     }
 
   reply = json_object_new_object();
