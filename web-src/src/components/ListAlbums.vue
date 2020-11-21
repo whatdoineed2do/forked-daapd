@@ -62,6 +62,7 @@
       <template slot="modal-content">
         <p>Permanently remove this podcast from your library?</p>
         <p class="is-size-7">(This will also remove the RSS playlist <b>{{ rss_playlist_to_remove.name }}</b>.)</p>
+        <p class="is-size-7 has-text-link">{{ rss_playlist_to_remove.path }}</p>
       </template>
     </modal-dialog>
   </div>
