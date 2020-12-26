@@ -6,6 +6,7 @@ import PageQueue from '@/pages/PageQueue'
 import PageNowPlaying from '@/pages/PageNowPlaying'
 import PageBrowse from '@/pages/PageBrowse'
 import PageBrowseRecentlyAdded from '@/pages/PageBrowseRecentlyAdded'
+import PageBrowseRecentlyAddedTracks from '@/pages/PageBrowseRecentlyAddedTracks'
 import PageBrowseRecentlyPlayed from '@/pages/PageBrowseRecentlyPlayed'
 import PageArtists from '@/pages/PageArtists'
 import PageArtist from '@/pages/PageArtist'
@@ -77,6 +78,12 @@ export const router = new VueRouter({
       path: '/music/browse/recently_added',
       name: 'Browse Recently Added',
       component: PageBrowseRecentlyAdded,
+      meta: { show_progress: true, has_tabs: true }
+    },
+    {
+      path: '/music/browse/recently_added_tracks',
+      name: 'Browse Recently Added Tracks',
+      component: PageBrowseRecentlyAddedTracks,
       meta: { show_progress: true, has_tabs: true }
     },
     {
