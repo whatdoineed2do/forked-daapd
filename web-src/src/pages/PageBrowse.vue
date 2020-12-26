@@ -20,6 +20,23 @@
       </template>
     </content-with-heading>
 
+    <content-with-heading>
+      <template slot="heading-left">
+        <p class="title is-4">Recently added</p>
+        <p class="heading">tracks</p>
+      </template>
+      <template slot="content">
+        <list-tracks :tracks="recently_added_tracks.items"></list-tracks>
+      </template>
+      <template slot="footer">
+        <nav class="level">
+          <p class="level-item">
+            <a class="button is-light is-small is-rounded" v-on:click="open_browse('recently_added_tracks')">Show more</a>
+          </p>
+        </nav>
+      </template>
+    </content-with-heading>
+
     <!-- Recently played -->
     <content-with-heading>
       <template slot="heading-left">
@@ -52,13 +69,15 @@ const browseData = {
   load: function (to) {
     return Promise.all([
       webapi.search({ type: 'album', expression: 'time_added after 8 weeks ago and media_kind is music having track_count > 3 order by time_added desc', limit: 3 }),
-      webapi.search({ type: 'track', expression: 'time_played after 8 weeks ago and media_kind is music order by time_played desc', limit: 3 })
+      webapi.search({ type: 'track', expression: 'time_played after 8 weeks ago and media_kind is music order by time_played desc', limit: 3 }),
+      webapi.search({ type: 'track', expression: 'time_added after 8 weeks ago and media_kind is music order by time_added desc', limit: 3 })
     ])
   },
 
   set: function (vm, response) {
     vm.recently_added = response[0].data.albums
     vm.recently_played = response[1].data.tracks
+    vm.recently_added_tracks = response[2].data.tracks
   }
 }
 
@@ -71,6 +90,7 @@ export default {
     return {
       recently_added: { items: [] },
       recently_played: { items: [] },
+      recently_added_tracks: { items: [] },
 
       show_track_details_modal: false,
       selected_track: {}
