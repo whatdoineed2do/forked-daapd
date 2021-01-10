@@ -13,6 +13,12 @@
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
+          <star-rating v-model="min_rating"
+            :star-size="17"
+            :show-rating="false"
+            :max-rating="5"
+            :increment="0.5"
+            @rating-selected="show_rating"></star-rating>
           <a class="button is-small is-light is-rounded" @click="show_artist_details_modal = true">
             <span class="icon"><i class="mdi mdi-dots-horizontal mdi-18px"></i></span>
           </a>
@@ -22,10 +28,10 @@
         </div>
       </template>
       <template slot="content">
-        <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artist">{{ artist.album_count }} albums</a> | {{ artist.track_count }} tracks</p>
-        <list-tracks :tracks="tracks.items" :uris="track_uris"></list-tracks>
+        <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artist">{{ album_count }} albums</a> | {{ track_count }} tracks</p>
+        <list-tracks :tracks="rated_tracks"></list-tracks>
         <modal-dialog-track :show="show_details_modal" :track="selected_track" @close="show_details_modal = false" />
-        <modal-dialog-artist :show="show_artist_details_modal" :artist="artist" @close="show_artist_details_modal = false" />
+        <modal-dialog-artist :show="show_artist_details_modal" :artist="modal_artist_obj" @close="show_artist_details_modal = false" />
       </template>
     </content-with-heading>
   </div>
@@ -40,6 +46,7 @@ import ModalDialogTrack from '@/components/ModalDialogTrack'
 import ModalDialogArtist from '@/components/ModalDialogArtist'
 import TabsMusic from '@/components/TabsMusic'
 import IndexList from '@/components/IndexList'
+import StarRating from 'vue-star-rating'
 import webapi from '@/webapi'
 
 const tracksData = {
@@ -61,7 +68,7 @@ const tracksData = {
 export default {
   name: 'PageArtistTracks',
   mixins: [LoadDataBeforeEnterMixin(tracksData)],
-  components: { ContentWithHeading, ListTracks, IndexButtonList, ModalDialogArtist, ModalDialogTrack, IndexList, TabsMusic },
+  components: { ContentWithHeading, ListTracks, IndexButtonList, ModalDialogArtist, ModalDialogTrack, IndexList, TabsMusic, StarRating },
 
   data () {
     return {
@@ -69,6 +76,7 @@ export default {
       id: '',
       artist: {},
       tracks: { items: [] },
+      min_rating: 0,
 
       show_details_modal: false,
       selected_track: {},
@@ -112,6 +120,13 @@ export default {
   },
 
   methods: {
+    show_rating: function (rating) {
+      if (rating === 0.5) {
+        rating = 0
+      }
+      this.min_rating = Math.ceil(rating) * 20
+    },
+
     open_artist: function () {
       this.show_details_modal = false
       this.$router.push({ path: '/music/artists/' + this.id })
