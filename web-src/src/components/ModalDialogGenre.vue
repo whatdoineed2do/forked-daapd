@@ -51,17 +51,29 @@ export default {
   methods: {
     play: function () {
       this.$emit('close')
-      webapi.player_play_expression('genre is "' + this.genre.name + '" and media_kind is music', false)
+      if (this.genre.uri === undefined) {
+        webapi.player_play_expression('genre is "' + this.genre.name + '" and media_kind is music', false)
+      } else {
+        webapi.player_play_uri(this.genre.uri, false)
+      }
     },
 
     queue_add: function () {
       this.$emit('close')
-      webapi.queue_expression_add('genre is "' + this.genre.name + '" and media_kind is music')
+      if (this.genre.uri === undefined) {
+        webapi.queue_expression_add('genre is "' + this.genre.name + '" and media_kind is music')
+      } else {
+        webapi.queue_add(this.genre.uri)
+      }
     },
 
     queue_add_next: function () {
       this.$emit('close')
-      webapi.queue_expression_add_next('genre is "' + this.genre.name + '" and media_kind is music')
+      if (this.genre.uri === undefined) {
+        webapi.queue_expression_add_next('genre is "' + this.genre.name + '" and media_kind is music')
+      } else {
+        webapi.queue_add_next(this.genre.uri)
+      }
     },
 
     open_albums: function () {
