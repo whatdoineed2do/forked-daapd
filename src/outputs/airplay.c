@@ -4119,7 +4119,7 @@ airplay_device_cb(const char *name, const char *type, const char *domain, const 
   features = keyval_get(txt, "features");
   if (!features || !strchr(features, ','))
     {
-      DPRINTF(E_WARN, L_AIRPLAY, "Not using AirPlay 2 for device '%s' as it does not have required 'features' in TXT field\n", name);
+      DPRINTF(E_DBG, L_AIRPLAY, "Not using AirPlay 2 for device '%s' as it does not have required 'features' (%s) in TXT field\n", name, features ? features : "<null>");
       goto free_rd;
     }
 
