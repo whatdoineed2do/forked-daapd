@@ -623,6 +623,9 @@ db_file_ping_bymatch(const char *path, int isdir);
 void
 db_file_ping_excl_bymatch(const char *path);
 
+void
+db_file_artwork_ping_bymatch(const char *path);
+
 char *
 db_file_path_byid(int id);
 

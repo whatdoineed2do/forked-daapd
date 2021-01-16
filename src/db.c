@@ -2723,6 +2723,13 @@ db_file_ping_excl_bymatch(const char *path)
 #undef Q_TMPL_DIR
 }
 
+void
+db_file_artwork_ping_bymatch(const char *path)
+{
+  db_file_ping_bymatch(path, 1);
+  db_admin_setint64(DB_ADMIN_DB_UPDATE, (int64_t) time(NULL));
+}
+
 char *
 db_file_path_byid(int id)
 {
