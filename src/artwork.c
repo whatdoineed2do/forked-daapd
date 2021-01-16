@@ -1854,7 +1854,7 @@ process_group(struct artwork_ctx *ctx)
       goto invalid_group;
     }
 
-  is_valid = (db_query_fetch_file(&ctx->qp, &dbmfi) == 0 && dbmfi.id && strcmp(dbmfi.album, CFG_NAME_UNKNOWN_ALBUM) != 0 && strcmp(dbmfi.album_artist, CFG_NAME_UNKNOWN_ARTIST) != 0);
+  is_valid = (db_query_fetch_file(&ctx->qp, &dbmfi) == 0 && dbmfi.id && strcmp(dbmfi.album_artist, CFG_NAME_UNKNOWN_ARTIST) != 0);
   db_query_end(&ctx->qp);
   if (!is_valid)
     {
