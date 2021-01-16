@@ -427,6 +427,7 @@ static const ssize_t dbgri_cols_map[] =
     dbgri_offsetof(time_added),
     dbgri_offsetof(time_played),
     dbgri_offsetof(seek),
+    dbgri_offsetof(db_timestamp),
   };
 
 /* This list must be kept in sync with
@@ -2228,17 +2229,17 @@ db_build_query_group_albums(struct query_params *qp, struct query_clause *qc)
 
   count = sqlite3_mprintf("SELECT COUNT(DISTINCT f.songalbumid) FROM files f %s;", qc->where);
   query = sqlite3_mprintf(
-	  "SELECT g.id, g.persistentid, "
-	         "f.album, f.album_sort, "
-		 "COUNT(f.id) as track_count, "
-	         "COUNT(DISTINCT f.songartistid) as artist_count, "
-		 "COUNT(DISTINCT f.songalbumid) as album_count, "
-	         "CASE WHEN COUNT(DISTINCT f.songartistid) > 1 THEN 'Various Artists' ELSE f.album_artist END as album_artist, "
-	         "GROUP_CONCAT(DISTINCT f.songartistid) as songartistid, "
-	         "SUM(f.song_length), MIN(f.data_kind), MIN(f.media_kind), MAX(f.year), MAX(f.date_released), "
-                 "MAX(f.time_added), MAX(f.time_played), MAX(f.seek) "
-	    "FROM files f JOIN groups g ON f.songalbumid = g.persistentid %s "
-	"GROUP BY f.songalbumid %s %s %s;", qc->where, qc->having, qc->order, qc->index);
+          "SELECT g.id, g.persistentid, "
+                 "f.album, f.album_sort, "
+                 "COUNT(f.id) as track_count, "
+                 "COUNT(DISTINCT f.songartistid) as artist_count, "
+                 "COUNT(DISTINCT f.songalbumid) as album_count, "
+                 "CASE WHEN COUNT(DISTINCT f.songartistid) > 1 THEN 'Various Artists' ELSE f.album_artist END as album_artist, "
+                 "GROUP_CONCAT(DISTINCT f.songartistid) as songartistid, "
+                 "SUM(f.song_length), MIN(f.data_kind), MIN(f.media_kind), MAX(f.year), MAX(f.date_released), "
+                 "MAX(f.time_added), MAX(f.time_played), MAX(f.seek), MAX(f.db_timestamp) "
+            "FROM files f JOIN groups g ON f.songalbumid = g.persistentid %s "
+        "GROUP BY f.songalbumid %s %s %s;", qc->where, qc->having, qc->order, qc->index);
 
   return db_build_query_check(qp, count, query);
 }
@@ -2283,31 +2284,31 @@ db_build_query_group_artists(struct query_params *qp, struct query_clause *qc)
 
   count = sqlite3_mprintf("SELECT COUNT(DISTINCT g.id) FROM groups g JOIN files f ON g.persistentid = f.songtrackartistid OR g.persistentid = f.songartistid %s;", qc->where);
   query = sqlite3_mprintf(
-	  "SELECT id, persistentid, album_artist, album_artist_sort, track_count, artist_count, album_count, artist, tmpartistid, sum, data_kind, media_kind, year, date_released, time_added, time_played, seek "
-	    "FROM ( "
-	  "SELECT g.id, g.persistentid, "
-	         "f.album_artist, f.album_artist_sort, "
-		 "COUNT(f.id) as track_count, "
-		 "COUNT(DISTINCT f.songartistid) as artist_count, "
-		 "COUNT(DISTINCT f.songalbumid) as album_count, "
-		 "GROUP_CONCAT(DISTINCT f.album_artist) as artist, GROUP_CONCAT(DISTINCT f.songartistid) as tmpartistid, "
-		 "SUM(f.song_length) as sum, MIN(f.data_kind) as data_kind, MIN(f.media_kind) as media_kind, MAX(f.year) as year, MAX(f.date_released) as date_released, "
-                 "MAX(f.time_added) as time_added, MAX(f.time_played) as time_played, MAX(f.seek) as seek "
-		 "%s "
-	    "FROM files f JOIN groups g ON f.songartistid = g.persistentid AND f.songtrackartistid != f.songartistid %s "
-	"GROUP BY f.songartistid %s "
-	   "UNION "
-	  "SELECT g.id, g.persistentid, "
-	         "f.artist, f.artist_sort, "
-		 "COUNT(f.id) as track_count, "
-		 "COUNT(DISTINCT f.songtrackartistid) as artist_count, "
-		 "COUNT(DISTINCT f.songalbumid) as album_count, "
-		 "f.artist as artist, f.songtrackartistid as tmpartistid, "
-		 "SUM(f.song_length) as sum, MIN(f.data_kind) as data_kind, MIN(f.media_kind) as media_kind, MAX(f.year) as year, MAX(f.date_released) as date_released, "
-                 "MAX(f.time_added) as time_added, MAX(f.time_played) as time_played, MAX(f.seek) as seek "
-		 "%s "
-	    "FROM files f JOIN groups g ON f.songtrackartistid = g.persistentid %s "
-	"GROUP BY f.songtrackartistid %s %s %s "
+          "SELECT id, persistentid, album_artist, album_artist_sort, track_count, artist_count, album_count, artist, tmpartistid, sum, data_kind, media_kind, year, date_released, time_added, time_played, seek, db_timestamp "
+            "FROM ( "
+          "SELECT g.id, g.persistentid, "
+                 "f.album_artist, f.album_artist_sort, "
+                 "COUNT(f.id) as track_count, "
+                 "COUNT(DISTINCT f.songartistid) as artist_count, "
+                 "COUNT(DISTINCT f.songalbumid) as album_count, "
+                 "GROUP_CONCAT(DISTINCT f.album_artist) as artist, GROUP_CONCAT(DISTINCT f.songartistid) as tmpartistid, "
+                 "SUM(f.song_length) as sum, MIN(f.data_kind) as data_kind, MIN(f.media_kind) as media_kind, MAX(f.year) as year, MAX(f.date_released) as date_released, "
+                 "MAX(f.time_added) as time_added, MAX(f.time_played) as time_played, MAX(f.seek) as seek, MAX(f.db_timestamp) as db_timestamp "
+                 "%s "
+            "FROM files f JOIN groups g ON f.songartistid = g.persistentid AND f.songtrackartistid != f.songartistid %s "
+        "GROUP BY f.songartistid %s "
+           "UNION "
+          "SELECT g.id, g.persistentid, "
+                 "f.artist, f.artist_sort, "
+                 "COUNT(f.id) as track_count, "
+                 "COUNT(DISTINCT f.songtrackartistid) as artist_count, "
+                 "COUNT(DISTINCT f.songalbumid) as album_count, "
+                 "f.artist as artist, f.songtrackartistid as tmpartistid, "
+                 "SUM(f.song_length) as sum, MIN(f.data_kind) as data_kind, MIN(f.media_kind) as media_kind, MAX(f.year) as year, MAX(f.date_released) as date_released, "
+                 "MAX(f.time_added) as time_added, MAX(f.time_played) as time_played, MAX(f.seek) as seek, MAX(f.db_timestamp) as db_timestamp "
+                 "%s "
+            "FROM files f JOIN groups g ON f.songtrackartistid = g.persistentid %s "
+        "GROUP BY f.songtrackartistid %s %s %s "
 	         ");",
 	unioncols, qc->where, qc->having,
 	unioncols, qc->where, qc->having, qc->order, qc->index);
