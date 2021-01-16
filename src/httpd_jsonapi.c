@@ -212,7 +212,7 @@ artist_to_json(struct db_group_info *dbgri)
   if (ret < sizeof(uri))
     json_object_object_add(item, "uri", json_object_new_string(uri));
 
-  ret = snprintf(artwork_url, sizeof(artwork_url), "./artwork/group/%s", dbgri->id);
+  ret = snprintf(artwork_url, sizeof(artwork_url), "./artwork/group/%s?v=%s", dbgri->id, dbgri->db_timestamp);
   if (ret < sizeof(artwork_url))
     json_object_object_add(item, "artwork_url", json_object_new_string(artwork_url));
 
@@ -263,7 +263,7 @@ album_to_json(struct db_group_info *dbgri)
   if (ret < sizeof(uri))
     json_object_object_add(item, "uri", json_object_new_string(uri));
 
-  ret = snprintf(artwork_url, sizeof(artwork_url), "./artwork/group/%s", dbgri->id);
+  ret = snprintf(artwork_url, sizeof(artwork_url), "./artwork/group/%s?v=%s", dbgri->id, dbgri->db_timestamp);
   if (ret < sizeof(artwork_url))
     json_object_object_add(item, "artwork_url", json_object_new_string(artwork_url));
 
