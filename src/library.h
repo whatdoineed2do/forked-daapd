@@ -89,6 +89,11 @@ struct library_source
   int (*fullrescan)(void);
 
   /*
+   * Run rescan (called from the library thread)
+   */
+  int (*rescan_path)(const char *path);
+
+  /*
    * Add an item to the library
    */
   int (*item_add)(const char *path);
@@ -173,6 +178,9 @@ library_rescan(enum scan_kind library_source);
  */
 void
 library_metarescan(enum scan_kind library_source);
+
+void
+library_rescan_path(const char *path);
 
 /*
  * Wipe library and do a full rescan of all library sources
