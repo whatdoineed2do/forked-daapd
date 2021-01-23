@@ -1246,10 +1246,23 @@ static int
 jsonapi_reply_update(struct httpd_request *hreq)
 {
   const char *param;
+  const char *path_param;
 
   param = evhttp_find_header(hreq->query, "scan_kind");
+  path_param = evhttp_find_header(hreq->query, "path");
 
-  library_rescan(db_scan_kind_enum(param));
+  if (path_param)
+    {
+      if (param && db_scan_kind_enum(param) != SCAN_KIND_FILES)
+	return HTTP_BADREQUEST;
+
+      library_rescan_path(path_param);
+    }
+  else
+    {
+      library_rescan(db_scan_kind_enum(param));
+    }
+
   return HTTP_NOCONTENT;
 }
 
