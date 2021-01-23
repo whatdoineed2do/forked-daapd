@@ -1162,6 +1162,7 @@ process_inotify_dir(struct watch_info *wi, char *path, struct inotify_event *ie)
       db_directory_disable_bymatch(path, STRIP_NONE, 0);
     }
 
+  DPRINTF(E_LOG, L_SCAN, "processing: %s\n", path);
   if (ie->mask & IN_MOVE_SELF)
     {
       /* A directory we know about, that got moved from a place
@@ -1455,6 +1456,7 @@ process_inotify_file(struct watch_info *wi, char *path, struct inotify_event *ie
 
       dir_id = get_parent_dir_id(file);
 
+      DPRINTF(E_LOG, L_SCAN, "processing: %s\n", path);
       if (S_ISDIR(sb.st_mode))
         {
 	  process_inotify_dir(wi, resolved_path, ie);
