@@ -1444,10 +1444,17 @@ static int
 jsonapi_reply_update(struct httpd_request *hreq)
 {
   const char *param;
+  const char *param_path;
 
   param = evhttp_find_header(hreq->query, "scan_kind");
+  param_path = evhttp_find_header(hreq->query, "path");
 
-  library_rescan(db_scan_kind_enum(param));
+
+  if (param_path)
+    library_rescan_path(param_path);
+  else
+    library_rescan(db_scan_kind_enum(param));
+
   return HTTP_NOCONTENT;
 }
 
