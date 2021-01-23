@@ -152,7 +152,7 @@ static uint32_t incomingfiles_buffer[INCOMINGFILES_BUFFER_SIZE];
 
 /* Forward */
 static void
-bulk_scan(int flags);
+bulk_scan(const char *req_path, int flags);
 static int
 inofd_event_set(void);
 static void
@@ -1019,7 +1019,7 @@ process_directories(char *root, int parent_id, int flags)
 
 /* Thread: scan */
 static void
-bulk_scan(int flags)
+bulk_scan(const char *req_path, int flags)
 {
   cfg_t *lib;
   int ndirs;
@@ -1044,6 +1044,18 @@ bulk_scan(int flags)
   for (i = 0; i < ndirs; i++)
     {
       path = cfg_getnstr(lib, "directories", i);
+
+      // make sure path is in library if we've been asked to scan a specific path
+      if (req_path)
+        {
+          if (strncmp(path, req_path, strlen(path)) == 0)
+            path = (char*)req_path;
+          else
+            {
+              DPRINTF(E_LOG, L_SCAN, "Skipping request path: '%s', not in library directories\n", req_path);
+              continue;
+            }
+        }
 
       parent_id = process_parent_directories(path);
 
@@ -1682,9 +1694,9 @@ filescanner_initscan()
     }
 
   if (cfg_getbool(cfg_getsec(cfg, "library"), "filescan_disable"))
-    bulk_scan(F_SCAN_BULK | F_SCAN_FAST);
+    bulk_scan(NULL, F_SCAN_BULK | F_SCAN_FAST);
   else
-    bulk_scan(F_SCAN_BULK);
+    bulk_scan(NULL, F_SCAN_BULK);
 
   if (!library_is_exiting())
     {
@@ -1702,7 +1714,24 @@ filescanner_rescan()
   inofd_event_unset(); // Clears all inotify watches
   db_watch_clear();
   inofd_event_set();
-  bulk_scan(F_SCAN_BULK | F_SCAN_RESCAN);
+  bulk_scan(NULL, F_SCAN_BULK | F_SCAN_RESCAN);
+
+  if (!library_is_exiting())
+    {
+      /* Enable inotify */
+      event_add(inoev, NULL);
+    }
+  return 0;
+}
+
+static int
+filescanner_rescan_path(const char *path)
+{
+  DPRINTF(E_LOG, L_SCAN, "rescan triggered for '%s'\n", path);
+
+  db_watch_delete_bypath((char*)path);
+  db_watch_delete_bymatch((char*)path);
+  bulk_scan(path, F_SCAN_BULK | F_SCAN_RESCAN);
 
   if (!library_is_exiting())
     {
@@ -1720,7 +1749,7 @@ filescanner_metarescan()
   inofd_event_unset(); // Clears all inotify watches
   db_watch_clear();
   inofd_event_set();
-  bulk_scan(F_SCAN_BULK | F_SCAN_METARESCAN);
+  bulk_scan(NULL, F_SCAN_BULK | F_SCAN_METARESCAN);
 
   if (!library_is_exiting())
     {
@@ -1737,7 +1766,7 @@ filescanner_fullrescan()
 
   inofd_event_unset(); // Clears all inotify watches
   inofd_event_set();
-  bulk_scan(F_SCAN_BULK);
+  bulk_scan(NULL, F_SCAN_BULK);
 
   if (!library_is_exiting())
     {
@@ -2249,6 +2278,7 @@ struct library_source filescanner =
   .deinit = filescanner_deinit,
   .initscan = filescanner_initscan,
   .rescan = filescanner_rescan,
+  .rescan_path = filescanner_rescan_path,
   .metarescan = filescanner_metarescan,
   .fullrescan = filescanner_fullrescan,
   .write_metadata = filescanner_write_metadata,
