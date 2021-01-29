@@ -1045,6 +1045,9 @@ int
 db_watch_enum_fetchwd(struct watch_enum *we, uint32_t *wd);
 
 int
+db_watch_enum_fetch(struct watch_enum *we, struct watch_info *wi);
+
+int
 db_backup(void);
 
 int
