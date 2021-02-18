@@ -20,6 +20,9 @@
               <a class="card-footer-item has-text-dark" @click="play">
                 <span class="icon"><i class="mdi mdi-play"></i></span> <span class="is-size-7">Play</span>
               </a>
+              <a class="card-footer-item has-text-dark" @click="update_rescan">
+                <span class="icon"><i class="mdi mdi-harddisk"></i></span> <span class="is-size-7">Update/Rescan</span>
+              </a>
             </footer>
           </div>
         </div>
@@ -40,6 +43,11 @@ export default {
     play: function () {
       this.$emit('close')
       webapi.player_play_expression('path starts with "' + this.directory.path + '" order by path asc', false)
+    },
+
+    update_rescan: function () {
+      this.$emit('close')
+      webapi.library_update(null, this.directory.path)
     },
 
     queue_add: function () {

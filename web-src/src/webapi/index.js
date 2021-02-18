@@ -27,10 +27,13 @@ export default {
     return axios.get('./api/library')
   },
 
-  library_update (scanKind) {
+  library_update (scanKind, path) {
     const params = {}
     if (scanKind) {
       params.scan_kind = scanKind
+    }
+    if (path) {
+      params.path = path
     }
     return axios.put('./api/update', undefined, { params: params })
   },
