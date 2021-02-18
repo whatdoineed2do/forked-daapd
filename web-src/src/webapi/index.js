@@ -27,8 +27,12 @@ export default {
     return axios.get('./api/library')
   },
 
-  library_update () {
-    return axios.put('./api/update')
+  library_update (path) {
+    if (path) {
+      return axios.put('./api/update?path=' + path)
+    } else {
+      return axios.put('./api/update')
+    }
   },
 
   library_rescan () {
