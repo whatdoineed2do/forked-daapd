@@ -3,11 +3,13 @@
     <div v-if="now_playing.id > 0" class="fd-is-fullheight">
       <div class="has-text-centered fd-has-padding-left-right"><star-rating v-model="rating"
         :star-size="17"
-        :padding="3"
+        :padding="5"
         :show-rating="false"
         :max-rating="5"
-        :increment="0.5"
+        :increment="1"
         :inline="true"
+        :clearable="true"
+        :active-on-click="true"
         @rating-selected="rate_track"></star-rating> </div>
       <div class="fd-is-expanded">
         <cover-artwork @click="open_dialog(now_playing)"
