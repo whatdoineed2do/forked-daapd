@@ -387,7 +387,7 @@ export default {
 
   library_track_set_rating (trackId, rating) {
     return axios.put('/api/library/tracks/' + trackId, undefined, { params: { rating: rating } }).then((response) => {
-      store.dispatch('add_notification', { text: 'track rating updated', type: 'info', timeout: 1500 })
+      store.dispatch('add_notification', { text: rating === 0 ? 'Track Rating Reset' : 'Track Rating Updated', type: rating === 0 ? 'success' : 'info', timeout: 1500 })
       return Promise.resolve(response)
     })
   },
