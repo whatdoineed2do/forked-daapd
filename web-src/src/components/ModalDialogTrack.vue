@@ -72,6 +72,16 @@
                 </p>
                 <p>
                   <span class="heading">Rating</span>
+                  <span class="heading"><star-rating v-model="rating"
+                    :star-size="24"
+                    :padding="7"
+                    :show-rating="false"
+                    :max-rating="5"
+                    :increment="1"
+                    :inline="true"
+                    :clearable="true"
+                    :active-on-click="true"
+                    @rating-selected="rate_track"></star-rating> </span>
                   <span class="title is-6">{{ Math.floor(track.rating / 10) }} / 10</span>
                 </p>
                 <p v-if="track.comment">
@@ -102,14 +112,17 @@
 <script>
 import webapi from '@/webapi'
 import SpotifyWebApi from 'spotify-web-api-js'
+import StarRating from 'vue-star-rating'
 
 export default {
   name: 'ModalDialogTrack',
+  components: { StarRating },
 
   props: ['show', 'track'],
 
   data () {
     return {
+      rating: 0,
       spotify_track: {}
     }
   },
@@ -118,6 +131,14 @@ export default {
     play_track: function () {
       this.$emit('close')
       webapi.player_play_uri(this.track.uri, false)
+    },
+
+    rate_track: function (rating) {
+      if (rating === 0.5) {
+        rating = 0
+      }
+      this.rating = Math.ceil(rating) * 20
+      webapi.library_track_set_rating(this.track.id, this.rating)
     },
 
     queue_add: function () {
@@ -187,6 +208,7 @@ export default {
         })
       } else {
         this.spotify_track = {}
+        this.rating = this.track.rating
       }
     }
   }
