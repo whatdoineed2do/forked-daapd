@@ -1,11 +1,13 @@
 <template>
   <div>
+    <tabs-music></tabs-music>
+
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
-      <template slot="options">
-        <index-button-list :index="index_list"></index-button-list>
-      </template>
       <template slot="heading-left">
         <p class="title is-4">{{ genre }}</p>
+        <p class="heading">{{ tracks.total }} tracks</p>
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
@@ -29,9 +31,10 @@
 <script>
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
-import IndexButtonList from '@/components/IndexButtonList'
 import ListTracks from '@/components/ListTracks'
+import TabsMusic from '@/components/TabsMusic'
 import ModalDialogGenre from '@/components/ModalDialogGenre'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 
 const tracksData = {
@@ -48,7 +51,7 @@ const tracksData = {
 export default {
   name: 'PageGenreTracks',
   mixins: [LoadDataBeforeEnterMixin(tracksData)],
-  components: { ContentWithHeading, ListTracks, IndexButtonList, ModalDialogGenre },
+  components: { ContentWithHeading, ListTracks, ModalDialogGenre, IndexList, TabsMusic },
 
   data () {
     return {
