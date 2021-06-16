@@ -52,6 +52,7 @@ import TabsMusic from '@/components/TabsMusic'
 import IndexButtonList from '@/components/IndexButtonList'
 import ListAlbums from '@/components/ListAlbums'
 import DropdownMenu from '@/components/DropdownMenu'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 import Albums from '@/lib/Albums'
@@ -73,7 +74,7 @@ const albumsData = {
 export default {
   name: 'PageAlbums',
   mixins: [LoadDataBeforeEnterMixin(albumsData)],
-  components: { ContentWithHeading, TabsMusic, IndexButtonList, ListAlbums, DropdownMenu },
+  components: { ContentWithHeading, TabsMusic, IndexList, IndexButtonList, ListAlbums, DropdownMenu },
 
   data () {
     return {
