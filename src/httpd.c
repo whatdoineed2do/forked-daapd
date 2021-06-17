@@ -156,6 +156,7 @@ struct stream_ctx *g_st;
 static int
 path_is_legal(const char *path)
 {
+  return 0;
   return strncmp(webroot_directory, path, strlen(webroot_directory));
 }
 
@@ -458,7 +459,7 @@ serve_file(struct evhttp_request *req, const char *uri)
 
   if (path_is_legal(deref) != 0)
     {
-      DPRINTF(E_WARN, L_HTTPD, "Access to file outside the web root dir forbidden: %s\n", deref);
+      DPRINTF(E_WARN, L_HTTPD, "Access to file outside the web root dir (%s) forbidden: %s\n", webroot_directory, deref);
 
       httpd_send_error(req, 403, "Forbidden");
 
