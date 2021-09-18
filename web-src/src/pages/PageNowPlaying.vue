@@ -41,7 +41,7 @@
       </div>
       <div class="fd-has-padding-left-right">
         <div class="container has-text-centered fd-has-margin-top">
-          <h1 class="title is-5">
+          <h1 :class="{ 'title': true, 'is-5': true, 'has-text-grey': this.usermark > 0, 'is-italic': this.usermark > 0}">
             {{ now_playing.title }}
             <h2 class="subtitle is-7 has-text-grey" v-if="composer">
               {{ composer }}
@@ -71,7 +71,7 @@
         </div>
       </div>
     </div>
-    <modal-dialog-queue-item :show="show_details_modal" :item="selected_item" @close="show_details_modal = false" />
+    <modal-dialog-queue-item :show="show_details_modal" :item="selected_item" :np_usermark="this.usermark" @close="show_details_modal = false" @close_usermark="close_usermark_upd"/>
   </section>
 </template>
 
@@ -94,6 +94,7 @@ export default {
       interval_id: 0,
 
       rating: 0,
+      usermark: 0,
 
       show_details_modal: false,
       selected_item: {}
@@ -183,6 +184,11 @@ export default {
       webapi.library_track_set_rating(this.now_playing.track_id, this.rating * 20)
     },
 
+    close_usermark_upd: function (args) {
+      this.usermark = args.value
+      this.show_details_modal = false
+    },
+
     open_dialog: function (item) {
       this.selected_item = item
       this.show_details_modal = true
@@ -204,8 +210,10 @@ export default {
     'now_playing' () {
       webapi.library_track(this.now_playing.track_id).then((response) => {
         this.rating = response.data.rating / 20
+        this.usermark = response.data.usermark
       }).catch(() => {
         this.rating = 0
+        this.usermark = 0
       })
     }
   }
