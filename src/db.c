@@ -3598,11 +3598,11 @@ db_file_rating_update_byvirtualpath(const char *virtual_path, uint32_t rating)
 int
 db_file_usermark_update_byid(uint32_t id, uint32_t usermark)
 {
-#define Q_TMPL "UPDATE files SET usermark = %d WHERE id = %d;"
+#define Q_TMPL "UPDATE files SET usermark = %d, time_modified = %d WHERE id = %d;"
   char *query;
   int ret;
 
-  query = sqlite3_mprintf(Q_TMPL, usermark, id);
+  query = sqlite3_mprintf(Q_TMPL, usermark, time(NULL), id);
 
   ret = db_query_run(query, 1, 0);
 
