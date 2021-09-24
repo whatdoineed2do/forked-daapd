@@ -451,6 +451,7 @@ track_to_json(struct db_media_file_info *dbmfi)
   safe_json_add_time_from_string(item, "time_played", dbmfi->time_played);
   safe_json_add_time_from_string(item, "time_skipped", dbmfi->time_skipped);
   safe_json_add_time_from_string(item, "time_added", dbmfi->time_added);
+  safe_json_add_time_from_string(item, "time_modified", dbmfi->time_modified);
   safe_json_add_date_from_string(item, "date_released", dbmfi->date_released);
   safe_json_add_int_from_string(item, "seek_ms", dbmfi->seek);
 
