@@ -105,7 +105,7 @@
 
         <modal-dialog-directory :show="show_directory_details_modal" :directory="selected_directory" @close="show_directory_details_modal = false" />
         <modal-dialog-playlist :show="show_playlist_details_modal" :playlist="selected_playlist" @close="show_playlist_details_modal = false" />
-        <modal-dialog-track :show="show_track_details_modal" :track="selected_track" @close="show_track_details_modal = false" />
+        <modal-dialog-track :show="show_track_details_modal" :track="selected_track" @close="show_track_details_modal = false" @usermark-updated="usermark_upd"/>
       </template>
     </content-with-heading>
   </div>
@@ -250,6 +250,10 @@ export default {
     open_playlist_dialog: function (playlist) {
       this.selected_playlist = playlist
       this.show_playlist_details_modal = true
+    },
+
+    usermark_upd: function (args) {
+      this.files.tracks.items.find(e => e.id === args.track_id).usermark = args.value
     }
   }
 }

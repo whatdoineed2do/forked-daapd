@@ -22,7 +22,7 @@
         </div>
       </template>
       <template slot="content">
-        <list-tracks :tracks="recently_added_today.items"></list-tracks>
+        <list-tracks :tracks="recently_added_today.items" @usermark-updated="usermark_upd_today"></list-tracks>
         <modal-dialog-tracks :show="show_modal_today" title='Recently Added - Today' :tracks="recently_added_today" @close="show_modal_today = false" />
       </template>
     </content-with-heading>
@@ -40,7 +40,7 @@
         </div>
       </template>
       <template slot="content">
-        <list-tracks :tracks="recently_added_week.items"></list-tracks>
+        <list-tracks :tracks="recently_added_week.items" @usermark-updated="usermark_upd_week"></list-tracks>
         <modal-dialog-tracks :show="show_modal_week" title='Recently Added - Past Week' :tracks="recently_added_week" @close="show_modal_week = false" />
       </template>
     </content-with-heading>
@@ -58,7 +58,7 @@
         </div>
       </template>
       <template slot="content">
-        <list-tracks :tracks="recently_added_month.items"></list-tracks>
+        <list-tracks :tracks="recently_added_month.items" @usermark-updated="usermark_upd_month"></list-tracks>
         <modal-dialog-tracks :show="show_modal_month" title='Recently Added - Past Month' :tracks="recently_added_month" @close="show_modal_month = false" />
       </template>
     </content-with-heading>
@@ -76,7 +76,7 @@
         </div>
       </template>
       <template slot="content">
-        <list-tracks :tracks="recently_added_older.items"></list-tracks>
+        <list-tracks :tracks="recently_added_older.items" @usermark-updated="usermark_upd_older"></list-tracks>
         <modal-dialog-tracks :show="show_modal_older" title='Recently Added - Older than Month' :tracks="recently_added_older" @close="show_modal_older = false" />
       </template>
     </content-with-heading>
@@ -150,6 +150,25 @@ export default {
       }).then(({ data }) => {
         this.recently_added_older = data.tracks
       })
+    }
+  },
+
+  methods: {
+    usermark_upd_today: function (args) {
+      this.usermark_upd(this.recently_added_today.items, args)
+    },
+    usermark_upd_week: function (args) {
+      this.usermark_upd(this.recently_added_week.items, args)
+    },
+    usermark_upd_month: function (args) {
+      this.usermark_upd(this.recently_added_month.items, args)
+    },
+    usermark_upd_older: function (args) {
+      this.usermark_upd(this.recently_added_older.items, args)
+    },
+
+    usermark_upd: function (what, args) {
+      what.find(e => e.id === args.track_id).usermark = args.value
     }
   },
 
