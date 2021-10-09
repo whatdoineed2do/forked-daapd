@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TGRT=/media/public/_delete
+TRGT=/media/public/_delete
 readarray -t DIRT < <(curl -s "http://localhost:3689/api/search?type=tracks&expression=usermark+>+0" | jq -r ".tracks.items[] | select(.time_modified | fromdateiso8601 < $(date +%s --date="5days ago")) | .path" )
 readarray -t DIRT1 < <(curl -s "http://rpi1:3689/api/search?type=tracks&expression=usermark+>+0" | jq -r ".tracks.items[] | select(.time_modified | fromdateiso8601 < $(date +%s --date="2days ago")) | .path" )
 DIRT+=("${DIRT1[@]}")
