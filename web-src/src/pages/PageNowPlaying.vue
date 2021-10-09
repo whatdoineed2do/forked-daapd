@@ -208,13 +208,18 @@ export default {
     },
 
     'now_playing' () {
-      webapi.library_track(this.now_playing.track_id).then((response) => {
-        this.rating = response.data.rating / 20
-        this.usermark = response.data.usermark
-      }).catch(() => {
-        this.rating = 0
-        this.usermark = 0
-      })
+      if (this.now_playing.track_id !== undefined) {
+        webapi.library_track(this.now_playing.track_id).then((response) => {
+          this.rating = response.data.rating / 20
+          this.usermark = response.data.usermark
+        }).catch((err) => {
+          this.rating = 0
+          this.usermark = 0
+          if (err.response.status === 404) {
+            webapi.queue_remove(this.now_playing.id)
+          }
+        })
+      }
     }
   }
 }

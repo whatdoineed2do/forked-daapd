@@ -184,8 +184,11 @@ export default {
         } else if (this.item.data_kind === 'file') {
           webapi.library_track(this.item.track_id).then((response) => {
             this.usermark = response.data.usermark
-          }).catch(() => {
+          }).catch((err) => {
             this.usermark = -1
+            if (err.response.status === 404) {
+              webapi.queue_remove(this.item.id)
+            }
           })
         }
       }
