@@ -3458,8 +3458,7 @@ jsonapi_reply_library_tracks_put(struct httpd_request *hreq)
       if (!mfi)
 	{
 	  DPRINTF(E_LOG, L_WEB, "Unknown track_id %d in json tracks request\n", track_id);
-	  err = HTTP_NOTFOUND;
-	  goto error;
+	  goto next;
 	}
 
       ret = json_to_track(mfi, track);
@@ -3478,6 +3477,7 @@ jsonapi_reply_library_tracks_put(struct httpd_request *hreq)
 
       free_mfi(mfi, 0);
       mfi = NULL;
+next:
       i++;
     }
 
