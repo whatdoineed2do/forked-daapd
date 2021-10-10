@@ -3367,8 +3367,7 @@ jsonapi_reply_library_tracks_put(struct httpd_request *hreq)
       if (!db_file_id_exists(track_id))
 	{
 	  DPRINTF(E_LOG, L_WEB, "Unknown track_id %d in json tracks request\n", track_id);
-	  err = HTTP_NOTFOUND;
-	  goto error;
+	  goto next;
 	}
 
       // These are async, so no error check
@@ -3379,6 +3378,7 @@ jsonapi_reply_library_tracks_put(struct httpd_request *hreq)
       if (jparse_contains_key(track, "play_count", json_type_int))
 	library_item_attrib_save(track_id, LIBRARY_ATTRIB_PLAY_COUNT, jparse_int_from_obj(track, "play_count"));
 
+next:
       i++;
     }
 
