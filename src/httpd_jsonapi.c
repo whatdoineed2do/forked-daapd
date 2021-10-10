@@ -3384,8 +3384,7 @@ jsonapi_reply_library_tracks_put(struct httpd_request *hreq)
       if (!db_file_id_exists(track_id))
 	{
 	  DPRINTF(E_LOG, L_WEB, "Unknown track_id %d in json tracks request\n", track_id);
-	  err = HTTP_NOTFOUND;
-	  goto error;
+	  goto next;
 	}
 
       for (j = 0; j < ARRAY_SIZE(track_attribs); j++)
@@ -3401,6 +3400,7 @@ jsonapi_reply_library_tracks_put(struct httpd_request *hreq)
 	  library_item_attrib_save(track_id, track_attribs[j].type, ret);
 	}
 
+next:
       i++;
     }
 
