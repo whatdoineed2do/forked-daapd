@@ -74,6 +74,7 @@
 #define F_SCAN_FAST    (1 << 2)
 #define F_SCAN_MOVED   (1 << 3)
 #define F_SCAN_METARESCAN  (1 << 4)
+#define F_SCAN_TIMEADDED_FILE (1 << 5)
 
 #define F_SCAN_TYPE_FILE         (1 << 0)
 #define F_SCAN_TYPE_PODCAST      (1 << 1)
@@ -581,6 +582,8 @@ process_regular_file(const char *file, struct stat *sb, int type, int flags, int
   mfi.path = strdup(file);
 
   mfi.time_modified = sb->st_mtime;
+  if (flags & F_SCAN_TIMEADDED_FILE)
+    mfi.time_added = sb->st_mtime;
   mfi.file_size = sb->st_size;
 
   snprintf(virtual_path, PATH_MAX, "/file:%s", file);
@@ -898,7 +901,7 @@ process_directory(char *path, int parent_id, int flags)
       else if (!(flags & F_SCAN_FAST))
 	{
 	  if (S_ISREG(sb.st_mode) || S_ISFIFO(sb.st_mode))
-	    process_file(resolved_path, &sb, file_type, scan_type, flags, dir_id);
+	    process_file(resolved_path, &sb, file_type, scan_type, flags | F_SCAN_TIMEADDED_FILE, dir_id);
 	  else
 	    DPRINTF(E_LOG, L_SCAN, "Skipping %s, not a directory, symlink, pipe nor regular file\n", entry);
 	}
