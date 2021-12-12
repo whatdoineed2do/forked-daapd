@@ -32,6 +32,9 @@ RestartSec=5
 StartLimitBurst=10
 StartLimitInterval=600
 
+# silence junk sent to journal
+StandardOutput=null
+
 [Install]
 WantedBy=multi-user.target
 
