@@ -21,6 +21,7 @@ import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import TabsMusic from '@/components/TabsMusic'
 import ListComposers from '@/components/ListComposers'
+import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
 import Composers from '@/lib/Composers'
 
