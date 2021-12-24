@@ -103,12 +103,12 @@ const browseData = {
       }),
       webapi.search({
         type: 'album',
-        expression: 'time_added after this week and media_kind is music order by time_added desc',
+        expression: 'time_added after this week and time_added before today and media_kind is music order by time_added desc',
         limit: recentlyAddedLimit
       }),
       webapi.search({
         type: 'album',
-        expression: 'time_added after last month and media_kind is music order by time_added desc',
+        expression: 'time_added after last month and time_added before this week and media_kind is music order by time_added desc',
         limit: recentlyAddedLimit
       })
     ])
@@ -141,7 +141,7 @@ export default {
   },
 
   mounted () {
-    const more = store.getters.settings_option_recently_added_limit - this.recently_added_month.items.length
+    const more = store.getters.settings_option_recently_added_limit - (this.recently_added_month.items.length + this.recently_added_week.items.length + this.recently_added_today.items.length)
     if (more) {
       webapi.search({
         type: 'album',
@@ -167,7 +167,7 @@ export default {
       return this.recently_added_older.items.length > 0
     },
     recently_added () {
-      return this.recently_added_older.items.length + this.recently_added_month.items.length
+      return this.recently_added_older.items.length + this.recently_added_month.items.length + this.recently_added_week.items.length + this.recently_added_today.items.length
     }
   }
 }
