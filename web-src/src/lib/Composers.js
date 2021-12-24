@@ -18,7 +18,7 @@ export default class Composers {
 
   getComposerIndex (composer) {
     if (this.options.sort === 'Name') {
-      return composer.name_sort.charAt(0).toUpperCase()
+      return composer.name.charAt(0).toUpperCase()
     }
     return composer.time_added.substring(0, 4)
   }
