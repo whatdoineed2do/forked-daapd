@@ -115,9 +115,28 @@ const browseData = {
   },
 
   set: function (vm, response) {
+    let N = store.getters.settings_option_recently_added_limit
+
     vm.recently_added_today = response[0].data.albums
+    if (vm.recently_added_today.length > N) {
+      vm.recently_added_today.length = N
+      N = 0
+    } else {
+      N -= vm.recently_added_today.length
+    }
+
     vm.recently_added_week = response[1].data.albums
+    if (vm.recently_added_week.length > N) {
+      vm.recently_added_week.length = N
+      N = 0
+    } else {
+      N -= vm.recently_added_week.length
+    }
+
     vm.recently_added_month = response[2].data.albums
+    if (vm.recently_added_month.length > N) {
+      vm.recently_added_month.length = N
+    }
   }
 }
 
