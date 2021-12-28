@@ -4221,7 +4221,7 @@ db_directory_enum_end(struct directory_enum *de)
   de->stmt = NULL;
 }
 
-static int
+int
 db_directory_add(struct directory_info *di, int *id)
 {
 #define QADD_TMPL "INSERT INTO directories (virtual_path, db_timestamp, disabled, parent_id, path)" \
@@ -4276,7 +4276,7 @@ db_directory_add(struct directory_info *di, int *id)
 #undef QADD_TMPL
 }
 
-static int
+int
 db_directory_update(struct directory_info *di)
 {
 #define QADD_TMPL "UPDATE directories SET virtual_path = TRIM(%Q), db_timestamp = %d, disabled = %" PRIi64 ", parent_id = %d, path = TRIM(%Q), source = TRIM(%Q)" \
@@ -4313,36 +4313,6 @@ db_directory_update(struct directory_info *di)
   return 0;
 
 #undef QADD_TMPL
-}
-
-int
-db_directory_addorupdate(char *virtual_path, char *path, int disabled, int parent_id)
-{
-  struct directory_info di = { 0 };
-  int id;
-  int ret;
-
-  id = db_directory_id_byvirtualpath(virtual_path);
-
-  di.id = id;
-  di.parent_id = parent_id;
-  di.virtual_path = virtual_path;
-  di.path = path;
-  di.disabled = disabled;
-  di.db_timestamp = (uint64_t)time(NULL);
-
-  if (di.id == 0)
-    ret = db_directory_add(&di, &id);
-  else
-    ret = db_directory_update(&di);
-
-  if (ret < 0 || id <= 0)
-  {
-    DPRINTF(E_LOG, L_DB, "Insert or update of directory failed '%s'\n", virtual_path);
-    return -1;
-  }
-
-  return id;
 }
 
 void

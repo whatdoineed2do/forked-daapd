@@ -134,6 +134,9 @@ library_media_save(struct media_file_info *mfi);
 int
 library_playlist_save(struct playlist_info *pli);
 
+int
+library_directory_save(char *virtual_path, char *path, int disabled, int parent_id);
+
 /*
  * @param cb      Callback to call
  * @param arg     Argument to call back with

@@ -164,6 +164,36 @@ library_playlist_save(struct playlist_info *pli)
     return db_pl_update(pli);
 }
 
+int
+library_directory_save(char *virtual_path, char *path, int disabled, int parent_id)
+{
+  struct directory_info di = { 0 };
+  int id;
+  int ret;
+
+  id = db_directory_id_byvirtualpath(virtual_path);
+
+  di.id = id;
+  di.parent_id = parent_id;
+  di.virtual_path = virtual_path;
+  di.path = path;
+  di.disabled = disabled;
+  di.db_timestamp = (uint64_t)time(NULL);
+
+  if (di.id == 0)
+    ret = db_directory_add(&di, &id);
+  else
+    ret = db_directory_update(&di);
+
+  if (ret < 0 || id <= 0)
+  {
+    DPRINTF(E_LOG, L_DB, "Insert or update of directory failed '%s'\n", virtual_path);
+    return -1;
+  }
+
+  return id;
+}
+
 static void
 scheduled_cb(int fd, short what, void *arg)
 {

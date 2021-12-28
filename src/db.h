@@ -801,7 +801,10 @@ void
 db_directory_enum_end(struct directory_enum *de);
 
 int
-db_directory_addorupdate(char *virtual_path, char *path, int disabled, int parent_id);
+db_directory_add(struct directory_info *di, int *id);
+
+int
+db_directory_update(struct directory_info *di);
 
 void
 db_directory_ping_bymatch(char *virtual_path);

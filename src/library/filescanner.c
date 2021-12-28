@@ -826,7 +826,7 @@ process_directory(char *path, int parent_id, int flags)
   if (ret < 0)
     return;
 
-  dir_id = db_directory_addorupdate(virtual_path, path, 0, parent_id);
+  dir_id = library_directory_save(virtual_path, path, 0, parent_id);
   if (dir_id <= 0)
     {
       DPRINTF(E_LOG, L_SCAN, "Insert or update of directory failed '%s'\n", virtual_path);
@@ -957,7 +957,7 @@ process_parent_directories(char *path)
       if (ret < 0)
 	return 0;
 
-      dir_id = db_directory_addorupdate(virtual_path, buf, 0, dir_id);
+      dir_id = library_directory_save(virtual_path, buf, 0, dir_id);
       if (dir_id <= 0)
 	{
 	  DPRINTF(E_LOG, L_SCAN, "Insert or update of directory failed '%s'\n", virtual_path);
