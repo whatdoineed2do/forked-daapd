@@ -122,10 +122,10 @@ static struct library_callback_register library_cb_register[LIBRARY_MAX_CALLBACK
 int
 library_media_save(struct media_file_info *mfi)
 {
-  if (!mfi->path || !mfi->fname)
+  if (!mfi->path || !mfi->fname || !mfi->source)
     {
-      DPRINTF(E_LOG, L_LIB, "Ignoring media file with missing values (path='%s', fname='%s', data_kind='%d')\n",
-	      mfi->path, mfi->fname, mfi->data_kind);
+      DPRINTF(E_LOG, L_LIB, "Ignoring media file with missing values (path='%s', fname='%s', source='%s', data_kind='%d')\n",
+	      mfi->path, mfi->fname, mfi->source, mfi->data_kind);
       return -1;
     }
 
@@ -145,9 +145,10 @@ library_media_save(struct media_file_info *mfi)
 int
 library_playlist_save(struct playlist_info *pli)
 {
-  if (!pli->path)
+  if (!pli->path || !pli->source)
     {
-      DPRINTF(E_LOG, L_LIB, "Ignoring playlist file with missing path\n");
+      DPRINTF(E_LOG, L_LIB, "Ignoring playlist with missing values (path='%s', source='%s')\n",
+	      pli->path, pli->source);
       return -1;
     }
 

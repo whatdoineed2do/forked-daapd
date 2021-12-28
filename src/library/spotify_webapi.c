@@ -1872,6 +1872,7 @@ map_playlist_to_pli(struct playlist_info *pli, struct spotify_playlist *playlist
 
   pli->parent_id    = spotify_base_plid;
   pli->directory_id = DIR_SPOTIFY;
+  pli->source       = strdup(LIBRARY_SOURCE_SPOTIFY);
 
   if (playlist->owner)
     pli->virtual_path = safe_asprintf("/spotify:/%s (%s)", playlist->name, playlist->owner);
@@ -1942,6 +1943,7 @@ create_saved_tracks_playlist(void)
       .type = PL_PLAIN,
       .parent_id = spotify_base_plid,
       .directory_id = DIR_SPOTIFY,
+      .source = strdup(LIBRARY_SOURCE_SPOTIFY),
     };
 
   spotify_saved_plid = playlist_add_or_update(&pli);
@@ -1966,6 +1968,7 @@ create_base_playlist(void)
       .path = strdup("spotify:playlistfolder"),
       .title = strdup("Spotify"),
       .type = PL_FOLDER,
+      .source = strdup(LIBRARY_SOURCE_SPOTIFY),
     };
 
   spotify_base_plid = 0;
@@ -2327,7 +2330,7 @@ spotifywebapi_deinit()
 
 struct library_source spotifyscanner =
 {
-  .name = "spotifyscanner",
+  .name = LIBRARY_SOURCE_SPOTIFY,
   .disabled = 0,
   .init = spotifywebapi_init,
   .deinit = spotifywebapi_deinit,

@@ -438,6 +438,7 @@ playlist_fill(struct playlist_info *pli, const char *path)
   pli->path  = strdup(path);
   pli->title = strip_extension(filename); // Will alloc
   pli->virtual_path = strip_extension(virtual_path); // Will alloc
+  pli->source = strdup(LIBRARY_SOURCE_FILESCANNER);
 
   pli->directory_id = get_parent_dir_id(path);
 
@@ -2159,7 +2160,7 @@ filescanner_deinit(void)
 
 struct library_source filescanner =
 {
-  .name = "filescanner",
+  .name = LIBRARY_SOURCE_FILESCANNER,
   .disabled = 0,
   .init = filescanner_init,
   .deinit = filescanner_deinit,

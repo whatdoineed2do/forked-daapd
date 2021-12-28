@@ -217,6 +217,7 @@ playlist_fetch(bool *is_new, const char *path)
   pli->directory_id = DIR_HTTP;
   pli->type = PL_RSS;
   pli->query_limit = RSS_LIMIT_DEFAULT;
+  pli->source = strdup(LIBRARY_SOURCE_RSSSCANNER);
 
   ret = library_playlist_save(pli);
   if (ret < 0)
@@ -641,7 +642,7 @@ rss_add(const char *path)
 
 struct library_source rssscanner =
 {
-  .name = "RSS feeds",
+  .name = LIBRARY_SOURCE_RSSSCANNER,
   .disabled = 0,
   .initscan = rss_rescan,
   .rescan = rss_rescan,

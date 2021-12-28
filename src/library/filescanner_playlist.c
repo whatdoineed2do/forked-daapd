@@ -186,6 +186,7 @@ process_nested_playlist(int parent_id, const char *path)
     goto error;
 
   pli->type = PL_FOLDER;
+  pli->source = strdup(LIBRARY_SOURCE_FILESCANNER);
   ret = library_playlist_save(pli);
   if (ret < 0)
     goto error;
