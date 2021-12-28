@@ -228,6 +228,7 @@ static const struct col_type_map mfi_cols_map[] =
     { "composer_sort",      mfi_offsetof(composer_sort),      DB_TYPE_STRING, DB_FIXUP_COMPOSER_SORT },
     { "channels",           mfi_offsetof(channels),           DB_TYPE_INT },
     { "usermark",           mfi_offsetof(usermark),           DB_TYPE_INT },
+    { "source",             mfi_offsetof(source),             DB_TYPE_STRING, DB_FIXUP_NO_SANITIZE },
   };
 
 /* This list must be kept in sync with
@@ -252,6 +253,7 @@ static const struct col_type_map pli_cols_map[] =
     { "query_limit",        pli_offsetof(query_limit),        DB_TYPE_INT },
     { "media_kind",         pli_offsetof(media_kind),         DB_TYPE_INT,    DB_FIXUP_MEDIA_KIND },
     { "artwork_url",        pli_offsetof(artwork_url),        DB_TYPE_STRING, DB_FIXUP_NO_SANITIZE },
+    { "source",             pli_offsetof(source),             DB_TYPE_STRING, DB_FIXUP_NO_SANITIZE },
 
     // Not in the database, but returned via the query's COUNT()/SUM()
     { "items",              pli_offsetof(items),              DB_TYPE_INT,    DB_FIXUP_STANDARD, DB_FLAG_NO_BIND },
@@ -367,6 +369,7 @@ static const ssize_t dbmfi_cols_map[] =
     dbmfi_offsetof(composer_sort),
     dbmfi_offsetof(channels),
     dbmfi_offsetof(usermark),
+    dbmfi_offsetof(source),
   };
 
 /* This list must be kept in sync with
@@ -391,6 +394,7 @@ static const ssize_t dbpli_cols_map[] =
     dbpli_offsetof(query_limit),
     dbpli_offsetof(media_kind),
     dbpli_offsetof(artwork_url),
+    dbpli_offsetof(source),
 
     dbpli_offsetof(items),
     dbpli_offsetof(streams),
@@ -735,6 +739,7 @@ free_mfi(struct media_file_info *mfi, int content_only)
   free(mfi->composer_sort);
   free(mfi->album_artist_sort);
   free(mfi->virtual_path);
+  free(mfi->source);
 
   if (!content_only)
     free(mfi);
@@ -754,6 +759,7 @@ free_pli(struct playlist_info *pli, int content_only)
   free(pli->virtual_path);
   free(pli->query_order);
   free(pli->artwork_url);
+  free(pli->source);
 
   if (!content_only)
     free(pli);
@@ -768,6 +774,7 @@ free_di(struct directory_info *di, int content_only)
     return;
 
   free(di->virtual_path);
+  free(di->source);
 
   if (!content_only)
     free(di);
@@ -4199,6 +4206,7 @@ db_directory_enum_fetch(struct directory_enum *de, struct directory_info *di)
   di->disabled = sqlite3_column_int64(de->stmt, 3);
   di->parent_id = sqlite3_column_int(de->stmt, 4);
   di->path = (char *)sqlite3_column_text(de->stmt, 5);
+  di->source = (char *)sqlite3_column_text(de->stmt, 6);
 
   return 0;
 }
@@ -4217,7 +4225,7 @@ static int
 db_directory_add(struct directory_info *di, int *id)
 {
 #define QADD_TMPL "INSERT INTO directories (virtual_path, db_timestamp, disabled, parent_id, path)" \
-                  " VALUES (TRIM(%Q), %d, %" PRIi64 ", %d, TRIM(%Q));"
+                  " VALUES (TRIM(%Q), %d, %" PRIi64 ", %d, TRIM(%Q), TRIM(%Q));"
 
   char *query;
   char *errmsg;
@@ -4232,7 +4240,7 @@ db_directory_add(struct directory_info *di, int *id)
       DPRINTF(E_LOG, L_DB, "Directory name ends with space: '%s'\n", di->virtual_path);
     }
 
-  query = sqlite3_mprintf(QADD_TMPL, di->virtual_path, di->db_timestamp, di->disabled, di->parent_id, di->path);
+  query = sqlite3_mprintf(QADD_TMPL, di->virtual_path, di->db_timestamp, di->disabled, di->parent_id, di->path, di->source);
 
   if (!query)
     {
@@ -4271,14 +4279,14 @@ db_directory_add(struct directory_info *di, int *id)
 static int
 db_directory_update(struct directory_info *di)
 {
-#define QADD_TMPL "UPDATE directories SET virtual_path = TRIM(%Q), db_timestamp = %d, disabled = %" PRIi64 ", parent_id = %d, path = TRIM(%Q)" \
+#define QADD_TMPL "UPDATE directories SET virtual_path = TRIM(%Q), db_timestamp = %d, disabled = %" PRIi64 ", parent_id = %d, path = TRIM(%Q), source = TRIM(%Q)" \
                   " WHERE id = %d;"
   char *query;
   char *errmsg;
   int ret;
 
   /* Add */
-  query = sqlite3_mprintf(QADD_TMPL, di->virtual_path, di->db_timestamp, di->disabled, di->parent_id, di->path, di->id);
+  query = sqlite3_mprintf(QADD_TMPL, di->virtual_path, di->db_timestamp, di->disabled, di->parent_id, di->path, di->source, di->id);
 
   if (!query)
     {
@@ -4310,7 +4318,7 @@ db_directory_update(struct directory_info *di)
 int
 db_directory_addorupdate(char *virtual_path, char *path, int disabled, int parent_id)
 {
-  struct directory_info di;
+  struct directory_info di = { 0 };
   int id;
   int ret;
 

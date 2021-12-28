@@ -1174,6 +1174,27 @@ static const struct db_upgrade_query db_upgrade_v2107_queries[] =
   };
 
 
+/* ---------------------------- 21.07 -> 21.08 ------------------------------ */
+
+#define U_v2108_ALTER_FILES_ADD_SOURCE \
+  "ALTER TABLE files ADD COLUMN source VARCHAR(255);"
+#define U_v2108_ALTER_PLAYLISTS_ADD_SOURCE \
+  "ALTER TABLE playlists ADD COLUMN source VARCHAR(255);"
+#define U_v2108_ALTER_DIR_ADD_SOURCE \
+  "ALTER TABLE directories ADD COLUMN source VARCHAR(255);"
+
+#define U_v2108_SCVER_MINOR                    \
+  "UPDATE admin SET value = '08' WHERE key = 'schema_version_minor';"
+
+static const struct db_upgrade_query db_upgrade_v2108_queries[] =
+  {
+    { U_v2108_ALTER_FILES_ADD_SOURCE, "alter table files add column source" },
+    { U_v2108_ALTER_PLAYLISTS_ADD_SOURCE, "alter table playlists add column source" },
+    { U_v2108_ALTER_DIR_ADD_SOURCE, "alter table directories add column source" },
+
+    { U_v2108_SCVER_MINOR,    "set schema_version_minor to 08" },
+  };
+
 /* -------------------------- Main upgrade handler -------------------------- */
 
 int
@@ -1374,6 +1395,13 @@ db_upgrade(sqlite3 *hdl, int db_ver)
 
     case 2106:
       ret = db_generic_upgrade(hdl, db_upgrade_v2107_queries, ARRAY_SIZE(db_upgrade_v2107_queries));
+      if (ret < 0)
+	return -1;
+
+      /* FALLTHROUGH */
+
+    case 2107:
+      ret = db_generic_upgrade(hdl, db_upgrade_v2108_queries, ARRAY_SIZE(db_upgrade_v2108_queries));
       if (ret < 0)
 	return -1;
 
