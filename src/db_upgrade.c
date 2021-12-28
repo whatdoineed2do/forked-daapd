@@ -1183,6 +1183,27 @@ static const struct db_upgrade_query db_upgrade_v2107_queries[] =
 #define U_v2108_ALTER_DIR_ADD_SOURCE \
   "ALTER TABLE directories ADD COLUMN source VARCHAR(255);"
 
+#define U_v2108_FILES_SET_SOURCE_RSS_SCANNER                     \
+  "UPDATE files SET source = 'rss-scanner' WHERE path in ("      \
+  "  SELECT i.filepath from playlists p, playlistitems i WHERE p.id = i.playlistid AND p.type = 4);"
+#define U_v2108_FILES_SET_SOURCE_SPOTIFY_SCANNER                    \
+  "UPDATE files SET source = 'spotify-scanner' WHERE virtual_path like '/spotify:/%';"
+#define U_v2108_FILES_SET_SOURCE_FILE_SCANNER                    \
+  "UPDATE files SET source = 'file-scanner' WHERE source IS NULL;"
+
+#define U_v2108_PL_SET_SOURCE_RSS_SCANNER                     \
+  "UPDATE playlists SET source = 'rss-scanner' WHERE type = 4;" // PL_RSS  = 4
+#define U_v2108_PL_SET_SOURCE_SPOTIFY_SCANNER                    \
+  "UPDATE playlists SET source = 'spotify-scanner' WHERE virtual_path like '/spotify:/%';"
+#define U_v2108_PL_SET_SOURCE_FILE_SCANNER                    \
+  "UPDATE playlists SET source = 'file-scanner' WHERE source IS NULL;"
+
+// Note: RSS feed items do not have their own directory structure (they use "http:/")
+#define U_v2108_DIR_SET_SOURCE_SPOTIFY_SCANNER                    \
+  "UPDATE directories SET source = 'spotify-scanner' WHERE virtual_path like '/spotify:/%';"
+#define U_v2108_DIR_SET_SOURCE_FILE_SCANNER                    \
+  "UPDATE directories SET source = 'file-scanner' WHERE virtual_path like '/file:/%';"
+
 #define U_v2108_SCVER_MINOR                    \
   "UPDATE admin SET value = '08' WHERE key = 'schema_version_minor';"
 
@@ -1191,6 +1212,14 @@ static const struct db_upgrade_query db_upgrade_v2108_queries[] =
     { U_v2108_ALTER_FILES_ADD_SOURCE, "alter table files add column source" },
     { U_v2108_ALTER_PLAYLISTS_ADD_SOURCE, "alter table playlists add column source" },
     { U_v2108_ALTER_DIR_ADD_SOURCE, "alter table directories add column source" },
+    { U_v2108_FILES_SET_SOURCE_RSS_SCANNER, "update table files set source rss-scanner" },
+    { U_v2108_FILES_SET_SOURCE_SPOTIFY_SCANNER, "update table files set source spotify-scanner" },
+    { U_v2108_FILES_SET_SOURCE_FILE_SCANNER, "update table files set source file-scanner" },
+    { U_v2108_PL_SET_SOURCE_RSS_SCANNER, "update table playlists set source rss-scanner" },
+    { U_v2108_PL_SET_SOURCE_SPOTIFY_SCANNER, "update table playlists set source spotify-scanner" },
+    { U_v2108_PL_SET_SOURCE_FILE_SCANNER, "update table playlists set source file-scanner" },
+    { U_v2108_DIR_SET_SOURCE_SPOTIFY_SCANNER, "update table directories set source spotify-scanner" },
+    { U_v2108_DIR_SET_SOURCE_FILE_SCANNER, "update table directories set source file-scanner" },
 
     { U_v2108_SCVER_MINOR,    "set schema_version_minor to 08" },
   };
