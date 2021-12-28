@@ -773,6 +773,7 @@ free_di(struct directory_info *di, int content_only)
   if (!di)
     return;
 
+  free(di->path);
   free(di->virtual_path);
   free(di->source);
 
@@ -1650,6 +1651,59 @@ db_purge_cruft(time_t ref)
     }
 
   query = sqlite3_mprintf(Q_TMPL, DIR_MAX, (int64_t)ref);
+  if (!query)
+    {
+      DPRINTF(E_LOG, L_DB, "Out of memory for query string\n");
+      db_transaction_end();
+      return;
+    }
+
+  DPRINTF(E_DBG, L_DB, "Running purge query '%s'\n", query);
+
+  ret = db_query_run(query, 1, LISTENER_DATABASE);
+  if (ret == 0)
+    DPRINTF(E_DBG, L_DB, "Purged %d rows\n", sqlite3_changes(hdl));
+
+  db_transaction_end();
+
+#undef Q_TMPL
+}
+
+void
+db_purge_source_cruft(time_t ref, const char *source)
+{
+#define Q_TMPL "DELETE FROM directories WHERE id >= %d AND db_timestamp < %" PRIi64 " AND source = %Q;"
+  int i;
+  int ret;
+  char *query;
+  char *queries_tmpl[4] =
+    {
+      "DELETE FROM playlistitems WHERE playlistid IN (SELECT p.id FROM playlists p WHERE p.type <> %d AND p.db_timestamp < %" PRIi64 " AND source = %Q);",
+      "DELETE FROM playlistitems WHERE filepath IN (SELECT f.path FROM files f WHERE -1 <> %d AND f.db_timestamp < %" PRIi64 " AND source = %Q);",
+      "DELETE FROM playlists WHERE type <> %d AND db_timestamp < %" PRIi64 " AND source = %Q;",
+      "DELETE FROM files WHERE -1 <> %d AND db_timestamp < %" PRIi64 " AND source = %Q;",
+    };
+
+  db_transaction_begin();
+
+  for (i = 0; i < (sizeof(queries_tmpl) / sizeof(queries_tmpl[0])); i++)
+    {
+      query = sqlite3_mprintf(queries_tmpl[i], PL_SPECIAL, (int64_t)ref, source);
+      if (!query)
+	{
+	  DPRINTF(E_LOG, L_DB, "Out of memory for query string\n");
+	  db_transaction_end();
+	  return;
+	}
+
+      DPRINTF(E_DBG, L_DB, "Running purge query '%s'\n", query);
+
+      ret = db_query_run(query, 1, 0);
+      if (ret == 0)
+	DPRINTF(E_DBG, L_DB, "Purged %d rows\n", sqlite3_changes(hdl));
+    }
+
+  query = sqlite3_mprintf(Q_TMPL, DIR_MAX, (int64_t)ref, source);
   if (!query)
     {
       DPRINTF(E_LOG, L_DB, "Out of memory for query string\n");
@@ -4224,7 +4278,7 @@ db_directory_enum_end(struct directory_enum *de)
 int
 db_directory_add(struct directory_info *di, int *id)
 {
-#define QADD_TMPL "INSERT INTO directories (virtual_path, db_timestamp, disabled, parent_id, path)" \
+#define QADD_TMPL "INSERT INTO directories (virtual_path, db_timestamp, disabled, parent_id, path, source)" \
                   " VALUES (TRIM(%Q), %d, %" PRIi64 ", %d, TRIM(%Q), TRIM(%Q));"
 
   char *query;
@@ -4328,7 +4382,7 @@ db_directory_ping_bymatch(char *virtual_path)
 }
 
 void
-db_directory_disable_bymatch(char *path, enum strip_type strip, uint32_t cookie)
+db_directory_disable_bymatch(const char *path, enum strip_type strip, uint32_t cookie)
 {
 #define Q_TMPL "UPDATE directories SET virtual_path = substr(virtual_path, %d)," \
                " disabled = %" PRIi64 " WHERE virtual_path = '/file:%q' OR virtual_path LIKE '/file:%q/%%';"
@@ -4347,7 +4401,7 @@ db_directory_disable_bymatch(char *path, enum strip_type strip, uint32_t cookie)
 }
 
 int
-db_directory_enable_bycookie(uint32_t cookie, char *path)
+db_directory_enable_bycookie(uint32_t cookie, const char *path)
 {
 #define Q_TMPL "UPDATE directories SET virtual_path = ('/file:%q' || virtual_path)," \
                " disabled = 0 WHERE disabled = %" PRIi64 ";"
@@ -6328,7 +6382,7 @@ db_watch_get_bypath(struct watch_info *wi)
 }
 
 void
-db_watch_mark_bypath(char *path, enum strip_type strip, uint32_t cookie)
+db_watch_mark_bypath(const char *path, enum strip_type strip, uint32_t cookie)
 {
 #define Q_TMPL "UPDATE inotify SET path = substr(path, %d), cookie = %" PRIi64 " WHERE path = '%q';"
   char *query;
@@ -6346,7 +6400,7 @@ db_watch_mark_bypath(char *path, enum strip_type strip, uint32_t cookie)
 }
 
 void
-db_watch_mark_bymatch(char *path, enum strip_type strip, uint32_t cookie)
+db_watch_mark_bymatch(const char *path, enum strip_type strip, uint32_t cookie)
 {
 #define Q_TMPL "UPDATE inotify SET path = substr(path, %d), cookie = %" PRIi64 " WHERE path LIKE '%q/%%';"
   char *query;
@@ -6364,7 +6418,7 @@ db_watch_mark_bymatch(char *path, enum strip_type strip, uint32_t cookie)
 }
 
 void
-db_watch_move_bycookie(uint32_t cookie, char *path)
+db_watch_move_bycookie(uint32_t cookie, const char *path)
 {
 #define Q_TMPL "UPDATE inotify SET path = '%q' || path, cookie = 0 WHERE cookie = %" PRIi64 ";"
   char *query;

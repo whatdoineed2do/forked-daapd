@@ -488,6 +488,7 @@ rss_save(struct playlist_info *pli, int *count, enum rss_scan_type scan_type)
 	}
 
       scan_metadata_stream(&mfi, ri.url);
+      mfi.source = strdup(LIBRARY_SOURCE_RSSSCANNER);
 
       mfi_metadata_fixup(&mfi, &ri, feed_title, feed_author, time_added);
 

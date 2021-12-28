@@ -166,7 +166,7 @@ library_playlist_save(struct playlist_info *pli)
 }
 
 int
-library_directory_save(char *virtual_path, char *path, int disabled, int parent_id)
+library_directory_save(char *virtual_path, char *path, int disabled, int parent_id, const char *source)
 {
   struct directory_info di = { 0 };
   int id;
@@ -176,15 +176,18 @@ library_directory_save(char *virtual_path, char *path, int disabled, int parent_
 
   di.id = id;
   di.parent_id = parent_id;
-  di.virtual_path = virtual_path;
-  di.path = path;
+  di.virtual_path = safe_strdup(virtual_path);
+  di.path = safe_strdup(path);
   di.disabled = disabled;
   di.db_timestamp = (uint64_t)time(NULL);
+  di.source = safe_strdup(source);
 
   if (di.id == 0)
     ret = db_directory_add(&di, &id);
   else
     ret = db_directory_update(&di);
+
+  free_di(&di, 1);
 
   if (ret < 0 || id <= 0)
   {
@@ -290,20 +293,27 @@ handle_deferred_update_notifications(void)
 }
 
 static void
-purge_cruft(time_t start)
+purge_cruft(time_t start, const char *source)
 {
   DPRINTF(E_DBG, L_LIB, "Purging old library content\n");
-  db_purge_cruft(start);
+  if (source)
+    db_purge_source_cruft(start, source);
+  else
+    db_purge_cruft(start);
   db_groups_cleanup();
   db_queue_cleanup();
 
-  DPRINTF(E_DBG, L_LIB, "Purging old artwork content\n");
-  cache_artwork_purge_cruft(start);
+  if (!source)
+    {
+      DPRINTF(E_DBG, L_LIB, "Purging old artwork content\n");
+      cache_artwork_purge_cruft(start);
+    }
 }
 
 static enum command_state
 rescan(void *arg, int *ret)
 {
+  char *source_name;
   time_t starttime;
   time_t endtime;
   int i;
@@ -312,12 +322,21 @@ rescan(void *arg, int *ret)
   listener_notify(LISTENER_UPDATE);
   starttime = time(NULL);
 
+  source_name = arg;
+
   for (i = 0; sources[i]; i++)
     {
       if (!sources[i]->disabled && sources[i]->rescan)
 	{
-	  DPRINTF(E_INFO, L_LIB, "Rescan library source '%s'\n", sources[i]->name);
-	  sources[i]->rescan();
+	  if (source_name && strcmp(source_name, sources[i]->name) != 0)
+	    {
+	      DPRINTF(E_DBG, L_LIB, "Skipping library source '%s'\n", sources[i]->name);
+	    }
+	  else
+	    {
+	      DPRINTF(E_INFO, L_LIB, "Rescan library source '%s'\n", sources[i]->name);
+	      sources[i]->rescan();
+	    }
 	}
       else
 	{
@@ -325,7 +344,7 @@ rescan(void *arg, int *ret)
 	}
     }
 
-  purge_cruft(starttime);
+  purge_cruft(starttime, source_name);
 
   DPRINTF(E_DBG, L_LIB, "Running post library scan jobs\n");
   db_hook_post_scan();
@@ -346,6 +365,7 @@ rescan(void *arg, int *ret)
 static enum command_state
 metarescan(void *arg, int *ret)
 {
+  char *source_name;
   time_t starttime;
   time_t endtime;
   int i;
@@ -354,12 +374,21 @@ metarescan(void *arg, int *ret)
   listener_notify(LISTENER_UPDATE);
   starttime = time(NULL);
 
+  source_name = arg;
+
   for (i = 0; sources[i]; i++)
     {
       if (!sources[i]->disabled && sources[i]->metarescan)
 	{
-	  DPRINTF(E_INFO, L_LIB, "Meta rescan library source '%s'\n", sources[i]->name);
-	  sources[i]->metarescan();
+	  if (source_name && strcmp(source_name, sources[i]->name) != 0)
+	    {
+	      DPRINTF(E_DBG, L_LIB, "Skipping library source '%s'\n", sources[i]->name);
+	    }
+	  else
+	    {
+	      DPRINTF(E_INFO, L_LIB, "Meta rescan library source '%s'\n", sources[i]->name);
+	      sources[i]->metarescan();
+	    }
 	}
       else
 	{
@@ -367,7 +396,7 @@ metarescan(void *arg, int *ret)
 	}
     }
 
-  purge_cruft(starttime);
+  purge_cruft(starttime, source_name);
 
   DPRINTF(E_DBG, L_LIB, "Running post library scan jobs\n");
   db_hook_post_scan();
@@ -628,29 +657,37 @@ update_trigger(void *arg, int *retval)
 /* ----------------------- LIBRARY EXTERNAL INTERFACE ---------------------- */
 
 void
-library_rescan()
+library_rescan(const char *source_name)
 {
+  char *param;
+
   if (scanning)
     {
       DPRINTF(E_INFO, L_LIB, "Scan already running, ignoring request to trigger a new init scan\n");
       return;
     }
 
-  scanning = true; // TODO Guard "scanning" with a mutex
-  commands_exec_async(cmdbase, rescan, NULL);
+  scanning = true;
+  param = safe_strdup(source_name);
+
+  commands_exec_async(cmdbase, rescan, param);
 }
 
 void
-library_metarescan()
+library_metarescan(const char *source_name)
 {
+  char *param;
+
   if (scanning)
     {
       DPRINTF(E_INFO, L_LIB, "Scan already running, ignoring request to trigger metadata scan\n");
       return;
     }
 
-  scanning = true; // TODO Guard "scanning" with a mutex
-  commands_exec_async(cmdbase, metarescan, NULL);
+  scanning = true;
+  param = safe_strdup(source_name);
+
+  commands_exec_async(cmdbase, metarescan, param);
 }
 
 void
@@ -662,7 +699,7 @@ library_fullrescan()
       return;
     }
 
-  scanning = true; // TODO Guard "scanning" with a mutex
+  scanning = true;
   commands_exec_async(cmdbase, fullrescan, NULL);
 }
 
@@ -693,7 +730,7 @@ initscan()
 
   if (! (cfg_getbool(cfg_getsec(cfg, "library"), "filescan_disable")))
     {
-      purge_cruft(starttime);
+      purge_cruft(starttime, NULL);
 
       DPRINTF(E_DBG, L_LIB, "Running post library scan jobs\n");
       db_hook_post_scan();
@@ -825,7 +862,7 @@ library_item_add(const char *path)
       return -1;
     }
 
-  scanning = true; // TODO Guard "scanning" with a mutex
+  scanning = true;
 
   return commands_exec_sync(cmdbase, item_add, NULL, (char *)path);
 }

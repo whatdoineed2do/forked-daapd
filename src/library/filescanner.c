@@ -587,6 +587,7 @@ process_regular_file(const char *file, struct stat *sb, int type, int flags, int
   mfi.virtual_path = strdup(virtual_path);
 
   mfi.directory_id = dir_id;
+  mfi.source = strdup(LIBRARY_SOURCE_FILESCANNER);
 
   if (S_ISFIFO(sb->st_mode))
     {
@@ -700,7 +701,7 @@ process_file(char *file, struct stat *sb, enum file_type file_type, int scan_typ
 
 	DPRINTF(E_LOG, L_SCAN, "Startup rescan triggered, found init-rescan file: %s\n", file);
 
-	library_rescan();
+	library_rescan(NULL);
 	break;
 
       case FILE_CTRL_METASCAN:
@@ -709,7 +710,7 @@ process_file(char *file, struct stat *sb, enum file_type file_type, int scan_typ
 
 	DPRINTF(E_LOG, L_SCAN, "Meta rescan triggered, found meta-rescan file: %s\n", file);
 
-	library_metarescan();
+	library_metarescan(NULL);
 	break;
 
       case FILE_CTRL_FULLSCAN:
@@ -827,7 +828,7 @@ process_directory(char *path, int parent_id, int flags)
   if (ret < 0)
     return;
 
-  dir_id = library_directory_save(virtual_path, path, 0, parent_id);
+  dir_id = library_directory_save(virtual_path, path, 0, parent_id, LIBRARY_SOURCE_FILESCANNER);
   if (dir_id <= 0)
     {
       DPRINTF(E_LOG, L_SCAN, "Insert or update of directory failed '%s'\n", virtual_path);
@@ -958,7 +959,7 @@ process_parent_directories(char *path)
       if (ret < 0)
 	return 0;
 
-      dir_id = library_directory_save(virtual_path, buf, 0, dir_id);
+      dir_id = library_directory_save(virtual_path, buf, 0, dir_id, LIBRARY_SOURCE_FILESCANNER);
       if (dir_id <= 0)
 	{
 	  DPRINTF(E_LOG, L_SCAN, "Insert or update of directory failed '%s'\n", virtual_path);

@@ -1177,11 +1177,11 @@ static const struct db_upgrade_query db_upgrade_v2107_queries[] =
 /* ---------------------------- 21.07 -> 21.08 ------------------------------ */
 
 #define U_v2108_ALTER_FILES_ADD_SOURCE \
-  "ALTER TABLE files ADD COLUMN source VARCHAR(255);"
+  "ALTER TABLE files ADD COLUMN source VARCHAR(255) DEFAULT NULL;"
 #define U_v2108_ALTER_PLAYLISTS_ADD_SOURCE \
-  "ALTER TABLE playlists ADD COLUMN source VARCHAR(255);"
+  "ALTER TABLE playlists ADD COLUMN source VARCHAR(255) DEFAULT NULL;"
 #define U_v2108_ALTER_DIR_ADD_SOURCE \
-  "ALTER TABLE directories ADD COLUMN source VARCHAR(255);"
+  "ALTER TABLE directories ADD COLUMN source VARCHAR(255) DEFAULT NULL;"
 
 #define U_v2108_FILES_SET_SOURCE_RSS_SCANNER                     \
   "UPDATE files SET source = 'rss-scanner' WHERE path in ("      \

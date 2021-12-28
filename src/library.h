@@ -139,7 +139,7 @@ int
 library_playlist_save(struct playlist_info *pli);
 
 int
-library_directory_save(char *virtual_path, char *path, int disabled, int parent_id);
+library_directory_save(char *virtual_path, char *path, int disabled, int parent_id, const char *source);
 
 /*
  * @param cb      Callback to call
@@ -160,12 +160,27 @@ library_is_exiting();
 
 /* ------------------------ Library external interface --------------------- */
 
+/*
+ * Rescan library: find new, remove deleted and update modified tracks and playlists
+ * If a "source_name" is given, only tracks / playlists belonging to that source are
+ * updated.
+ *
+ * Update is done asynchronously in the library thread.
+ *
+ * @param source_name NULL to update everything, one of LIBRARY_SOURCE_xxx to only update specific source
+ */
 void
-library_rescan();
+library_rescan(const char *source_name);
 
+/*
+ * Same as library_rescan but also updates unmodified tracks and playlists
+ */
 void
-library_metarescan();
+library_metarescan(const char *source_name);
 
+/*
+ * Wipe library and do a full rescan of all library sources
+ */
 void
 library_fullrescan();
 

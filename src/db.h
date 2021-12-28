@@ -593,6 +593,9 @@ void
 db_purge_cruft(time_t ref);
 
 void
+db_purge_source_cruft(time_t ref, const char *source);
+
+void
 db_purge_all(void);
 
 /* Transactions */
@@ -810,10 +813,10 @@ void
 db_directory_ping_bymatch(char *virtual_path);
 
 void
-db_directory_disable_bymatch(char *path, enum strip_type strip, uint32_t cookie);
+db_directory_disable_bymatch(const char *path, enum strip_type strip, uint32_t cookie);
 
 int
-db_directory_enable_bycookie(uint32_t cookie, char *path);
+db_directory_enable_bycookie(uint32_t cookie, const char *path);
 
 int
 db_directory_enable_bypath(char *path);
@@ -984,13 +987,13 @@ int
 db_watch_get_bypath(struct watch_info *wi);
 
 void
-db_watch_mark_bypath(char *path, enum strip_type strip, uint32_t cookie);
+db_watch_mark_bypath(const char *path, enum strip_type strip, uint32_t cookie);
 
 void
-db_watch_mark_bymatch(char *path, enum strip_type strip, uint32_t cookie);
+db_watch_mark_bymatch(const char *path, enum strip_type strip, uint32_t cookie);
 
 void
-db_watch_move_bycookie(uint32_t cookie, char *path);
+db_watch_move_bycookie(uint32_t cookie, const char *path);
 
 int
 db_watch_cookie_known(uint32_t cookie);

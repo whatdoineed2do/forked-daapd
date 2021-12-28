@@ -159,6 +159,7 @@ scan_metadata_stream(struct media_file_info *mfi, const char *path)
   mfi->data_kind = DATA_KIND_HTTP;
   mfi->time_modified = time(NULL);
   mfi->directory_id = DIR_HTTP;
+  mfi->source = strdup(LIBRARY_SOURCE_FILESCANNER);
 
   ret = scan_metadata_ffmpeg(mfi, path);
   if (ret < 0)

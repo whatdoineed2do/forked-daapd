@@ -1462,7 +1462,7 @@ prepare_directories(const char *artist, const char *album)
       DPRINTF(E_LOG, L_SPOTIFY, "Virtual path exceeds PATH_MAX (/spotify:/%s)\n", artist);
       return -1;
     }
-  dir_id = library_directory_save(virtual_path, NULL, 0, DIR_SPOTIFY);
+  dir_id = library_directory_save(virtual_path, NULL, 0, DIR_SPOTIFY, LIBRARY_SOURCE_SPOTIFY);
   if (dir_id <= 0)
     {
       DPRINTF(E_LOG, L_SPOTIFY, "Could not add or update directory '%s'\n", virtual_path);
@@ -1474,7 +1474,7 @@ prepare_directories(const char *artist, const char *album)
       DPRINTF(E_LOG, L_SPOTIFY, "Virtual path exceeds PATH_MAX (/spotify:/%s/%s)\n", artist, album);
       return -1;
     }
-  dir_id = library_directory_save(virtual_path, NULL, 0, dir_id);
+  dir_id = library_directory_save(virtual_path, NULL, 0, dir_id, LIBRARY_SOURCE_SPOTIFY);
   if (dir_id <= 0)
     {
       DPRINTF(E_LOG, L_SPOTIFY, "Could not add or update directory '%s'\n", virtual_path);
@@ -1577,6 +1577,7 @@ map_track_to_mfi(struct media_file_info *mfi, const struct spotify_track *track,
     }
   snprintf(virtual_path, PATH_MAX, "/spotify:/%s/%s/%s", mfi->album_artist, mfi->album, mfi->title);
   mfi->virtual_path = strdup(virtual_path);
+  mfi->source = strdup(LIBRARY_SOURCE_SPOTIFY);
 }
 
 static int
