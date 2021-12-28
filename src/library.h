@@ -47,9 +47,9 @@ enum library_cb_action
   LIBRARY_CB_DELETE,
 };
 
-#define LIBRARY_SOURCE_FILESCANNER "filescanner"
-#define LIBRARY_SOURCE_RSSSCANNER "RSS feeds"
-#define LIBRARY_SOURCE_SPOTIFY "spotifyscanner"
+#define LIBRARY_SOURCE_FILESCANNER "file-scanner"
+#define LIBRARY_SOURCE_RSSSCANNER "rss-scanner"
+#define LIBRARY_SOURCE_SPOTIFY "spotify-scanner"
 
 /*
  * Definition of a library source
