@@ -644,6 +644,7 @@ rss_add(const char *path)
 struct library_source rssscanner =
 {
   .name = LIBRARY_SOURCE_RSSSCANNER,
+  .description = "podcast RSS feeds",
   .disabled = 0,
   .initscan = rss_rescan,
   .rescan = rss_rescan,

@@ -2332,6 +2332,7 @@ spotifywebapi_deinit()
 struct library_source spotifyscanner =
 {
   .name = LIBRARY_SOURCE_SPOTIFY,
+  .description = "Spotify library",
   .disabled = 0,
   .init = spotifywebapi_init,
   .deinit = spotifywebapi_deinit,

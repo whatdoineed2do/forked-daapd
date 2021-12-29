@@ -1181,6 +1181,10 @@ jsonapi_reply_library(struct httpd_request *hreq)
   json_object *jreply;
   int ret;
   char *s;
+  int i;
+  struct library_source **sources;
+  json_object *jsources;
+  json_object *jsource;
 
 
   CHECK_NULL(L_WEB, jreply = json_object_new_object());
@@ -1215,6 +1219,20 @@ jsonapi_reply_library(struct httpd_request *hreq)
     }
 
   json_object_object_add(jreply, "updating", json_object_new_boolean(library_is_scanning()));
+
+  jsources = json_object_new_array();
+  json_object_object_add(jreply, "sources", jsources);
+  sources = library_sources();
+  for (i = 0; sources[i]; i++)
+    {
+      if (!sources[i]->disabled)
+	{
+	  jsource = json_object_new_object();
+	  safe_json_add_string(jsource, "name", sources[i]->name);
+	  safe_json_add_string(jsource, "description", sources[i]->description);
+	  json_object_array_add(jsources, jsource);
+	}
+    }
 
   CHECK_ERRNO(L_WEB, evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(jreply)));
   jparse_free(jreply);

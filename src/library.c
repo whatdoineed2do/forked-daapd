@@ -867,6 +867,12 @@ library_item_add(const char *path)
   return commands_exec_sync(cmdbase, item_add, NULL, (char *)path);
 }
 
+struct library_source **
+library_sources(void)
+{
+  return sources;
+}
+
 int
 library_exec_async(command_function func, void *arg)
 {

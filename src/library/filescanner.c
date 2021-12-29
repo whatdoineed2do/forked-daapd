@@ -2162,6 +2162,7 @@ filescanner_deinit(void)
 struct library_source filescanner =
 {
   .name = LIBRARY_SOURCE_FILESCANNER,
+  .description = "local files",
   .disabled = 0,
   .init = filescanner_init,
   .deinit = filescanner_deinit,

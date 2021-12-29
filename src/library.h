@@ -59,6 +59,7 @@ enum library_cb_action
 struct library_source
 {
   char *name;
+  char *description;
   int disabled;
 
   /*
@@ -223,6 +224,8 @@ library_queue_item_add(const char *path, int position, char reshuffle, uint32_t 
 int
 library_item_add(const char *path);
 
+struct library_source **
+library_sources(void);
 
 /*
  * Execute the function 'func' with the given argument 'arg' in the library thread.
