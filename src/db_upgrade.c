@@ -1223,8 +1223,8 @@ static const struct db_upgrade_query db_upgrade_v2200_queries[] =
     { U_v2200_DIR_SET_SOURCE_SPOTIFY_SCANNER, "update table directories set source spotify-scanner" },
     { U_v2200_DIR_SET_SOURCE_FILE_SCANNER, "update table directories set source file-scanner" },
 
-    { U_v2200_SCVER_MAJOR,    "set schema_version_major to 08" },
-    { U_v2200_SCVER_MINOR,    "set schema_version_minor to 08" },
+    { U_v2200_SCVER_MAJOR,    "set schema_version_major to 22" },
+    { U_v2200_SCVER_MINOR,    "set schema_version_minor to 00" },
   };
 
 /* -------------------------- Main upgrade handler -------------------------- */

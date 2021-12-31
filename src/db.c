@@ -228,7 +228,7 @@ static const struct col_type_map mfi_cols_map[] =
     { "composer_sort",      mfi_offsetof(composer_sort),      DB_TYPE_STRING, DB_FIXUP_COMPOSER_SORT },
     { "channels",           mfi_offsetof(channels),           DB_TYPE_INT },
     { "usermark",           mfi_offsetof(usermark),           DB_TYPE_INT },
-    { "library_source",     mfi_offsetof(library_source),             DB_TYPE_STRING, DB_FIXUP_NO_SANITIZE },
+    { "library_source",     mfi_offsetof(library_source),     DB_TYPE_INT },
   };
 
 /* This list must be kept in sync with
@@ -253,7 +253,7 @@ static const struct col_type_map pli_cols_map[] =
     { "query_limit",        pli_offsetof(query_limit),        DB_TYPE_INT },
     { "media_kind",         pli_offsetof(media_kind),         DB_TYPE_INT,    DB_FIXUP_MEDIA_KIND },
     { "artwork_url",        pli_offsetof(artwork_url),        DB_TYPE_STRING, DB_FIXUP_NO_SANITIZE },
-    { "library_source",     pli_offsetof(library_source),             DB_TYPE_STRING, DB_FIXUP_NO_SANITIZE },
+    { "library_source",     pli_offsetof(library_source),     DB_TYPE_INT },
 
     // Not in the database, but returned via the query's COUNT()/SUM()
     { "items",              pli_offsetof(items),              DB_TYPE_INT,    DB_FIXUP_STANDARD, DB_FLAG_NO_BIND },
@@ -4312,8 +4312,8 @@ db_directory_enum_end(struct directory_enum *de)
 int
 db_directory_add(struct directory_info *di, int *id)
 {
-#define QADD_TMPL "INSERT INTO directories (virtual_path, db_timestamp, disabled, parent_id, path, source)" \
-                  " VALUES (TRIM(%Q), %d, %" PRIi64 ", %d, TRIM(%Q), TRIM(%Q));"
+#define QADD_TMPL "INSERT INTO directories (virtual_path, db_timestamp, disabled, parent_id, path, library_source)" \
+                  " VALUES (TRIM(%Q), %d, %" PRIi64 ", %d, TRIM(%Q), %d);"
 
   char *query;
   char *errmsg;
@@ -4367,7 +4367,7 @@ db_directory_add(struct directory_info *di, int *id)
 int
 db_directory_update(struct directory_info *di)
 {
-#define QADD_TMPL "UPDATE directories SET virtual_path = TRIM(%Q), db_timestamp = %d, disabled = %" PRIi64 ", parent_id = %d, path = TRIM(%Q), source = TRIM(%Q)" \
+#define QADD_TMPL "UPDATE directories SET virtual_path = TRIM(%Q), db_timestamp = %d, disabled = %" PRIi64 ", parent_id = %d, path = TRIM(%Q), library_source = %d" \
                   " WHERE id = %d;"
   char *query;
   char *errmsg;
