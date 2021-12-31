@@ -98,7 +98,7 @@
   "   composer_sort      VARCHAR(1024) DEFAULT NULL COLLATE DAAP,"	\
   "   channels           INTEGER DEFAULT 0,"		\
   "   usermark           INTEGER DEFAULT 0,"		\
-  "   source             VARCHAR(255) DEFAULT NULL"	\
+  "   library_source     INTEGER DEFAULT 0"		\
   ");"
 
 #define T_PL					\
@@ -119,7 +119,7 @@
   "   query_limit    INTEGER DEFAULT 0,"		\
   "   media_kind     INTEGER DEFAULT 1,"		\
   "   artwork_url    VARCHAR(4096) DEFAULT NULL,"	\
-  "   source         VARCHAR(255) DEFAULT NULL"	\
+  "   library_source INTEGER DEFAULT 0"			\
   ");"
 
 #define T_PLITEMS				\
@@ -168,8 +168,8 @@
   "   db_timestamp        INTEGER DEFAULT 0,"			\
   "   disabled            INTEGER DEFAULT 0,"			\
   "   parent_id           INTEGER DEFAULT 0,"			\
-  "   path                VARCHAR(4096) DEFAULT NULL,"	\
-  "   source              VARCHAR(255) DEFAULT NULL"	\
+  "   path                VARCHAR(4096) DEFAULT NULL,"		\
+  "   library_source      INTEGER DEFAULT 0"			\
   ");"
 
 #define T_QUEUE								\

@@ -1228,8 +1228,7 @@ jsonapi_reply_library(struct httpd_request *hreq)
       if (!sources[i]->disabled)
 	{
 	  jsource = json_object_new_object();
-	  safe_json_add_string(jsource, "name", sources[i]->name);
-	  safe_json_add_string(jsource, "description", sources[i]->description);
+	  safe_json_add_string(jsource, "name", db_library_source_label(sources[i]->type));
 	  json_object_array_add(jsources, jsource);
 	}
     }
@@ -1248,9 +1247,9 @@ jsonapi_reply_update(struct httpd_request *hreq)
 {
   const char *param;
 
-  param = evhttp_find_header(hreq->query, "source");
+  param = evhttp_find_header(hreq->query, "library_source");
 
-  library_rescan(param);
+  library_rescan(db_library_source_enum(param));
   return HTTP_NOCONTENT;
 }
 
@@ -1259,9 +1258,9 @@ jsonapi_reply_meta_rescan(struct httpd_request *hreq)
 {
   const char *param;
 
-  param = evhttp_find_header(hreq->query, "source");
+  param = evhttp_find_header(hreq->query, "library_source");
 
-  library_metarescan(param);
+  library_metarescan(db_library_source_enum(param));
   return HTTP_NOCONTENT;
 }
 

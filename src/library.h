@@ -47,10 +47,6 @@ enum library_cb_action
   LIBRARY_CB_DELETE,
 };
 
-#define LIBRARY_SOURCE_FILESCANNER "file-scanner"
-#define LIBRARY_SOURCE_RSSSCANNER "rss-scanner"
-#define LIBRARY_SOURCE_SPOTIFY "spotify-scanner"
-
 /*
  * Definition of a library source
  *
@@ -58,8 +54,7 @@ enum library_cb_action
  */
 struct library_source
 {
-  char *name;
-  char *description;
+  enum library_source_type type;
   int disabled;
 
   /*
@@ -140,7 +135,7 @@ int
 library_playlist_save(struct playlist_info *pli);
 
 int
-library_directory_save(char *virtual_path, char *path, int disabled, int parent_id, const char *source);
+library_directory_save(char *virtual_path, char *path, int disabled, int parent_id, enum library_source_type library_source);
 
 /*
  * @param cb      Callback to call
@@ -168,16 +163,16 @@ library_is_exiting();
  *
  * Update is done asynchronously in the library thread.
  *
- * @param source_name NULL to update everything, one of LIBRARY_SOURCE_xxx to only update specific source
+ * @param library_source 0 to update everything, one of LIBRARY_SOURCE_xxx to only update specific source
  */
 void
-library_rescan(const char *source_name);
+library_rescan(enum library_source_type library_source);
 
 /*
  * Same as library_rescan but also updates unmodified tracks and playlists
  */
 void
-library_metarescan(const char *source_name);
+library_metarescan(enum library_source_type library_source);
 
 /*
  * Wipe library and do a full rescan of all library sources

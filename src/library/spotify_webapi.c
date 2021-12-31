@@ -1577,7 +1577,7 @@ map_track_to_mfi(struct media_file_info *mfi, const struct spotify_track *track,
     }
   snprintf(virtual_path, PATH_MAX, "/spotify:/%s/%s/%s", mfi->album_artist, mfi->album, mfi->title);
   mfi->virtual_path = strdup(virtual_path);
-  mfi->source = strdup(LIBRARY_SOURCE_SPOTIFY);
+  mfi->library_source = LIBRARY_SOURCE_SPOTIFY;
 }
 
 static int
@@ -1871,9 +1871,9 @@ map_playlist_to_pli(struct playlist_info *pli, struct spotify_playlist *playlist
   pli->path  = strdup(playlist->uri);
   pli->title = safe_strdup(playlist->name);
 
-  pli->parent_id    = spotify_base_plid;
-  pli->directory_id = DIR_SPOTIFY;
-  pli->source       = strdup(LIBRARY_SOURCE_SPOTIFY);
+  pli->parent_id      = spotify_base_plid;
+  pli->directory_id   = DIR_SPOTIFY;
+  pli->library_source = LIBRARY_SOURCE_SPOTIFY;
 
   if (playlist->owner)
     pli->virtual_path = safe_asprintf("/spotify:/%s (%s)", playlist->name, playlist->owner);
@@ -1944,7 +1944,7 @@ create_saved_tracks_playlist(void)
       .type = PL_PLAIN,
       .parent_id = spotify_base_plid,
       .directory_id = DIR_SPOTIFY,
-      .source = strdup(LIBRARY_SOURCE_SPOTIFY),
+      .library_source = LIBRARY_SOURCE_SPOTIFY,
     };
 
   spotify_saved_plid = playlist_add_or_update(&pli);
@@ -1969,7 +1969,7 @@ create_base_playlist(void)
       .path = strdup("spotify:playlistfolder"),
       .title = strdup("Spotify"),
       .type = PL_FOLDER,
-      .source = strdup(LIBRARY_SOURCE_SPOTIFY),
+      .library_source = LIBRARY_SOURCE_SPOTIFY,
     };
 
   spotify_base_plid = 0;
@@ -2331,8 +2331,7 @@ spotifywebapi_deinit()
 
 struct library_source spotifyscanner =
 {
-  .name = LIBRARY_SOURCE_SPOTIFY,
-  .description = "Spotify library",
+  .type = LIBRARY_SOURCE_SPOTIFY,
   .disabled = 0,
   .init = spotifywebapi_init,
   .deinit = spotifywebapi_deinit,
