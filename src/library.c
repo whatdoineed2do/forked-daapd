@@ -297,7 +297,7 @@ purge_cruft(time_t start, const char *source)
 {
   DPRINTF(E_DBG, L_LIB, "Purging old library content\n");
   if (source)
-    db_purge_source_cruft(start, source);
+    db_purge_cruft_bysource(start, source);
   else
     db_purge_cruft(start);
   db_groups_cleanup();

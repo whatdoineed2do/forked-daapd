@@ -1670,7 +1670,7 @@ db_purge_cruft(time_t ref)
 }
 
 void
-db_purge_source_cruft(time_t ref, const char *source)
+db_purge_cruft_bysource(time_t ref, const char *source)
 {
 #define Q_TMPL "DELETE FROM directories WHERE id >= %d AND db_timestamp < %" PRIi64 " AND source = %Q;"
   int i;

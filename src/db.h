@@ -593,7 +593,7 @@ void
 db_purge_cruft(time_t ref);
 
 void
-db_purge_source_cruft(time_t ref, const char *source);
+db_purge_cruft_bysource(time_t ref, const char *source);
 
 void
 db_purge_all(void);
