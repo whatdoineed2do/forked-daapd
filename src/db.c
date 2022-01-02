@@ -228,7 +228,7 @@ static const struct col_type_map mfi_cols_map[] =
     { "composer_sort",      mfi_offsetof(composer_sort),      DB_TYPE_STRING, DB_FIXUP_COMPOSER_SORT },
     { "channels",           mfi_offsetof(channels),           DB_TYPE_INT },
     { "usermark",           mfi_offsetof(usermark),           DB_TYPE_INT },
-    { "library_source",     mfi_offsetof(library_source),     DB_TYPE_INT },
+    { "scan_kind",          mfi_offsetof(scan_kind),          DB_TYPE_INT },
   };
 
 /* This list must be kept in sync with
@@ -253,7 +253,7 @@ static const struct col_type_map pli_cols_map[] =
     { "query_limit",        pli_offsetof(query_limit),        DB_TYPE_INT },
     { "media_kind",         pli_offsetof(media_kind),         DB_TYPE_INT,    DB_FIXUP_MEDIA_KIND },
     { "artwork_url",        pli_offsetof(artwork_url),        DB_TYPE_STRING, DB_FIXUP_NO_SANITIZE },
-    { "library_source",     pli_offsetof(library_source),     DB_TYPE_INT },
+    { "scan_kind",          pli_offsetof(scan_kind),          DB_TYPE_INT },
 
     // Not in the database, but returned via the query's COUNT()/SUM()
     { "items",              pli_offsetof(items),              DB_TYPE_INT,    DB_FIXUP_STANDARD, DB_FLAG_NO_BIND },
@@ -369,7 +369,7 @@ static const ssize_t dbmfi_cols_map[] =
     dbmfi_offsetof(composer_sort),
     dbmfi_offsetof(channels),
     dbmfi_offsetof(usermark),
-    dbmfi_offsetof(library_source),
+    dbmfi_offsetof(scan_kind),
   };
 
 /* This list must be kept in sync with
@@ -394,7 +394,7 @@ static const ssize_t dbpli_cols_map[] =
     dbpli_offsetof(query_limit),
     dbpli_offsetof(media_kind),
     dbpli_offsetof(artwork_url),
-    dbpli_offsetof(library_source),
+    dbpli_offsetof(scan_kind),
 
     dbpli_offsetof(items),
     dbpli_offsetof(streams),
@@ -594,38 +594,38 @@ db_data_kind_label(enum data_kind data_kind)
   return NULL;
 }
 
-/* Keep in sync with enum library_source_type */
-static const struct enum_label library_source_label[] =
+/* Keep in sync with enum scan_kind */
+static const struct enum_label scan_kind_labels[] =
   {
-    { MEDIA_KIND_MUSIC,      "unknown" },
-    { MEDIA_KIND_MOVIE,      "files" },
-    { MEDIA_KIND_PODCAST,    "spotify" },
-    { MEDIA_KIND_AUDIOBOOK,  "rss" },
+    { SCAN_KIND_UNKNOWN,    "unknown" },
+    { SCAN_KIND_FILES,      "files" },
+    { SCAN_KIND_SPOTIFY,    "spotify" },
+    { SCAN_KIND_RSS,        "rss" },
   };
 
 const char *
-db_library_source_label(enum library_source_type library_source)
+db_scan_kind_label(enum scan_kind scan_kind)
 {
-  if (library_source < ARRAY_SIZE(library_source_label))
+  if (scan_kind < ARRAY_SIZE(scan_kind_labels))
     {
-      return library_source_label[library_source].label;
+      return scan_kind_labels[scan_kind].label;
     }
 
   return NULL;
 }
 
-enum library_source_type
-db_library_source_enum(const char *name)
+enum scan_kind
+db_scan_kind_enum(const char *name)
 {
   int i;
 
   if (!name)
     return 0;
 
-  for (i = 0; i < ARRAY_SIZE(media_kind_labels); i++)
+  for (i = 0; i < ARRAY_SIZE(scan_kind_labels); i++)
     {
-      if (strcmp(name, library_source_label[i].label) == 0)
-	return library_source_label[i].type;
+      if (strcmp(name, scan_kind_labels[i].label) == 0)
+	return scan_kind_labels[i].type;
     }
 
   return 0;
@@ -1704,25 +1704,25 @@ db_purge_cruft(time_t ref)
 }
 
 void
-db_purge_cruft_bysource(time_t ref, enum library_source_type library_source)
+db_purge_cruft_bysource(time_t ref, enum scan_kind scan_kind)
 {
-#define Q_TMPL "DELETE FROM directories WHERE id >= %d AND db_timestamp < %" PRIi64 " AND library_source = %d;"
+#define Q_TMPL "DELETE FROM directories WHERE id >= %d AND db_timestamp < %" PRIi64 " AND scan_kind = %d;"
   int i;
   int ret;
   char *query;
   char *queries_tmpl[4] =
     {
-      "DELETE FROM playlistitems WHERE playlistid IN (SELECT p.id FROM playlists p WHERE p.type <> %d AND p.db_timestamp < %" PRIi64 " AND library_source = %d);",
-      "DELETE FROM playlistitems WHERE filepath IN (SELECT f.path FROM files f WHERE -1 <> %d AND f.db_timestamp < %" PRIi64 " AND library_source = %d);",
-      "DELETE FROM playlists WHERE type <> %d AND db_timestamp < %" PRIi64 " AND library_source = %d;",
-      "DELETE FROM files WHERE -1 <> %d AND db_timestamp < %" PRIi64 " AND library_source = %d;",
+      "DELETE FROM playlistitems WHERE playlistid IN (SELECT p.id FROM playlists p WHERE p.type <> %d AND p.db_timestamp < %" PRIi64 " AND scan_kind = %d);",
+      "DELETE FROM playlistitems WHERE filepath IN (SELECT f.path FROM files f WHERE -1 <> %d AND f.db_timestamp < %" PRIi64 " AND scan_kind = %d);",
+      "DELETE FROM playlists WHERE type <> %d AND db_timestamp < %" PRIi64 " AND scan_kind = %d;",
+      "DELETE FROM files WHERE -1 <> %d AND db_timestamp < %" PRIi64 " AND scan_kind = %d;",
     };
 
   db_transaction_begin();
 
   for (i = 0; i < (sizeof(queries_tmpl) / sizeof(queries_tmpl[0])); i++)
     {
-      query = sqlite3_mprintf(queries_tmpl[i], PL_SPECIAL, (int64_t)ref, library_source);
+      query = sqlite3_mprintf(queries_tmpl[i], PL_SPECIAL, (int64_t)ref, scan_kind);
       if (!query)
 	{
 	  DPRINTF(E_LOG, L_DB, "Out of memory for query string\n");
@@ -1737,7 +1737,7 @@ db_purge_cruft_bysource(time_t ref, enum library_source_type library_source)
 	DPRINTF(E_DBG, L_DB, "Purged %d rows\n", sqlite3_changes(hdl));
     }
 
-  query = sqlite3_mprintf(Q_TMPL, DIR_MAX, (int64_t)ref, library_source);
+  query = sqlite3_mprintf(Q_TMPL, DIR_MAX, (int64_t)ref, scan_kind);
   if (!query)
     {
       DPRINTF(E_LOG, L_DB, "Out of memory for query string\n");
@@ -4294,7 +4294,7 @@ db_directory_enum_fetch(struct directory_enum *de, struct directory_info *di)
   di->disabled = sqlite3_column_int64(de->stmt, 3);
   di->parent_id = sqlite3_column_int(de->stmt, 4);
   di->path = (char *)sqlite3_column_text(de->stmt, 5);
-  di->library_source = sqlite3_column_int(de->stmt, 6);
+  di->scan_kind = sqlite3_column_int(de->stmt, 6);
 
   return 0;
 }
@@ -4312,7 +4312,7 @@ db_directory_enum_end(struct directory_enum *de)
 int
 db_directory_add(struct directory_info *di, int *id)
 {
-#define QADD_TMPL "INSERT INTO directories (virtual_path, db_timestamp, disabled, parent_id, path, library_source)" \
+#define QADD_TMPL "INSERT INTO directories (virtual_path, db_timestamp, disabled, parent_id, path, scan_kind)" \
                   " VALUES (TRIM(%Q), %d, %" PRIi64 ", %d, TRIM(%Q), %d);"
 
   char *query;
@@ -4328,7 +4328,7 @@ db_directory_add(struct directory_info *di, int *id)
       DPRINTF(E_LOG, L_DB, "Directory name ends with space: '%s'\n", di->virtual_path);
     }
 
-  query = sqlite3_mprintf(QADD_TMPL, di->virtual_path, di->db_timestamp, di->disabled, di->parent_id, di->path, di->library_source);
+  query = sqlite3_mprintf(QADD_TMPL, di->virtual_path, di->db_timestamp, di->disabled, di->parent_id, di->path, di->scan_kind);
 
   if (!query)
     {
@@ -4367,14 +4367,14 @@ db_directory_add(struct directory_info *di, int *id)
 int
 db_directory_update(struct directory_info *di)
 {
-#define QADD_TMPL "UPDATE directories SET virtual_path = TRIM(%Q), db_timestamp = %d, disabled = %" PRIi64 ", parent_id = %d, path = TRIM(%Q), library_source = %d" \
+#define QADD_TMPL "UPDATE directories SET virtual_path = TRIM(%Q), db_timestamp = %d, disabled = %" PRIi64 ", parent_id = %d, path = TRIM(%Q), scan_kind = %d" \
                   " WHERE id = %d;"
   char *query;
   char *errmsg;
   int ret;
 
   /* Add */
-  query = sqlite3_mprintf(QADD_TMPL, di->virtual_path, di->db_timestamp, di->disabled, di->parent_id, di->path, di->library_source, di->id);
+  query = sqlite3_mprintf(QADD_TMPL, di->virtual_path, di->db_timestamp, di->disabled, di->parent_id, di->path, di->scan_kind, di->id);
 
   if (!query)
     {

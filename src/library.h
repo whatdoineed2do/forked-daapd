@@ -54,7 +54,7 @@ enum library_cb_action
  */
 struct library_source
 {
-  enum library_source_type type;
+  enum scan_kind scan_kind;
   int disabled;
 
   /*
@@ -135,7 +135,7 @@ int
 library_playlist_save(struct playlist_info *pli);
 
 int
-library_directory_save(char *virtual_path, char *path, int disabled, int parent_id, enum library_source_type library_source);
+library_directory_save(char *virtual_path, char *path, int disabled, int parent_id, enum scan_kind library_source);
 
 /*
  * @param cb      Callback to call
@@ -166,13 +166,13 @@ library_is_exiting();
  * @param library_source 0 to update everything, one of LIBRARY_SOURCE_xxx to only update specific source
  */
 void
-library_rescan(enum library_source_type library_source);
+library_rescan(enum scan_kind library_source);
 
 /*
  * Same as library_rescan but also updates unmodified tracks and playlists
  */
 void
-library_metarescan(enum library_source_type library_source);
+library_metarescan(enum scan_kind library_source);
 
 /*
  * Wipe library and do a full rescan of all library sources

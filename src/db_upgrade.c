@@ -1176,33 +1176,33 @@ static const struct db_upgrade_query db_upgrade_v2107_queries[] =
 
 /* ---------------------------- 21.07 -> 22.00 ------------------------------ */
 
-#define U_v2200_ALTER_FILES_ADD_SOURCE \
-  "ALTER TABLE files ADD COLUMN library_source INTEGER DEFAULT 0;"
-#define U_v2200_ALTER_PLAYLISTS_ADD_SOURCE \
-  "ALTER TABLE playlists ADD COLUMN library_source INTEGER DEFAULT 0;"
-#define U_v2200_ALTER_DIR_ADD_SOURCE \
-  "ALTER TABLE directories ADD COLUMN library_source INTEGER DEFAULT 0;"
+#define U_v2200_ALTER_FILES_ADD_SCAN_KIND \
+  "ALTER TABLE files ADD COLUMN scan_kind INTEGER DEFAULT 0;"
+#define U_v2200_ALTER_PLAYLISTS_ADD_SCAN_KIND \
+  "ALTER TABLE playlists ADD COLUMN scan_kind INTEGER DEFAULT 0;"
+#define U_v2200_ALTER_DIR_ADD_SCAN_KIND \
+  "ALTER TABLE directories ADD COLUMN scan_kind INTEGER DEFAULT 0;"
 
-#define U_v2200_FILES_SET_SOURCE_RSS_SCANNER                     \
-  "UPDATE files SET library_source = 3 WHERE path in ("      \
+#define U_v2200_FILES_SET_SCAN_KIND_RSS \
+  "UPDATE files SET scan_kind = 3 WHERE path in ("      \
   "  SELECT i.filepath from playlists p, playlistitems i WHERE p.id = i.playlistid AND p.type = 4);"
-#define U_v2200_FILES_SET_SOURCE_SPOTIFY_SCANNER                    \
-  "UPDATE files SET library_source = 2 WHERE virtual_path like '/spotify:/%';"
-#define U_v2200_FILES_SET_SOURCE_FILE_SCANNER                    \
-  "UPDATE files SET library_source = 1 WHERE library_source = 0;"
+#define U_v2200_FILES_SET_SCAN_KIND_SPOTIFY \
+  "UPDATE files SET scan_kind = 2 WHERE virtual_path like '/spotify:/%';"
+#define U_v2200_FILES_SET_SOURCE_FILE_SCANNER \
+  "UPDATE files SET scan_kind = 1 WHERE scan_kind = 0;"
 
-#define U_v2200_PL_SET_SOURCE_RSS_SCANNER                     \
-  "UPDATE playlists SET library_source = 3 WHERE type = 4;" // PL_RSS  = 4
-#define U_v2200_PL_SET_SOURCE_SPOTIFY_SCANNER                    \
-  "UPDATE playlists SET library_source = 2 WHERE virtual_path like '/spotify:/%';"
-#define U_v2200_PL_SET_SOURCE_FILE_SCANNER                    \
-  "UPDATE playlists SET library_source = 1 WHERE library_source = 0;"
+#define U_v2200_PL_SET_SCAN_KIND_RSS \
+  "UPDATE playlists SET scan_kind = 3 WHERE type = 4;" // PL_RSS  = 4
+#define U_v2200_PL_SET_SCAN_KIND_SPOTIFY \
+  "UPDATE playlists SET scan_kind = 2 WHERE virtual_path like '/spotify:/%';"
+#define U_v2200_PL_SET_SCAN_KIND_FILES \
+  "UPDATE playlists SET scan_kind = 1 WHERE scan_kind = 0;"
 
 // Note: RSS feed items do not have their own directory structure (they use "http:/")
-#define U_v2200_DIR_SET_SOURCE_SPOTIFY_SCANNER                    \
-  "UPDATE directories SET library_source = 2 WHERE virtual_path like '/spotify:/%';"
-#define U_v2200_DIR_SET_SOURCE_FILE_SCANNER                    \
-  "UPDATE directories SET library_source = 1 WHERE virtual_path like '/file:/%';"
+#define U_v2200_DIR_SET_SCAN_KIND_SPOTIFY \
+  "UPDATE directories SET scan_kind = 2 WHERE virtual_path like '/spotify:/%';"
+#define U_v2200_DIR_SET_SCAN_KIND_FILES \
+  "UPDATE directories SET scan_kind = 1 WHERE virtual_path like '/file:/%';"
 
 #define U_v2200_SCVER_MAJOR                    \
   "UPDATE admin SET value = '22' WHERE key = 'schema_version_major';"
@@ -1211,17 +1211,17 @@ static const struct db_upgrade_query db_upgrade_v2107_queries[] =
 
 static const struct db_upgrade_query db_upgrade_v2200_queries[] =
   {
-    { U_v2200_ALTER_FILES_ADD_SOURCE, "alter table files add column source" },
-    { U_v2200_ALTER_PLAYLISTS_ADD_SOURCE, "alter table playlists add column source" },
-    { U_v2200_ALTER_DIR_ADD_SOURCE, "alter table directories add column source" },
-    { U_v2200_FILES_SET_SOURCE_RSS_SCANNER, "update table files set source rss-scanner" },
-    { U_v2200_FILES_SET_SOURCE_SPOTIFY_SCANNER, "update table files set source spotify-scanner" },
-    { U_v2200_FILES_SET_SOURCE_FILE_SCANNER, "update table files set source file-scanner" },
-    { U_v2200_PL_SET_SOURCE_RSS_SCANNER, "update table playlists set source rss-scanner" },
-    { U_v2200_PL_SET_SOURCE_SPOTIFY_SCANNER, "update table playlists set source spotify-scanner" },
-    { U_v2200_PL_SET_SOURCE_FILE_SCANNER, "update table playlists set source file-scanner" },
-    { U_v2200_DIR_SET_SOURCE_SPOTIFY_SCANNER, "update table directories set source spotify-scanner" },
-    { U_v2200_DIR_SET_SOURCE_FILE_SCANNER, "update table directories set source file-scanner" },
+    { U_v2200_ALTER_FILES_ADD_SCAN_KIND, "alter table files add column scan_kind" },
+    { U_v2200_ALTER_PLAYLISTS_ADD_SCAN_KIND, "alter table playlists add column scan_kind" },
+    { U_v2200_ALTER_DIR_ADD_SCAN_KIND, "alter table directories add column scan_kind" },
+    { U_v2200_FILES_SET_SCAN_KIND_RSS, "update table files set scan_kind rss" },
+    { U_v2200_FILES_SET_SCAN_KIND_SPOTIFY, "update table files set scan_kind spotify" },
+    { U_v2200_FILES_SET_SOURCE_FILE_SCANNER, "update table files set scan_kind files" },
+    { U_v2200_PL_SET_SCAN_KIND_RSS, "update table playlists set scan_kind rss" },
+    { U_v2200_PL_SET_SCAN_KIND_SPOTIFY, "update table playlists set scan_kind spotify" },
+    { U_v2200_PL_SET_SCAN_KIND_FILES, "update table playlists set scan_kind files" },
+    { U_v2200_DIR_SET_SCAN_KIND_SPOTIFY, "update table directories set scan_kind spotify" },
+    { U_v2200_DIR_SET_SCAN_KIND_FILES , "update table directories set scan_kind files" },
 
     { U_v2200_SCVER_MAJOR,    "set schema_version_major to 22" },
     { U_v2200_SCVER_MINOR,    "set schema_version_minor to 00" },

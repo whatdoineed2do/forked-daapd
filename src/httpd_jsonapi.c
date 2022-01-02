@@ -1228,7 +1228,7 @@ jsonapi_reply_library(struct httpd_request *hreq)
       if (!sources[i]->disabled)
 	{
 	  jsource = json_object_new_object();
-	  safe_json_add_string(jsource, "name", db_library_source_label(sources[i]->type));
+	  safe_json_add_string(jsource, "name", db_scan_kind_label(sources[i]->scan_kind));
 	  json_object_array_add(jsources, jsource);
 	}
     }
@@ -1247,9 +1247,9 @@ jsonapi_reply_update(struct httpd_request *hreq)
 {
   const char *param;
 
-  param = evhttp_find_header(hreq->query, "library_source");
+  param = evhttp_find_header(hreq->query, "scan_kind");
 
-  library_rescan(db_library_source_enum(param));
+  library_rescan(db_scan_kind_enum(param));
   return HTTP_NOCONTENT;
 }
 
@@ -1258,9 +1258,9 @@ jsonapi_reply_meta_rescan(struct httpd_request *hreq)
 {
   const char *param;
 
-  param = evhttp_find_header(hreq->query, "library_source");
+  param = evhttp_find_header(hreq->query, "scan_kind");
 
-  library_metarescan(db_library_source_enum(param));
+  library_metarescan(db_scan_kind_enum(param));
   return HTTP_NOCONTENT;
 }
 

@@ -1462,7 +1462,7 @@ prepare_directories(const char *artist, const char *album)
       DPRINTF(E_LOG, L_SPOTIFY, "Virtual path exceeds PATH_MAX (/spotify:/%s)\n", artist);
       return -1;
     }
-  dir_id = library_directory_save(virtual_path, NULL, 0, DIR_SPOTIFY, LIBRARY_SOURCE_SPOTIFY);
+  dir_id = library_directory_save(virtual_path, NULL, 0, DIR_SPOTIFY, SCAN_KIND_SPOTIFY);
   if (dir_id <= 0)
     {
       DPRINTF(E_LOG, L_SPOTIFY, "Could not add or update directory '%s'\n", virtual_path);
@@ -1474,7 +1474,7 @@ prepare_directories(const char *artist, const char *album)
       DPRINTF(E_LOG, L_SPOTIFY, "Virtual path exceeds PATH_MAX (/spotify:/%s/%s)\n", artist, album);
       return -1;
     }
-  dir_id = library_directory_save(virtual_path, NULL, 0, dir_id, LIBRARY_SOURCE_SPOTIFY);
+  dir_id = library_directory_save(virtual_path, NULL, 0, dir_id, SCAN_KIND_SPOTIFY);
   if (dir_id <= 0)
     {
       DPRINTF(E_LOG, L_SPOTIFY, "Could not add or update directory '%s'\n", virtual_path);
@@ -1577,7 +1577,7 @@ map_track_to_mfi(struct media_file_info *mfi, const struct spotify_track *track,
     }
   snprintf(virtual_path, PATH_MAX, "/spotify:/%s/%s/%s", mfi->album_artist, mfi->album, mfi->title);
   mfi->virtual_path = strdup(virtual_path);
-  mfi->library_source = LIBRARY_SOURCE_SPOTIFY;
+  mfi->scan_kind = SCAN_KIND_SPOTIFY;
 }
 
 static int
@@ -1873,7 +1873,7 @@ map_playlist_to_pli(struct playlist_info *pli, struct spotify_playlist *playlist
 
   pli->parent_id      = spotify_base_plid;
   pli->directory_id   = DIR_SPOTIFY;
-  pli->library_source = LIBRARY_SOURCE_SPOTIFY;
+  pli->scan_kind = SCAN_KIND_SPOTIFY;
 
   if (playlist->owner)
     pli->virtual_path = safe_asprintf("/spotify:/%s (%s)", playlist->name, playlist->owner);
@@ -1944,7 +1944,7 @@ create_saved_tracks_playlist(void)
       .type = PL_PLAIN,
       .parent_id = spotify_base_plid,
       .directory_id = DIR_SPOTIFY,
-      .library_source = LIBRARY_SOURCE_SPOTIFY,
+      .scan_kind = SCAN_KIND_SPOTIFY,
     };
 
   spotify_saved_plid = playlist_add_or_update(&pli);
@@ -1969,7 +1969,7 @@ create_base_playlist(void)
       .path = strdup("spotify:playlistfolder"),
       .title = strdup("Spotify"),
       .type = PL_FOLDER,
-      .library_source = LIBRARY_SOURCE_SPOTIFY,
+      .scan_kind = SCAN_KIND_SPOTIFY,
     };
 
   spotify_base_plid = 0;
@@ -2331,7 +2331,7 @@ spotifywebapi_deinit()
 
 struct library_source spotifyscanner =
 {
-  .type = LIBRARY_SOURCE_SPOTIFY,
+  .scan_kind = SCAN_KIND_SPOTIFY,
   .disabled = 0,
   .init = spotifywebapi_init,
   .deinit = spotifywebapi_deinit,
