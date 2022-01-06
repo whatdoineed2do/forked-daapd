@@ -2916,57 +2916,6 @@ db_query_fetch_string_sort(char **string, char **sortstring, struct query_params
   return 0;
 }
 
-static int
-db_genre_info_count(const char *genre, int *album_count, int *artist_count, int *track_count)
-{
-#define Q_TMPL "SELECT COUNT(DISTINCT(songalbumid)), COUNT(DISTINCT(songartistid)), COUNT(id) FROM files WHERE GENRE='%q';"
-
-  sqlite3_stmt *stmt;
-  char *query;
-  int ret;
-
-  query = sqlite3_mprintf(Q_TMPL, genre);
-  if (!query)
-    {
-      DPRINTF(E_LOG, L_DB, "Out of memory for query string\n");
-
-      return -1;
-    }
-
-  ret = db_blocking_prepare_v2(query, strlen(query) + 1, &stmt, NULL);
-  if (ret != SQLITE_OK)
-    {
-      DPRINTF(E_LOG, L_DB, "Could not prepare statement: %s\n", sqlite3_errmsg(hdl));
-
-      sqlite3_free(query);
-      return -1;
-    }
-
-  ret = db_blocking_step(stmt);
-  if (ret != SQLITE_ROW)
-    {
-      if (ret == SQLITE_DONE)
-	DPRINTF(E_DBG, L_DB, "No results\n");
-      else
-	DPRINTF(E_LOG, L_DB, "Could not step: %s\n", sqlite3_errmsg(hdl));
-
-      sqlite3_finalize(stmt);
-      sqlite3_free(query);
-      return -1;
-    }
-
-  *album_count  = sqlite3_column_int(stmt, 0);
-  *artist_count = sqlite3_column_int(stmt, 1);
-  *track_count = sqlite3_column_int(stmt, 2);
-
-  sqlite3_finalize(stmt);
-  sqlite3_free(query);
-
-  return ret;
-
-#undef Q_TMPL
-}
-
 /* Files */
 int
 db_files_get_count(uint32_t *nitems, uint32_t *nstreams, const char *filter)
