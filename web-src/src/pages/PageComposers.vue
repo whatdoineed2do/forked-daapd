@@ -27,6 +27,9 @@ import Composers from '@/lib/Composers'
 
 const composersData = {
   load: function (to) {
+    if (to.params.genre) {
+      return webapi.library_genre_composers(to.params.genre)
+    }
     return webapi.library_composers()
   },
 
