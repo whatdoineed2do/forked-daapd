@@ -2,9 +2,19 @@
   <div>
     <tabs-music></tabs-music>
 
-    <index-list :index="index_list"></index-list>
+    <index-list :index="tracks_list.indexList"></index-list>
 
     <content-with-heading>
+      <template slot="options">
+        <index-button-list :index="tracks_list.indexList"></index-button-list>
+
+        <div class="columns">
+          <div class="column">
+            <p class="heading" style="margin-bottom: 24px;">Sort by</p>
+            <dropdown-menu v-model="sort" :options="sort_options"></dropdown-menu>
+          </div>
+        </div>
+      </template>
       <template slot="heading-left">
         <p class="title is-4">{{ genre }}</p>
         <p class="heading">{{ tracks.total }} tracks</p>
@@ -27,7 +37,7 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artists">artists</a> | <a class="has-text-link" @click="open_albums">albums</a> | {{ tracks.total }} tracks | <a class="has-text-link" @click="open_composers">composers</a></p>
-        <list-tracks :tracks="rated_tracks" @rating-updated="rating_upd"></list-tracks>
+        <list-tracks :tracks="tracks_list" @rating-updated="rating_upd"></list-tracks>
         <modal-dialog-track :show="show_details_modal" :track="selected_track" @close="show_details_modal = false" />
         <modal-dialog-genre :show="show_genre_details_modal" :genre="modal_obj" @close="show_genre_details_modal = false" />
       </template>
@@ -39,12 +49,16 @@
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import ListTracks from '@/components/ListTracks'
+import IndexButtonList from '@/components/IndexButtonList'
+import DropdownMenu from '@/components/DropdownMenu'
 import TabsMusic from '@/components/TabsMusic'
 import ModalDialogTrack from '@/components/ModalDialogTrack'
 import ModalDialogGenre from '@/components/ModalDialogGenre'
 import IndexList from '@/components/IndexList'
 import StarRating from 'vue-star-rating'
 import webapi from '@/webapi'
+import * as types from '@/store/mutation_types'
+import Tracks from '@/lib/Tracks'
 
 const tracksData = {
   load: function (to) {
@@ -60,7 +74,7 @@ const tracksData = {
 export default {
   name: 'PageGenreTracks',
   mixins: [LoadDataBeforeEnterMixin(tracksData)],
-  components: { ContentWithHeading, ListTracks, ModalDialogGenre, ModalDialogTrack, IndexList, TabsMusic, StarRating },
+  components: { ContentWithHeading, IndexButtonList, DropdownMenu, ListTracks, ModalDialogGenre, ModalDialogTrack, IndexList, TabsMusic, StarRating },
 
   data () {
     return {
@@ -71,6 +85,7 @@ export default {
 
       show_details_modal: false,
       selected_track: {},
+      sort_options: ['Name', 'Recently added', 'Recently released'],
 
       show_genre_details_modal: false
     }
@@ -85,6 +100,23 @@ export default {
         artist_count: new Set(tracks.map(track => track.artist_id)).size,
         track_count: tracks.length,
         uri: tracks.map(a => a.uri).join(',')
+      }
+    },
+
+    tracks_list () {
+      return new Tracks(this.tracks.items, {
+        sort: this.sort,
+        group: true,
+        min_rating: this.min_rating
+      })
+    },
+
+    sort: {
+      get () {
+        return this.$store.state.albums_sort
+      },
+      set (value) {
+        this.$store.commit(types.ALBUMS_SORT, value)
       }
     },
 
