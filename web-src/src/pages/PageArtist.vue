@@ -2,7 +2,7 @@
   <div>
     <tabs-music></tabs-music>
 
-    <index-list :index="index_list"></index-list>
+    <index-list :index="albums_list.indexList"></index-list>
 
   <content-with-heading>
       <template slot="options">
@@ -89,7 +89,7 @@ export default {
       show_details_modal: false,
       selected_album: {},
 
-      sort_options: ['Name', 'Release date'],
+      sort_options: ['Name', 'Release date', 'Recently released'],
       show_artist_details_modal: false
     }
   },
@@ -130,6 +130,11 @@ export default {
       },
       set (value) {
         this.$store.commit(types.ARTIST_ALBUMS_SORT, value)
+        if (value !== 'Name') {
+          this.albums_list.options.group = true
+        } else {
+          this.albums_list.options.group = false
+        }
       }
     }
   },
