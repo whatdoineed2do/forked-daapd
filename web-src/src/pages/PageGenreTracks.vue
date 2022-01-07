@@ -27,7 +27,7 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artists">artists</a> | <a class="has-text-link" @click="open_albums">albums</a> | {{ tracks.total }} tracks | <a class="has-text-link" @click="open_composers">composers</a></p>
-        <list-tracks :tracks="rated_tracks"></list-tracks>
+        <list-tracks :tracks="rated_tracks" @rating-updated="rating_upd"></list-tracks>
         <modal-dialog-track :show="show_details_modal" :track="selected_track" @close="show_details_modal = false" />
         <modal-dialog-genre :show="show_genre_details_modal" :genre="modal_obj" @close="show_genre_details_modal = false" />
       </template>
@@ -136,6 +136,13 @@ export default {
         rating = 0
       }
       this.min_rating = Math.ceil(rating) * 20
+    },
+
+    rating_upd: function (args) {
+      const idx = this.tracks.items.findIndex(track => track.id === args.track_id)
+      if (idx > -1) {
+        this.tracks.items[idx].rating = args.rating
+      }
     },
 
     open_dialog: function (track) {
