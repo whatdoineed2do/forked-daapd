@@ -275,6 +275,17 @@ export default {
     })
   },
 
+  library_genre_composers (genre) {
+    const genreParams = {
+      type: 'composers',
+      media_kind: 'music',
+      expression: 'genre is "' + genre + '"'
+    }
+    return axios.get('./api/search', {
+      params: genreParams
+    })
+  },
+
   library_radio_streams () {
     const params = {
       type: 'tracks',
