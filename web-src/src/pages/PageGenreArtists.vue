@@ -2,9 +2,19 @@
   <div>
     <tabs-music></tabs-music>
 
-    <index-list :index="index_list"></index-list>
+    <index-list :index="artists_list.indexList"></index-list>
 
     <content-with-heading>
+      <template slot="options">
+        <index-button-list :index="artists_list.indexList"></index-button-list>
+
+        <div class="columns">
+          <div class="column">
+            <p class="heading" style="margin-bottom: 24px;">Sort by</p>
+            <dropdown-menu v-model="sort" :options="sort_options"></dropdown-menu>
+          </div>
+        </div>
+      </template>
       <template slot="heading-left">
         <p class="title is-4">{{ genre }}</p>
       </template>
@@ -20,14 +30,7 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile">{{ artists.total }} artists | <a class="has-text-link" @click="open_albums">albums</a> | <a class="has-text-link" @click="open_tracks">tracks</a> | <a class="has-text-link" @click="open_composers">composers</a></p>
-        <list-item-artist v-for="artist in artists.items" :key="artist.id" :artist="artist" @click="open_artist(artist)">
-          <template slot="actions">
-            <a @click="open_dialog(artist)">
-              <span class="icon has-text-dark"><i class="mdi mdi-dots-vertical mdi-18px"></i></span>
-            </a>
-          </template>
-        </list-item-artist>
-        <modal-dialog-artist :show="show_details_modal" :artist="selected_artist" @close="show_details_modal = false" />
+        <list-artists :artists="artists_list"></list-artists>
         <modal-dialog-genre :show="show_genre_details_modal" :genre="modal_obj" @close="show_genre_details_modal = false" />
       </template>
     </content-with-heading>
@@ -38,11 +41,14 @@
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import TabsMusic from '@/components/TabsMusic'
-import ListItemArtist from '@/components/ListItemArtist'
-import ModalDialogArtist from '@/components/ModalDialogArtist'
+import IndexButtonList from '@/components/IndexButtonList'
+import ListArtists from '@/components/ListArtists'
+import DropdownMenu from '@/components/DropdownMenu'
 import ModalDialogGenre from '@/components/ModalDialogGenre'
 import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
+import * as types from '@/store/mutation_types'
+import Artists from '@/lib/Artists'
 
 const artistsData = {
   load: function (to) {
@@ -58,21 +64,39 @@ const artistsData = {
 export default {
   name: 'PageGenreArtists',
   mixins: [LoadDataBeforeEnterMixin(artistsData)],
-  components: { ContentWithHeading, TabsMusic, ListItemArtist, IndexList, ModalDialogArtist, ModalDialogGenre },
+  components: { ContentWithHeading, TabsMusic, IndexButtonList, ListArtists, IndexList, ModalDialogGenre, DropdownMenu },
 
   data () {
     return {
       artists: { items: [] },
       genre: '',
+      sort_options: ['Name', 'Recently added'],
 
       show_details_modal: false,
-      selected_artist: {},
 
       show_genre_details_modal: false
     }
   },
 
   computed: {
+    artists_list () {
+      return new Artists(this.artists.items, {
+        hideSingles: this.hide_singles,
+        hideSpotify: this.hide_spotify,
+        sort: this.sort,
+        group: true
+      })
+    },
+
+    sort: {
+      get () {
+        return this.$store.state.artists_sort
+      },
+      set (value) {
+        this.$store.commit(types.ARTISTS_SORT, value)
+      }
+    },
+
     modal_obj () {
       return {
         name: this.genre,
@@ -87,11 +111,6 @@ export default {
         }, 0),
         uri: this.artists.items.map(a => a.uri).join(',')
       }
-    },
-
-    index_list () {
-      return [...new Set(this.artists.items
-        .map(artist => artist.name_sort.charAt(0).toUpperCase()))]
     }
   },
 
@@ -123,9 +142,8 @@ export default {
       webapi.player_play_expression('genre is "' + this.genre + '" and media_kind is music', false, position)
     },
 
-    open_dialog: function (artist) {
-      this.selected_artist = artist
-      this.show_details_modal = true
+    scrollToTop: function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 }
