@@ -2,9 +2,19 @@
   <div>
     <tabs-music></tabs-music>
 
-    <index-list :index="index_list"></index-list>
+    <index-list :index="albums_list.indexList"></index-list>
 
     <content-with-heading>
+      <template slot="options">
+        <index-button-list :index="albums_list.indexList"></index-button-list>
+
+        <div class="columns">
+          <div class="column">
+            <p class="heading" style="margin-bottom: 24px;">Sort by</p>
+            <dropdown-menu v-model="sort" :options="sort_options"></dropdown-menu>
+          </div>
+        </div>
+      </template>
       <template slot="heading-left">
         <p class="title is-4">{{ name }}</p>
       </template>
@@ -20,7 +30,7 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artists">artists</a> | {{ genre_albums.total }} albums | <a class="has-text-link" @click="open_tracks">tracks</a> | <a class="has-text-link" @click="open_composers">composers</a> </p>
-        <list-albums :albums="genre_albums.items"></list-albums>
+        <list-albums :albums="albums_list"></list-albums>
         <modal-dialog-album :show="show_details_modal" :album="selected_album" @close="show_details_modal = false" />
         <modal-dialog-genre :show="show_genre_details_modal" :genre="modal_obj" @close="show_genre_details_modal = false" />
       </template>
@@ -31,12 +41,16 @@
 <script>
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
+import IndexButtonList from '@/components/IndexButtonList'
+import DropdownMenu from '@/components/DropdownMenu'
 import ListAlbums from '@/components/ListAlbums'
 import TabsMusic from '@/components/TabsMusic'
 import ModalDialogAlbum from '@/components/ModalDialogAlbum'
 import ModalDialogGenre from '@/components/ModalDialogGenre'
 import IndexList from '@/components/IndexList'
 import webapi from '@/webapi'
+import * as types from '@/store/mutation_types'
+import Albums from '@/lib/Albums'
 
 const genreData = {
   load: function (to) {
@@ -56,7 +70,7 @@ const genreData = {
 export default {
   name: 'PageGenre',
   mixins: [LoadDataBeforeEnterMixin(genreData)],
-  components: { ContentWithHeading, ListAlbums, ModalDialogGenre, ModalDialogAlbum, IndexList, TabsMusic },
+  components: { ContentWithHeading, IndexButtonList, DropdownMenu, ListAlbums, ModalDialogGenre, ModalDialogAlbum, IndexList, TabsMusic },
 
   data () {
     return {
@@ -65,6 +79,7 @@ export default {
       tracks: 0,
       show_details_modal: false,
       selected_album: {},
+      sort_options: ['Name', 'Recently added', 'Recently released'],
       show_genre_details_modal: false
     }
   },
@@ -80,9 +95,20 @@ export default {
       }
     },
 
-    index_list () {
-      return [...new Set(this.genre_albums.items
-        .map(album => album.name_sort.charAt(0).toUpperCase()))]
+    albums_list () {
+      return new Albums(this.genre_albums.items, {
+        sort: this.sort,
+        group: true
+      })
+    },
+
+    sort: {
+      get () {
+        return this.$store.state.albums_sort
+      },
+      set (value) {
+        this.$store.commit(types.ALBUMS_SORT, value)
+      }
     }
   },
 
@@ -109,6 +135,10 @@ export default {
 
     play: function () {
       webapi.player_play_expression('genre is "' + this.name + '" and media_kind is music', true)
+    },
+
+    scrollToTop: function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     },
 
     open_dialog: function (album) {
