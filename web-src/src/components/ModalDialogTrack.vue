@@ -150,7 +150,9 @@ export default {
         rating = 0
       }
       this.rating = Math.ceil(rating) * 20
-      webapi.library_track_set_rating(this.track.id, this.rating)
+      webapi.library_track_set_rating(this.track.id, this.rating).then(() => {
+        this.$emit('rating-updated', { track_id: this.track.id, rating: this.rating })
+      })
     },
 
     queue_add: function () {
