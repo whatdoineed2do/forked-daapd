@@ -37,7 +37,7 @@
       </template>
       <template slot="content">
         <p class="heading has-text-centered-mobile"><a class="has-text-link" @click="open_artists">artists</a> | <a class="has-text-link" @click="open_albums">albums</a> | {{ tracks.total }} tracks | <a class="has-text-link" @click="open_composers">composers</a></p>
-        <list-tracks :tracks="tracks_list" @rating-updated="rating_upd"></list-tracks>
+        <list-tracks :tracks="tracks_list" @rating-updated="rating_upd" @usermark-updated="usermark_upd"></list-tracks>
         <modal-dialog-track :show="show_details_modal" :track="selected_track" @close="show_details_modal = false" />
         <modal-dialog-genre :show="show_genre_details_modal" :genre="modal_obj" @close="show_genre_details_modal = false" />
       </template>
@@ -175,6 +175,10 @@ export default {
       if (idx > -1) {
         this.tracks.items[idx].rating = args.rating
       }
+    },
+
+    usermark_upd: function (args) {
+      this.tracks.items.find(e => e.id === args.track_id).usermark = args.value
     },
 
     open_dialog: function (track) {
