@@ -4617,9 +4617,9 @@ search_tracks(json_object *reply, struct httpd_request *hreq, const char *param_
   if (param_query)
     {
       if (media_kind)
-	query_params.filter = db_mprintf("(f.title LIKE '%%%q%%' AND f.media_kind = %d)", param_query, media_kind);
+	query_params.filter = db_mprintf("((f.title LIKE '%%%q%%' OR f.title = '%q') AND f.media_kind = %d)", param_query, param_query, media_kind);
       else
-	query_params.filter = db_mprintf("(f.title LIKE '%%%q%%')", param_query);
+	query_params.filter = db_mprintf("(f.title LIKE '%%%q%%' OR f.title = '%q')", param_query, param_query);
     }
   else
     {
@@ -4678,9 +4678,9 @@ search_artists(json_object *reply, struct httpd_request *hreq, const char *param
   if (param_query)
     {
       if (media_kind)
-	query_params.filter = db_mprintf("((f.album_artist LIKE '%%%q%%' OR f.artist LIKE '%%%q%%') AND f.media_kind = %d)", param_query, param_query, media_kind);
+	query_params.filter = db_mprintf("((f.album_artist LIKE '%%%q%%' OR f.album_artist = '%q') AND f.media_kind = %d)", param_query, param_query, media_kind);
       else
-	query_params.filter = db_mprintf("(f.album_artist LIKE '%%%q%%' OR f.artist LIKE '%%%q%%')", param_query, param_query);
+	query_params.filter = db_mprintf("(f.album_artist LIKE '%%%q%%' OR f.album_artist = '%q')", param_query, param_query);
     }
   else
     {
@@ -4740,9 +4740,9 @@ search_albums(json_object *reply, struct httpd_request *hreq, const char *param_
   if (param_query)
     {
       if (media_kind)
-	query_params.filter = db_mprintf("(f.album LIKE '%%%q%%' AND f.media_kind = %d)", param_query, media_kind);
+	query_params.filter = db_mprintf("((f.album LIKE '%%%q%%' OR f.album = '%q') AND f.media_kind = %d)", param_query, param_query, media_kind);
       else
-	query_params.filter = db_mprintf("(f.album LIKE '%%%q%%')", param_query);
+	query_params.filter = db_mprintf("(f.album LIKE '%%%q%%' OR f.album = '%q')", param_query, param_query);
     }
   else
     {
@@ -4802,9 +4802,9 @@ search_composers(json_object *reply, struct httpd_request *hreq, const char *par
   if (param_query)
     {
       if (media_kind)
-	query_params.filter = db_mprintf("(f.composer LIKE '%%%q%%' AND f.media_kind = %d)", param_query, media_kind);
+	query_params.filter = db_mprintf("((f.composer LIKE '%%%q%%' OR f.composer = '%q') AND f.media_kind = %d)", param_query, param_query, media_kind);
       else
-	query_params.filter = db_mprintf("(f.composer LIKE '%%%q%%')", param_query);
+	query_params.filter = db_mprintf("(f.composer LIKE '%%%q%%' OR f.composer = '%q')", param_query, param_query);
     }
   else
     {
