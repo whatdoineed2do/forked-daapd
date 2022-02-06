@@ -103,21 +103,40 @@ const browseData = {
       }),
       webapi.search({
         type: 'track',
-        expression: 'time_added after this week and media_kind is music order by time_added desc',
+        expression: 'time_added after this week and time_added before today and media_kind is music order by time_added desc',
         limit: recentlyAddedLimit
       }),
       webapi.search({
         type: 'track',
-        expression: 'time_added after last month and media_kind is music order by time_added desc',
+        expression: 'time_added after last month and time_added before this week and media_kind is music order by time_added desc',
         limit: recentlyAddedLimit
       })
     ])
   },
 
   set: function (vm, response) {
+    let N = store.getters.settings_option_recently_added_limit
+
     vm.recently_added_today = response[0].data.tracks
+    if (vm.recently_added_today.length > N) {
+      vm.recently_added_today.length = N
+      N = 0
+    } else {
+      N -= vm.recently_added_today.length
+    }
+
     vm.recently_added_week = response[1].data.tracks
+    if (vm.recently_added_week.length > N) {
+      vm.recently_added_week.length = N
+      N = 0
+    } else {
+      N -= vm.recently_added_week.length
+    }
+
     vm.recently_added_month = response[2].data.tracks
+    if (vm.recently_added_month.length > N) {
+      vm.recently_added_month.length = N
+    }
   }
 }
 
@@ -186,7 +205,7 @@ export default {
       return this.recently_added_older.items.length > 0
     },
     recently_added () {
-      return this.recently_added_older.items.length + this.recently_added_month.items.length
+      return this.recently_added_older.items.length + this.recently_added_month.items.length + this.recently_added_week.items.length + this.recently_added_today.items.length
     }
   }
 }
