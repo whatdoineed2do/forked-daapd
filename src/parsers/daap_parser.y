@@ -292,6 +292,8 @@ static void sql_append_dmap_clause(struct daap_result *result, struct ast *a)
   bool is_equal = (a->type == DAAP_T_EQUAL);
   char escape_char;
   char *key;
+  char *wildcard_stripped;
+  int len;
 
   if (!k || k->type != DAAP_T_KEY || !(key = (char *)k->data))
     {
@@ -335,11 +337,27 @@ static void sql_append_dmap_clause(struct daap_result *result, struct ast *a)
     }
   else if (!dqfm->as_int && v->type == DAAP_T_WILDCARD)
     {
+      sql_append(result, "(");
+      if (is_equal)
+        {
+          len = strlen((char *)v->data);
+          if (len > 2)
+            {
+              // bookended with '*', which we strip
+              wildcard_stripped = strdup(((char *)v->data)+1);
+              wildcard_stripped[len-2] = '\0';
+
+              sql_append(result, "%s = '%s' OR ", dqfm->db_col, wildcard_stripped);
+              free(wildcard_stripped);
+            }
+         }
+
       sql_like_escape((char **)&v->data, &escape_char);
       sql_str_escape((char **)&v->data);
       sql_append(result, "%s", dqfm->db_col);
       sql_append(result, is_equal ? " LIKE " : " NOT LIKE ");
       sql_append(result, "'%s'", (char *)v->data);
+      sql_append(result, ")");
       if (escape_char)
         sql_append(result, " ESCAPE '%c'", escape_char);
       return;
