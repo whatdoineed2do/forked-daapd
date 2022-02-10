@@ -184,7 +184,7 @@ export default {
     },
 
     index_list () {
-      var items = []
+      let items = []
 
       if (this.view === 'file_view') {
         items = this.files.tracks.items

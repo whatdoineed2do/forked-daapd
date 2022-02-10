@@ -110,7 +110,7 @@ export default {
     },
 
     modal_artist_obj () {
-      var tracks = this.min_rating === 0 ? this.tracks.items : this.tracks.items.filter(a => a.rating >= this.min_rating)
+      const tracks = this.min_rating === 0 ? this.tracks.items : this.tracks.items.filter(a => a.rating >= this.min_rating)
       return {
         id: this.id,
         name: this.name,

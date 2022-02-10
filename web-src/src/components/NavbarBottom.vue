@@ -281,7 +281,7 @@ export default {
     },
 
     stream_location () {
-      var port = (this.$store.state.config.stream_port === 0 || this.$store.state.config.stream_port === undefined) ? window.location.port : this.$store.state.config.stream_port
+      const port = (this.$store.state.config.stream_port === 0 || this.$store.state.config.stream_port === undefined) ? window.location.port : this.$store.state.config.stream_port
       return window.location.protocol + '//' + window.location.hostname + ':' + port + '/stream.mp3'
     },
 

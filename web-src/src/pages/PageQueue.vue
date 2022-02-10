@@ -109,14 +109,14 @@ export default {
       return this.$store.state.config.allow_modifying_stored_playlists && this.$store.state.config.default_playlist_directory
     },
     queue_duration () {
-      var seconds = this.queue.items.reduce((acc, item) => {
+      const seconds = this.queue.items.reduce((acc, item) => {
         acc += item.length_ms
         return acc
       }, 0) / 1000
 
-      var h = Math.floor(seconds / 3600)
-      var m = Math.floor(seconds % 3600 / 60)
-      var s = Math.floor(seconds % 3600 % 60)
+      const h = Math.floor(seconds / 3600)
+      const m = Math.floor(seconds % 3600 / 60)
+      const s = Math.floor(seconds % 3600 % 60)
 
       return [h > 0 ? h + ':' : ''] + ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2)
     },

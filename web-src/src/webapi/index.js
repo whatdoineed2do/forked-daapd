@@ -243,7 +243,7 @@ export default {
   },
 
   library_genre_albums (genre) {
-    var genreParams = {
+    const genreParams = {
       type: 'albums',
       media_kind: 'music',
       expression: 'genre is "' + genre + '"'
@@ -254,7 +254,7 @@ export default {
   },
 
   library_genre_artists (genre) {
-    var genreParams = {
+    const genreParams = {
       type: 'artists',
       media_kind: 'music',
       expression: 'genre is "' + genre + '"'

@@ -93,7 +93,7 @@ export default {
 
   computed: {
     modal_obj () {
-      var tracks = this.min_rating === 0 ? this.tracks.items : this.tracks.items.filter(a => a.rating >= this.min_rating)
+      const tracks = this.min_rating === 0 ? this.tracks.items : this.tracks.items.filter(a => a.rating >= this.min_rating)
       return {
         name: this.genre,
         album_count: new Set(tracks.map(track => track.album_id)).size,

@@ -116,7 +116,7 @@ export default {
     },
 
     is_url_pl: function () {
-      var urltracks = this.tracks.reduce((acc, item) => {
+      const urltracks = this.tracks.reduce((acc, item) => {
         acc += item.data_kind === 'url' ? 1 : 0
         return acc
       }, 0)
