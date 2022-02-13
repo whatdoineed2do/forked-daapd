@@ -1,7 +1,7 @@
 #!/bin/bash
 
-BASEOVERLAY=@localstatedir@/cache/overlay/forked-daapd
-CACHE=@localstatedir@/cache/forked-daapd
+BASEOVERLAY=@localstatedir@/cache/overlay/owntone
+CACHE=@localstatedir@/cache/owntone
 
 OVERLAY_SZ=16M
 if [ $# -eq 2 ]; then
