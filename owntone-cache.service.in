@@ -1,0 +1,13 @@
+[Unit]
+Description=OwnTone overlay cache service
+Before=owntone.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-@sysconfdir@/sysconfig/owntone
+ExecStart=@sbindir@/owntone-cache.sh start $CACHE_OVERLAY_SZ
+ExecStop=@sbindir@/owntone-cache.sh stop
+RemainAfterExit=true
+
+[Install]
+RequiredBy=owntone.service
