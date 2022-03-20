@@ -137,7 +137,7 @@ static struct streaming_ctx streaming_ctxs[] = {
   },
   {
     .name = "ALAC",
-    .endpoint = "/stream.alac",
+    .endpoint = "/stream.m4a",
     .mime = "audio/mp4; codecs=alac",
     .xcode = XCODE_ALAC,
     .available_sessions = STREAMING_SESSIONS_MAX,
