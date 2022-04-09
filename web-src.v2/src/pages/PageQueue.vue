@@ -1,8 +1,12 @@
 <template>
+  <div>
+    <tabs-music></tabs-music>
+
   <content-with-heading>
     <template slot="heading-left">
-      <p class="heading">{{ queue.count }} tracks</p>
       <p class="title is-4">Queue</p>
+      <p class="heading">{{ queue.count }} tracks | {{ queue_duration }} Playtime</p>
+      <a class="subtitle has-text-link is-7" v-show="queue_items.length > 0 && now_playing.id !== undefined" href='#' v-scroll-to="{ el: '#index_' + now_playing.id, offset: -165 }">Now Playing</a>
     </template>
     <template slot="heading-right">
       <div class="buttons is-centered">
@@ -39,7 +43,13 @@
       </div>
     </template>
     <template slot="content">
-      <draggable v-model="queue_items" handle=".handle" @end="move_item">
+      <draggable
+         v-model="queue_items"
+         handle=".handle"
+         v-bind="dragOptions"
+         @start="drag=true"
+         @update="move_item"
+         @end="drag=false">
         <list-item-queue-item v-for="(item, index) in queue_items"
           :key="item.id" :item="item" :position="index"
           :current_position="current_position"
@@ -60,10 +70,12 @@
       <modal-dialog-playlist-save v-if="is_queue_save_allowed" :show="show_pls_save_modal" @close="show_pls_save_modal = false" />
     </template>
   </content-with-heading>
+  </div>
 </template>
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading'
+import TabsMusic from '@/components/TabsMusic'
 import ListItemQueueItem from '@/components/ListItemQueueItem'
 import ModalDialogQueueItem from '@/components/ModalDialogQueueItem'
 import ModalDialogAddUrlStream from '@/components/ModalDialogAddUrlStream'
@@ -74,11 +86,13 @@ import draggable from 'vuedraggable'
 
 export default {
   name: 'PageQueue',
-  components: { ContentWithHeading, ListItemQueueItem, draggable, ModalDialogQueueItem, ModalDialogAddUrlStream, ModalDialogPlaylistSave },
+  components: { ContentWithHeading, TabsMusic, ListItemQueueItem, draggable, ModalDialogQueueItem, ModalDialogAddUrlStream, ModalDialogPlaylistSave },
 
   data () {
     return {
       edit_mode: false,
+      drag: false,
+      pre_move_queue_items: [],
 
       show_details_modal: false,
       show_url_modal: false,
@@ -94,12 +108,31 @@ export default {
     is_queue_save_allowed () {
       return this.$store.state.config.allow_modifying_stored_playlists && this.$store.state.config.default_playlist_directory
     },
+    queue_duration () {
+      const seconds = this.queue.items.reduce((acc, item) => {
+        acc += item.length_ms
+        return acc
+      }, 0) / 1000
+
+      const h = Math.floor(seconds / 3600)
+      const m = Math.floor(seconds % 3600 / 60)
+      const s = Math.floor(seconds % 3600 % 60)
+
+      return [h > 0 ? h + ':' : ''] + ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2)
+    },
     queue () {
       return this.$store.state.queue
     },
     queue_items: {
       get () { return this.$store.state.queue.items },
-      set (value) { /* Do nothing? Send move request in @end event */ }
+      set (value) {
+        this.pre_move_queue_items = this.$store.state.queue.items
+        this.$store.state.queue.items = value
+        this.$store.commit(types.UPDATE_QUEUE, this.$store.state.queue)
+      }
+    },
+    now_playing () {
+      return this.$store.getters.now_playing
     },
     current_position () {
       const nowPlaying = this.$store.getters.now_playing
@@ -107,6 +140,14 @@ export default {
     },
     show_only_next_items () {
       return this.$store.state.show_only_next_items
+    },
+    dragOptions () {
+      return {
+        animation: 100,
+        group: 'description',
+        disabled: false,
+        ghostClass: 'ghost'
+      }
     }
   },
 
@@ -125,7 +166,8 @@ export default {
 
     move_item: function (e) {
       const oldPosition = !this.show_only_next_items ? e.oldIndex : e.oldIndex + this.current_position
-      const item = this.queue_items[oldPosition]
+      const item = this.pre_move_queue_items[oldPosition]
+      this.pre_move_queue_items = []
       const newPosition = item.position + (e.newIndex - e.oldIndex)
       if (newPosition !== oldPosition) {
         webapi.queue_move(item.id, newPosition)

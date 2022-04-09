@@ -10,7 +10,8 @@
                 {{ item.title }}
               </p>
               <p class="subtitle">
-                {{ item.artist }}
+                <a v-if="item.track_artist_id" class="title is-6 has-text-link" @click="open_track_artist">{{ item.artist }}</a>
+                <span v-else class="subtitle">{{ item.artist }}</span>
               </p>
               <div class="content is-small">
                 <p>
@@ -60,11 +61,25 @@
                     <span v-if="item.bitrate"> | {{ item.bitrate }} Kb/s</span>
                   </span>
                 </p>
+                <div v-if="this.item.data_kind === 'file'">
+                  <p>
+                    <span class="heading">Usermark</span>
+                  </p>
+                  <div class="buttons">
+                    <a :disabled="this.usermark_is_set(1)" class="button is-small is-danger" @click="usermark_update(1)">Mark to delete</a>
+                    <a :disabled="this.usermark_is_set(2)" class="button is-small is-warning" @click="usermark_update(2)">Mark to rexcode</a>
+                    <a :disabled="this.usermark_is_set(4)" class="button is-small is-warning" @click="usermark_update(4)">Mark to review</a>
+                    <a :disabled="this.usermark === 0" class="button is-small is-success" @click="usermark_update(0)">Mark reset</a>
+                  </div>
+                </div>
               </div>
             </div>
             <footer class="card-footer">
               <a class="card-footer-item has-text-dark" @click="remove">
                 <span class="icon"><i class="mdi mdi-delete"></i></span> <span class="is-size-7">Remove</span>
+              </a>
+              <a class="card-footer-item has-text-dark" @click="play_next">
+                <span class="icon"><i class="mdi mdi-playlist-play"></i></span> <span class="is-size-7">Play Next</span>
               </a>
               <a class="card-footer-item has-text-dark" @click="play">
                 <span class="icon"><i class="mdi mdi-play"></i></span> <span class="is-size-7">Play</span>
@@ -84,10 +99,11 @@ import SpotifyWebApi from 'spotify-web-api-js'
 
 export default {
   name: 'ModalDialogQueueItem',
-  props: ['show', 'item'],
+  props: ['show', 'item', 'np_usermark'],
 
   data () {
     return {
+      usermark: -1,
       spotify_track: {}
     }
   },
@@ -96,6 +112,11 @@ export default {
     remove: function () {
       this.$emit('close')
       webapi.queue_remove(this.item.id)
+    },
+
+    play_next: function () {
+      this.$emit('close')
+      webapi.queue_add_next(this.item.uri)
     },
 
     play: function () {
@@ -117,6 +138,10 @@ export default {
       this.$router.push({ path: '/music/artists/' + this.item.album_artist_id })
     },
 
+    open_track_artist: function () {
+      this.$router.push({ path: '/music/artists/' + this.item.track_artist_id })
+    },
+
     open_genre: function () {
       this.$router.push({ name: 'Genre', params: { genre: this.item.genre } })
     },
@@ -129,6 +154,18 @@ export default {
     open_spotify_album: function () {
       this.$emit('close')
       this.$router.push({ path: '/music/spotify/albums/' + this.spotify_track.album.id })
+    },
+
+    usermark_is_set: function (value) {
+      return (this.usermark & value) > 0
+    },
+
+    usermark_update (value) {
+      const newvalue = value === 0 ? 0 : value | this.usermark
+      webapi.library_track_set_usermark(this.item.track_id, newvalue).then(() => {
+        this.usermark = newvalue
+        this.$emit('close_usermark', { value: this.usermark })
+      })
     }
   },
 
@@ -142,6 +179,18 @@ export default {
         })
       } else {
         this.spotify_track = {}
+        if (this.np_usermark !== undefined) {
+          this.usermark = this.np_usermark
+        } else if (this.item.data_kind === 'file') {
+          webapi.library_track(this.item.track_id).then((response) => {
+            this.usermark = response.data.usermark
+          }).catch((err) => {
+            this.usermark = -1
+            if (err.response.status === 404) {
+              webapi.queue_remove(this.item.id)
+            }
+          })
+        }
       }
     }
   }
