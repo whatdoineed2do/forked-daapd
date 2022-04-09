@@ -396,6 +396,7 @@ AC_CONFIG_FILES([
 	src/Makefile
 	sqlext/Makefile
 	htdocs/Makefile
+	htdocs.vue2/Makefile
 	Makefile
 	owntone.spec
 ])
