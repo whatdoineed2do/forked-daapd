@@ -7,7 +7,19 @@
           <div class="card">
             <div class="card-content">
               <p class="title is-4">
-                <a class="has-text-link" @click="open_genre">{{ genre.name }}</a>
+                <a class="has-text-link" @click="open_albums">{{ genre.name }}</a>
+              </p>
+              <p>
+                <span class="heading">Albums</span>
+                <a class="has-text-link is-6" @click="open_albums">{{ genre.album_count }}</a>
+              </p>
+              <p>
+                <span class="heading">Artists</span>
+                <a class="has-text-link is-6" @click="open_artists">{{ genre.artist_count }}</a>
+              </p>
+              <p>
+                <span class="heading">Tracks</span>
+                <a class="has-text-link is-6" @click="open_tracks">{{ genre.track_count }}</a>
               </p>
             </div>
             <footer class="card-footer">
@@ -39,22 +51,44 @@ export default {
   methods: {
     play: function () {
       this.$emit('close')
-      webapi.player_play_expression('genre is "' + this.genre.name + '" and media_kind is music', false)
+      if (this.genre.uri === undefined) {
+        webapi.player_play_expression('genre is "' + this.genre.name + '" and media_kind is music', false)
+      } else {
+        webapi.player_play_uri(this.genre.uri, false)
+      }
     },
 
     queue_add: function () {
       this.$emit('close')
-      webapi.queue_expression_add('genre is "' + this.genre.name + '" and media_kind is music')
+      if (this.genre.uri === undefined) {
+        webapi.queue_expression_add('genre is "' + this.genre.name + '" and media_kind is music')
+      } else {
+        webapi.queue_add(this.genre.uri)
+      }
     },
 
     queue_add_next: function () {
       this.$emit('close')
-      webapi.queue_expression_add_next('genre is "' + this.genre.name + '" and media_kind is music')
+      if (this.genre.uri === undefined) {
+        webapi.queue_expression_add_next('genre is "' + this.genre.name + '" and media_kind is music')
+      } else {
+        webapi.queue_add_next(this.genre.uri)
+      }
     },
 
-    open_genre: function () {
+    open_albums: function () {
       this.$emit('close')
       this.$router.push({ name: 'Genre', params: { genre: this.genre.name } })
+    },
+
+    open_tracks: function () {
+      this.show_details_modal = false
+      this.$router.push({ name: 'GenreTracks', params: { genre: this.genre.name } })
+    },
+
+    open_artists: function () {
+      this.show_details_modal = false
+      this.$router.push({ name: 'GenreArtists', params: { genre: this.genre.name } })
     }
   }
 }

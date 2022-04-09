@@ -1,8 +1,5 @@
 <template>
   <section>
-    <nav class="buttons is-centered fd-is-square" style="margin-bottom: 16px;">
-      <a v-for="char in filtered_index" :key="char" class="button is-small" @click="nav(char)">{{ char }}</a>
-    </nav>
   </section>
 </template>
 
