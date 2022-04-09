@@ -116,6 +116,13 @@ export default {
   computed: {
     rss () {
       return this.$store.state.rss_count
+    },
+
+    podcasts_tracks () {
+      return this.$store.state.podcasts_count.tracks
+    },
+    podcasts () {
+      return this.$store.state.podcasts_count
     }
   },
 
@@ -146,6 +153,10 @@ export default {
       })
     },
 
+    update_podcasts: function () {
+      webapi.library_podcast_update()
+    },
+
     reload_podcasts: function () {
       webapi.library_albums('podcast').then(({ data }) => {
         this.albums = data
@@ -156,6 +167,16 @@ export default {
     update_rss: function () {
       this.$store.commit(types.UPDATE_DIALOG_SCAN_KIND, 'rss')
       this.$store.commit(types.SHOW_UPDATE_DIALOG, true)
+    }
+  },
+
+  watch: {
+    'podcasts' () {
+      this.reload_podcasts()
+    },
+
+    'podcasts_tracks' () {
+      this.reload_new_episodes()
     }
   }
 }

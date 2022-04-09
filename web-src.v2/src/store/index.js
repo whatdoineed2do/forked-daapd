@@ -8,6 +8,7 @@ export default new Vuex.Store({
   state: {
     config: {
       websocket_port: 0,
+      stream_port: 0,
       version: '',
       buildoptions: []
     },
@@ -32,6 +33,7 @@ export default new Vuex.Store({
       shuffle: false,
       volume: 0,
       item_id: 0,
+      item_rating: 0,
       item_length_ms: 0,
       item_progress_ms: 0
     },
