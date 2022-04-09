@@ -25,6 +25,11 @@
                   <span class="">Online Services</span>
                 </a>
               </router-link>
+              <router-link tag="li" to="/settings/custom" active-class="is-active">
+                <a>
+                  <span class="">Custom</span>
+                </a>
+              </router-link>
             </ul>
           </div>
         </div>
