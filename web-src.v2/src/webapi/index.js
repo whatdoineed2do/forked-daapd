@@ -27,10 +27,13 @@ export default {
     return axios.get('./api/library')
   },
 
-  library_update (scanKind) {
+  library_update (scanKind, path) {
     const params = {}
     if (scanKind) {
       params.scan_kind = scanKind
+    }
+    if (path) {
+      params.path = path
     }
     return axios.put('./api/update', undefined, { params: params })
   },
@@ -76,7 +79,7 @@ export default {
       position = store.getters.now_playing.position + 1
     }
     return axios.post('./api/queue/items/add?uris=' + uri + '&position=' + position).then((response) => {
-      store.dispatch('add_notification', { text: response.data.count + ' tracks appended to queue', type: 'info', timeout: 2000 })
+      store.dispatch('add_notification', { text: response.data.count + ' tracks added next to queue', type: 'info', timeout: 2000 })
       return Promise.resolve(response)
     })
   },
@@ -242,7 +245,7 @@ export default {
     return axios.get('./api/library/genres')
   },
 
-  library_genre (genre) {
+  library_genre_albums (genre) {
     const genreParams = {
       type: 'albums',
       media_kind: 'music',
@@ -253,9 +256,31 @@ export default {
     })
   },
 
+  library_genre_artists (genre) {
+    const genreParams = {
+      type: 'artists',
+      media_kind: 'music',
+      expression: 'genre is "' + genre + '"'
+    }
+    return axios.get('/api/search', {
+      params: genreParams
+    })
+  },
+
   library_genre_tracks (genre) {
     const genreParams = {
       type: 'tracks',
+      media_kind: 'music',
+      expression: 'genre is "' + genre + '"'
+    }
+    return axios.get('./api/search', {
+      params: genreParams
+    })
+  },
+
+  library_genre_composers (genre) {
+    const genreParams = {
+      type: 'composers',
       media_kind: 'music',
       expression: 'genre is "' + genre + '"'
     }
@@ -311,6 +336,7 @@ export default {
         params: artistParams
       })
     }
+    // return axios.get('/api/library/artists/' + artist + '/tracks')
   },
 
   library_podcasts_new_episodes () {
@@ -331,6 +357,10 @@ export default {
     return axios.get('./api/search', {
       params: episodesParams
     })
+  },
+
+  library_podcast_update () {
+    return axios.put('/api/update/rss')
   },
 
   library_add (url) {
@@ -367,6 +397,20 @@ export default {
 
   library_track_update (trackId, attributes = {}) {
     return axios.put('./api/library/tracks/' + trackId, undefined, { params: attributes })
+  },
+
+  library_track_set_rating (trackId, rating) {
+    return axios.put('/api/library/tracks/' + trackId, undefined, { params: { rating: rating } }).then((response) => {
+      store.dispatch('add_notification', { text: rating === 0 ? 'Track Rating Reset' : 'Track Rating Updated', type: rating === 0 ? 'success' : 'info', timeout: 1500 })
+      return Promise.resolve(response)
+    })
+  },
+
+  library_track_set_usermark (trackId, flag) {
+    return axios.put('/api/library/tracks/' + trackId, undefined, { params: { usermark: flag } }).then((response) => {
+      store.dispatch('add_notification', { text: flag === 0 ? 'Track Review Reset' : 'Track Review Updated', type: flag === 0 ? 'success' : 'info', timeout: 1500 })
+      return Promise.resolve(response)
+    })
   },
 
   library_files (directory = undefined) {
