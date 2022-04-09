@@ -79,7 +79,7 @@ export default {
       if (this.rescan_metadata) {
         webapi.library_rescan(this.update_dialog_scan_kind)
       } else {
-        webapi.library_update(this.update_dialog_scan_kind)
+        webapi.library_update(this.update_dialog_scan_kind, null)
       }
     },
 

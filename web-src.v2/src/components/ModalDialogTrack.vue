@@ -68,12 +68,33 @@
                 </p>
                 <p>
                   <span class="heading">Added at</span>
-                  <span class="title is-6">{{ track.time_added | time('L LT') }}</span>
+                  <span class="title is-6">{{ track.time_added | time('lll') }}</span>
                 </p>
                 <p>
                   <span class="heading">Rating</span>
+                  <span class="heading"><star-rating v-model="rating"
+                    :star-size="24"
+                    :padding="7"
+                    :show-rating="false"
+                    :max-rating="5"
+                    :increment="1"
+                    :inline="true"
+                    :clearable="true"
+                    :active-on-click="true"
+                    @rating-selected="rate_track"></star-rating> </span>
                   <span class="title is-6">{{ Math.floor(track.rating / 10) }} / 10</span>
                 </p>
+                <div v-if="this.track.data_kind === 'file'">
+                  <p>
+                    <span class="heading">Usermark</span>
+                  </p>
+                  <div class="buttons">
+                    <a :disabled="this.usermark_is_set(1)" class="button is-small is-danger" @click="usermark_update(1)">Mark to delete</a>
+                    <a :disabled="this.usermark_is_set(2)" class="button is-small is-warning" @click="usermark_update(2)">Mark to rexcode</a>
+                    <a :disabled="this.usermark_is_set(4)" class="button is-small is-warning" @click="usermark_update(4)">Mark to review</a>
+                    <a :disabled="this.usermark === 0" class="button is-small is-success" @click="usermark_update(0)">Mark reset</a>
+                  </div>
+                </div>
                 <p v-if="track.comment">
                   <span class="heading">Comment</span>
                   <span class="title is-6">{{ track.comment }}</span>
@@ -102,14 +123,18 @@
 <script>
 import webapi from '@/webapi'
 import SpotifyWebApi from 'spotify-web-api-js'
+import StarRating from 'vue-star-rating'
 
 export default {
   name: 'ModalDialogTrack',
+  components: { StarRating },
 
   props: ['show', 'track'],
 
   data () {
     return {
+      rating: 0,
+      usermark: -1,
       spotify_track: {}
     }
   },
@@ -120,14 +145,26 @@ export default {
       webapi.player_play_uri(this.track.uri, false)
     },
 
+    rate_track: function (rating) {
+      if (rating === 0.5) {
+        rating = 0
+      }
+      this.rating = Math.ceil(rating) * 20
+      webapi.library_track_set_rating(this.track.id, this.rating).then(() => {
+        this.$emit('rating-updated', { track_id: this.track.id, rating: this.rating })
+      })
+    },
+
     queue_add: function () {
-      this.$emit('close')
-      webapi.queue_add(this.track.uri)
+      webapi.queue_add(this.track.uri).then(() => {
+        this.$emit('close')
+      })
     },
 
     queue_add_next: function () {
-      this.$emit('close')
-      webapi.queue_add_next(this.track.uri)
+      webapi.queue_add_next(this.track.uri).then(() => {
+        this.$emit('close')
+      })
     },
 
     open_album: function () {
@@ -160,6 +197,18 @@ export default {
       this.$router.push({ path: '/music/spotify/albums/' + this.spotify_track.album.id })
     },
 
+    usermark_is_set: function (value) {
+      return (this.usermark & value) > 0
+    },
+
+    usermark_update (value) {
+      const newvalue = value === 0 ? 0 : value | this.usermark
+      webapi.library_track_set_usermark(this.track.id, newvalue).then(() => {
+        this.usermark = newvalue
+        this.$emit('usermark-updated', { value: this.usermark, track_id: this.track.id })
+      })
+    },
+
     mark_new: function () {
       webapi.library_track_update(this.track.id, { play_count: 'reset' }).then(() => {
         this.$emit('play-count-changed')
@@ -185,6 +234,14 @@ export default {
         })
       } else {
         this.spotify_track = {}
+        this.rating = this.track.rating
+        if (this.track.data_kind === 'file') {
+          webapi.library_track(this.track.id).then((response) => {
+            this.usermark = response.data.usermark
+          }).catch(() => {
+            this.usermark = -1
+          })
+        }
       }
     }
   }
