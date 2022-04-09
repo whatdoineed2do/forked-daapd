@@ -1,4 +1,5 @@
-> 0.25%
-not ie <= 8
-not dead
-not op_mini all
+# 'npx browserslist' to veify
+last 1 chrome version,
+last 2 ff version,
+last 1 and_ff version,
+ios > 9

@@ -5,14 +5,14 @@
     <content-with-heading>
       <template slot="heading-left">
         <p class="title is-4">Recently added</p>
-        <p class="heading">{{ recently_added }} albums</p>
+        <p class="heading">{{ recently_added }} tracks</p>
       </template>
     </content-with-heading>
 
     <content-with-heading v-if="show_recent_today && recently_added_today.items.length">
       <template slot="heading-left">
         <p class="title is-6">Today</p>
-        <p class="heading">{{ recently_added_today.items.length }} albums</p>
+        <p class="heading">{{ recently_added_today.items.length }} tracks</p>
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
@@ -22,15 +22,15 @@
         </div>
       </template>
       <template slot="content">
-        <list-albums :albums="recently_added_today.items"></list-albums>
-        <modal-dialog-albums :show="show_modal_today" title='Recently Added - Today' :albums="recently_added_today" @close="show_modal_today = false" />
+        <list-tracks :tracks="recently_added_today.items" @usermark-updated="usermark_upd_today"></list-tracks>
+        <modal-dialog-tracks :show="show_modal_today" title='Recently Added - Today' :tracks="recently_added_today" @close="show_modal_today = false" />
       </template>
     </content-with-heading>
 
     <content-with-heading v-if="show_recent_week && recently_added_week.items.length">
       <template slot="heading-left">
         <p class="title is-6">This Week</p>
-        <p class="heading">{{ recently_added_week.items.length }} albums</p>
+        <p class="heading">{{ recently_added_week.items.length }} tracks</p>
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
@@ -40,15 +40,15 @@
         </div>
       </template>
       <template slot="content">
-        <list-albums :albums="recently_added_week.items"></list-albums>
-        <modal-dialog-albums :show="show_modal_week" title='Recently Added - Past Week' :albums="recently_added_week" @close="show_modal_week = false" />
+        <list-tracks :tracks="recently_added_week.items" @usermark-updated="usermark_upd_week"></list-tracks>
+        <modal-dialog-tracks :show="show_modal_week" title='Recently Added - Past Week' :tracks="recently_added_week" @close="show_modal_week = false" />
       </template>
     </content-with-heading>
 
     <content-with-heading v-if="show_recent_month && recently_added_month.items.length">
       <template slot="heading-left">
         <p class="title is-6">This Month </p>
-        <p class="heading">{{ recently_added_month.items.length }} albums</p>
+        <p class="heading">{{ recently_added_month.items.length }} tracks</p>
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
@@ -58,15 +58,15 @@
         </div>
       </template>
       <template slot="content">
-        <list-albums :albums="recently_added_month.items"></list-albums>
-        <modal-dialog-albums :show="show_modal_month" title='Recently Added - Past Month' :albums="recently_added_month" @close="show_modal_month = false" />
+        <list-tracks :tracks="recently_added_month.items" @usermark-updated="usermark_upd_month"></list-tracks>
+        <modal-dialog-tracks :show="show_modal_month" title='Recently Added - Past Month' :tracks="recently_added_month" @close="show_modal_month = false" />
       </template>
     </content-with-heading>
 
     <content-with-heading v-if="show_recent_older && recently_added_older.items.length">
       <template slot="heading-left">
         <p class="title is-6">Older</p>
-        <p class="heading">{{ recently_added_older.items.length }} albums</p>
+        <p class="heading">{{ recently_added_older.items.length }} tracks</p>
       </template>
       <template slot="heading-right">
         <div class="buttons is-centered">
@@ -76,8 +76,8 @@
         </div>
       </template>
       <template slot="content">
-        <list-albums :albums="recently_added_older.items"></list-albums>
-        <modal-dialog-albums :show="show_modal_older" title='Recently Added - Older than Month' :albums="recently_added_older" @close="show_modal_older = false" />
+        <list-tracks :tracks="recently_added_older.items" @usermark-updated="usermark_upd_older"></list-tracks>
+        <modal-dialog-tracks :show="show_modal_older" title='Recently Added - Older than Month' :tracks="recently_added_older" @close="show_modal_older = false" />
       </template>
     </content-with-heading>
   </div>
@@ -87,8 +87,8 @@
 import { LoadDataBeforeEnterMixin } from './mixin'
 import ContentWithHeading from '@/templates/ContentWithHeading'
 import TabsMusic from '@/components/TabsMusic'
-import ListAlbums from '@/components/ListAlbums'
-import ModalDialogAlbums from '@/components/ModalDialogAlbums'
+import ListTracks from '@/components/ListTracks'
+import ModalDialogTracks from '@/components/ModalDialogTracks'
 import webapi from '@/webapi'
 import store from '@/store'
 
@@ -97,17 +97,17 @@ const browseData = {
     const recentlyAddedLimit = store.getters.settings_option_recently_added_limit
     return Promise.all([
       webapi.search({
-        type: 'album',
+        type: 'track',
         expression: 'time_added after today and media_kind is music order by time_added desc',
         limit: recentlyAddedLimit
       }),
       webapi.search({
-        type: 'album',
+        type: 'track',
         expression: 'time_added after this week and time_added before today and media_kind is music order by time_added desc',
         limit: recentlyAddedLimit
       }),
       webapi.search({
-        type: 'album',
+        type: 'track',
         expression: 'time_added after last month and time_added before this week and media_kind is music order by time_added desc',
         limit: recentlyAddedLimit
       })
@@ -117,7 +117,7 @@ const browseData = {
   set: function (vm, response) {
     let N = store.getters.settings_option_recently_added_limit
 
-    vm.recently_added_today = response[0].data.albums
+    vm.recently_added_today = response[0].data.tracks
     if (vm.recently_added_today.length > N) {
       vm.recently_added_today.length = N
       N = 0
@@ -125,7 +125,7 @@ const browseData = {
       N -= vm.recently_added_today.length
     }
 
-    vm.recently_added_week = response[1].data.albums
+    vm.recently_added_week = response[1].data.tracks
     if (vm.recently_added_week.length > N) {
       vm.recently_added_week.length = N
       N = 0
@@ -133,7 +133,7 @@ const browseData = {
       N -= vm.recently_added_week.length
     }
 
-    vm.recently_added_month = response[2].data.albums
+    vm.recently_added_month = response[2].data.tracks
     if (vm.recently_added_month.length > N) {
       vm.recently_added_month.length = N
     }
@@ -143,7 +143,7 @@ const browseData = {
 export default {
   name: 'PageBrowseType',
   mixins: [LoadDataBeforeEnterMixin(browseData)],
-  components: { ContentWithHeading, TabsMusic, ListAlbums, ModalDialogAlbums },
+  components: { ContentWithHeading, TabsMusic, ListTracks, ModalDialogTracks },
 
   data () {
     return {
@@ -160,15 +160,34 @@ export default {
   },
 
   mounted () {
-    const more = store.getters.settings_option_recently_added_limit - (this.recently_added_month.items.length + this.recently_added_week.items.length + this.recently_added_today.items.length)
+    const more = store.getters.settings_option_recently_added_limit - this.recently_added_month.items.length
     if (more) {
       webapi.search({
-        type: 'album',
+        type: 'track',
         expression: 'time_added before last month and media_kind is music order by time_added desc',
         limit: more
       }).then(({ data }) => {
-        this.recently_added_older = data.albums
+        this.recently_added_older = data.tracks
       })
+    }
+  },
+
+  methods: {
+    usermark_upd_today: function (args) {
+      this.usermark_upd(this.recently_added_today.items, args)
+    },
+    usermark_upd_week: function (args) {
+      this.usermark_upd(this.recently_added_week.items, args)
+    },
+    usermark_upd_month: function (args) {
+      this.usermark_upd(this.recently_added_month.items, args)
+    },
+    usermark_upd_older: function (args) {
+      this.usermark_upd(this.recently_added_older.items, args)
+    },
+
+    usermark_upd: function (what, args) {
+      what.find(e => e.id === args.track_id).usermark = args.value
     }
   },
 

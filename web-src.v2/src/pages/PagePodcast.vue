@@ -46,6 +46,7 @@
         :album="album"
         :media_kind="'podcast'"
         :new_tracks="new_tracks"
+        :request_remove_button="is_url_pl"
         @close="show_album_details_modal = false"
         @play-count-changed="reload_tracks"
         @remove-podcast="open_remove_podcast_dialog" />
@@ -58,6 +59,7 @@
         <template slot="modal-content">
           <p>Permanently remove this podcast from your library?</p>
           <p class="is-size-7">(This will also remove the RSS playlist <b>{{ rss_playlist_to_remove.name }}</b>.)</p>
+          <p class="is-size-7 has-text-link">{{ rss_playlist_to_remove.path }}</p>
         </template>
       </modal-dialog>
     </template>
@@ -111,6 +113,14 @@ export default {
   computed: {
     new_tracks () {
       return this.tracks.filter(track => track.play_count === 0).length
+    },
+
+    is_url_pl: function () {
+      const urltracks = this.tracks.reduce((acc, item) => {
+        acc += item.data_kind === 'url' ? 1 : 0
+        return acc
+      }, 0)
+      return urltracks > 0
     }
   },
 
