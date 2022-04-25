@@ -704,8 +704,8 @@ int main(int argc, char* argv[])
     struct stream_args  stream_args = { 0 };
     args.svc_name = "RCP/SoundBridge Test Harness";
 
-    char  c;
-    while ( (c = getopt(argc, argv, "hkfLt:T:D:n:rR")) != EOF)
+    int c;
+    while ( (c = getopt(argc, argv, "hkfLt:T:D:n:rR")) != -1)
     {
         switch (c) {
             case 'k':  _theopts.keepalive = true;  break;
