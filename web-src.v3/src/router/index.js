@@ -5,6 +5,7 @@ import PageQueue from '@/pages/PageQueue.vue'
 import PageNowPlaying from '@/pages/PageNowPlaying.vue'
 import PageBrowse from '@/pages/PageBrowse.vue'
 import PageBrowseRecentlyAdded from '@/pages/PageBrowseRecentlyAdded.vue'
+import PageBrowseRecentlyAddedTracks from '@/pages/PageBrowseRecentlyAddedTracks.vue'
 import PageBrowseRecentlyPlayed from '@/pages/PageBrowseRecentlyPlayed.vue'
 import PageArtists from '@/pages/PageArtists.vue'
 import PageArtist from '@/pages/PageArtist.vue'
@@ -12,6 +13,7 @@ import PageAlbums from '@/pages/PageAlbums.vue'
 import PageAlbum from '@/pages/PageAlbum.vue'
 import PageGenres from '@/pages/PageGenres.vue'
 import PageGenre from '@/pages/PageGenre.vue'
+import PageGenreArtists from '@/pages/PageGenreArtists.vue'
 import PageGenreTracks from '@/pages/PageGenreTracks.vue'
 import PageArtistTracks from '@/pages/PageArtistTracks.vue'
 import PageComposers from '@/pages/PageComposers.vue'
@@ -40,6 +42,7 @@ import SettingsPageWebinterface from '@/pages/SettingsPageWebinterface.vue'
 import SettingsPageArtwork from '@/pages/SettingsPageArtwork.vue'
 import SettingsPageOnlineServices from '@/pages/SettingsPageOnlineServices.vue'
 import SettingsPageRemotesOutputs from '@/pages/SettingsPageRemotesOutputs.vue'
+import SettingsPageCustom from '@/pages/SettingsPageCustom.vue'
 
 export const router = createRouter({
   history: createWebHashHistory(),
@@ -73,6 +76,12 @@ export const router = createRouter({
       path: '/music/browse/recently_added',
       name: 'Browse Recently Added',
       component: PageBrowseRecentlyAdded,
+      meta: { show_progress: true, has_tabs: true }
+    },
+    {
+      path: '/music/browse/recently_added_tracks',
+      name: 'Browse Recently Added Tracks',
+      component: PageBrowseRecentlyAddedTracks,
       meta: { show_progress: true, has_tabs: true }
     },
     {
@@ -121,6 +130,12 @@ export const router = createRouter({
       path: '/music/genres/:genre',
       name: 'Genre',
       component: PageGenre,
+      meta: { show_progress: true, has_index: true }
+    },
+    {
+      path: '/music/genres/:genre/artists',
+      name: 'GenreArtists',
+      component: PageGenreArtists,
       meta: { show_progress: true, has_index: true }
     },
     {
@@ -264,6 +279,11 @@ export const router = createRouter({
       path: '/search/spotify',
       name: 'Spotify Search',
       component: SpotifyPageSearch
+    },
+    {
+      path: '/settings/custom',
+      name: 'Settings Custom',
+      component: SettingsPageCustom
     },
     {
       path: '/settings/webinterface',
