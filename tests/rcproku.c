@@ -30,6 +30,7 @@
 
 #include <stdbool.h>
 
+#include <ctype.h>
 #include <time.h>
 #include <libgen.h>
 #include <unistd.h>
@@ -68,6 +69,22 @@ static struct {
     pthread_t  tid;
 }
 _theglobs = { 0 };
+
+
+
+static struct {
+    bool  keepalive;
+    bool  fakeerrors;
+    bool  lo_only;
+    unsigned delay;
+    unsigned stop_delay;
+    unsigned disconnect_delay;
+    bool  disconnect_err;
+    unsigned  read_stream;
+} _theopts = {
+    false, false, true, 0, 0, false, 0
+};
+
 
 
 static void mdns_create_svc(AvahiClient *c);
@@ -154,7 +171,7 @@ struct if_idx* ip4_ifidx()
 	    continue;
 
 	family = ifa->ifa_addr->sa_family;
-	if (family != AF_INET ||  strcmp(ifa->ifa_name, "lo") == 0) {
+	if (family != AF_INET) {
 	    continue;
 	}
 
@@ -206,6 +223,17 @@ static void mdns_create_svc(AvahiClient *c)
 
 	while (l)
 	{
+	    bool  add = false;
+	    if (strcmp(l->name, "lo") == 0) {
+		add = _theopts.lo_only;
+	    }
+	    else {
+		add = !_theopts.lo_only;
+	    }
+	    if (!add) {
+		goto next;
+	    }
+
 	    printf("adding service '%s' on interface '%s' (#%d)\n", _theglobs.svc_name, l->name, l->idx);
 	    if ((ret = avahi_entry_group_add_service(_theglobs.group, l->idx, AVAHI_PROTO_INET, 0,
 			    _theglobs.svc_name, "_roku-rcp._tcp", NULL, NULL, RPC_ROKU_PORT, NULL, NULL, NULL)) < 0) {
@@ -222,7 +250,7 @@ static void mdns_create_svc(AvahiClient *c)
 		fprintf(stderr, "Failed to commit entry group: %s\n", avahi_strerror(ret));
 		goto fail;
 	    }
-
+next:
 	    l = l->next;
 	}
     }
@@ -681,21 +709,6 @@ static bool _valid_token(const char* tok_, const char* list_[], struct iovec* io
 }
 
 
-
-static struct {
-    bool  keepalive;
-    bool  fakeerrors;
-    unsigned delay;
-    unsigned stop_delay;
-    unsigned disconnect_delay;
-    bool  disconnect_err;
-    unsigned  read_stream;
-} _theopts = {
-    false, false, 0, 0, false, 0
-};
-
-
-
 int main(int argc, char* argv[])
 {
     const char*  argv0 = basename(argv[0]);
@@ -705,10 +718,11 @@ int main(int argc, char* argv[])
     args.svc_name = "RCP/SoundBridge Test Harness";
 
     int c;
-    while ( (c = getopt(argc, argv, "hkfLt:T:D:n:rR")) != -1)
+    while ( (c = getopt(argc, argv, "hkl:fLt:T:D:n:rR")) != -1)
     {
         switch (c) {
             case 'k':  _theopts.keepalive = true;  break;
+	    case 'l':  _theopts.lo_only = (tolower(*optarg) == 'y') ;  break;
             case 'f':  _theopts.fakeerrors = true;  break;
             case 't':  _theopts.delay = atoi(optarg);  break;
             case 'T':  _theopts.stop_delay = atoi(optarg);  break;
@@ -721,9 +735,10 @@ int main(int argc, char* argv[])
             case 'h':
             default:
 usage:
-                fprintf(stderr, "usage: %s [-k] [-f] [-t <secs>] [-T <secs>] [-L] [-n <mDNS svc name> [-r|-R]\n"
+                fprintf(stderr, "usage: %s [-k] [-l <y|n>] [-f] [-t <secs>] [-T <secs>] [-L] [-n <mDNS svc name> [-r|-R]\n"
 			        "RCP/Roku Soundbridge server emulator\n"
 			        "       -k  keep alive\n"
+			        "       -l [y|n]  loopback only\n"
 				"    Test client handling\n"
 				"       -n  mDNS svc name\n"
 				"       -f  fake errors on responses\n"
