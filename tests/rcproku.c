@@ -1217,7 +1217,6 @@ unknown:
 		stream_args.sock = -1;
 		pthread_cond_broadcast(&stream_args.c);
 	    }
-	    last_bytes = stream_args.bytes - last_bytes;
 	    pthread_mutex_unlock(&stream_args.m);
 	}
 	stream_url[0] = 0;
@@ -1226,6 +1225,7 @@ unknown:
 	       inet_ntop(AF_INET, &cliaddr.sin_addr, addrbuf, INET_ADDRSTRLEN), ntohs(cliaddr.sin_port),
 	       done ? "client" : "user/signal",
 	       xfers_in, xfers_out, r, w, (stream_args.bytes-last_bytes)/(1024.0*1024.0));
+	last_bytes = stream_args.bytes - last_bytes;
 
 	if (_theglobs.sig == SIGTERM)
 	    break;
