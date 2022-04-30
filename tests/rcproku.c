@@ -71,6 +71,9 @@ static struct {
 _theglobs = { 0 };
 
 
+#define STREAM_READ_DISABLED	0
+#define STREAM_READ		1
+#define STREAM_READ_WITH_ICY	(STREAM_READ | 2)
 
 static struct {
     bool  keepalive;
@@ -82,7 +85,13 @@ static struct {
     bool  disconnect_err;
     unsigned  read_stream;
 } _theopts = {
-    false, false, true, 0, 0, false, 0
+    .keepalive = false,
+    .fakeerrors = false,
+    .lo_only = true,
+    .delay = 0,
+    .stop_delay = 0,
+    .disconnect_err = false,
+    .read_stream = STREAM_READ_WITH_ICY
 };
 
 
@@ -404,8 +413,6 @@ struct stream_args {
     size_t  bytes;
 };
 
-#define STREAM_READ		1
-#define STREAM_READ_WITH_ICY	(STREAM_READ | 2)
 
 
 static void* stream_thread(void* args_)
@@ -718,7 +725,7 @@ int main(int argc, char* argv[])
     args.svc_name = "RCP/SoundBridge Test Harness";
 
     int c;
-    while ( (c = getopt(argc, argv, "hkl:fLt:T:D:n:rR")) != -1)
+    while ( (c = getopt(argc, argv, "hkl:fLt:T:D:n:s:")) != -1)
     {
         switch (c) {
             case 'k':  _theopts.keepalive = true;  break;
@@ -729,8 +736,17 @@ int main(int argc, char* argv[])
             case 'D':  _theopts.disconnect_delay = atoi(optarg);  break;
             case 'L':  _theopts.disconnect_err = true;  break;
             case 'n':  args.svc_name = optarg;  break;
-            case 'r':  _theopts.read_stream = STREAM_READ;  break;
-            case 'R':  _theopts.read_stream = STREAM_READ_WITH_ICY;  break;
+            case 's':
+	    {
+		switch (atol(optarg))
+		{
+		    case STREAM_READ_DISABLED:  _theopts.read_stream = STREAM_READ_DISABLED;  break;
+		    case STREAM_READ:           _theopts.read_stream = STREAM_READ;  break;
+		    case STREAM_READ_WITH_ICY:  _theopts.read_stream = STREAM_READ_WITH_ICY;  break;
+		    default:
+		      ;
+		}
+	    } break;
 
             case 'h':
             default:
@@ -744,9 +760,10 @@ usage:
 				"       -f  fake errors on responses\n"
 				"       -t  delay on setup responses\n"
 				"       -T  delay on shutdown responses\n"
-				"       -L  send lockup respnse on disconnect\n",
-				"       -r|-R request data from handshake playlistURL stream\n",
-				argv0);
+				"       -L  send lockup respnse on disconnect\n"
+				"       -s  request stream: %d (none), %d (no icy), %d (with icy)\n",
+				argv0,
+				STREAM_READ_DISABLED, STREAM_READ, STREAM_READ_WITH_ICY);
                 return 1;
         }
     }
