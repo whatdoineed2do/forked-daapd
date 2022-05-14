@@ -14,7 +14,7 @@
           </p>
         </div>
         <settings-checkbox category_name="custom" option_name="queue_add_replace_tracks">
-          <template slot="label"> Replace existing on add</template>
+          <template #label> Replace existing on add</template>
         </settings-checkbox>
       </template>
     </content-with-heading>
