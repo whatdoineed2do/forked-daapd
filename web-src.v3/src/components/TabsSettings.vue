@@ -49,6 +49,18 @@
                   </a>
                 </li>
               </router-link>
+
+              <router-link
+                v-slot="{ navigate, isActive }"
+                to="/settings/custom"
+                custom
+              >
+                <li :class="{ 'is-active': isActive }">
+                  <a @click="navigate" @keypress.enter="navigate">
+                    <span class="">Custom</span>
+                  </a>
+                </li>
+              </router-link>
             </ul>
           </div>
         </div>
