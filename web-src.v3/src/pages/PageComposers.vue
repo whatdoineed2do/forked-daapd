@@ -2,6 +2,8 @@
   <div>
     <tabs-music />
 
+    <index-list :index="composers.indexList"></index-list>
+
     <content-with-heading>
       <template #options>
         <index-button-list :index="composers.indexList" />
@@ -22,6 +24,7 @@ import ContentWithHeading from '@/templates/ContentWithHeading.vue'
 import TabsMusic from '@/components/TabsMusic.vue'
 import IndexButtonList from '@/components/IndexButtonList.vue'
 import ListComposers from '@/components/ListComposers.vue'
+import IndexList from '@/components/IndexList.vue'
 import webapi from '@/webapi'
 import { byName, GroupByList } from '@/lib/GroupByList'
 
@@ -38,7 +41,7 @@ const dataObject = {
 
 export default {
   name: 'PageComposers',
-  components: { ContentWithHeading, TabsMusic, IndexButtonList, ListComposers },
+  components: { ContentWithHeading, TabsMusic, IndexList, IndexButtonList, ListComposers },
 
   beforeRouteEnter(to, from, next) {
     dataObject.load(to).then((response) => {

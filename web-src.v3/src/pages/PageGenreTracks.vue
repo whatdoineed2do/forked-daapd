@@ -1,4 +1,9 @@
 <template>
+  <div class="fd-page-with-tabs">
+    <tabs-music />
+
+    <index-list :index="index_list"></index-list>
+
   <div>
     <content-with-heading>
       <template #options>
@@ -41,10 +46,13 @@
       </template>
     </content-with-heading>
   </div>
+  </div>
 </template>
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
+import TabsMusic from '@/components/TabsMusic.vue'
+import IndexList from '@/components/IndexList.vue'
 import IndexButtonList from '@/components/IndexButtonList.vue'
 import ListTracks from '@/components/ListTracks.vue'
 import ModalDialogGenre from '@/components/ModalDialogGenre.vue'
@@ -68,6 +76,8 @@ export default {
   name: 'PageGenreTracks',
   components: {
     ContentWithHeading,
+    TabsMusic,
+    IndexList,
     ListTracks,
     IndexButtonList,
     ModalDialogGenre
