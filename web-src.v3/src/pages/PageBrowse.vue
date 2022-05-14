@@ -31,7 +31,7 @@
         <p class="heading">Tracks</p>
       </template>
       <template #content>
-        <list-tracks :tracks="recently_added_tracks.items" />
+        <list-tracks :tracks="recently_added_tracks.items" @usermark-updated="usermark_upd_added" />
       </template>
       <template #footer>
         <nav class="level">
@@ -53,7 +53,7 @@
         <p class="heading">tracks</p>
       </template>
       <template #content>
-        <list-tracks :tracks="recently_played.items" />
+        <list-tracks :tracks="recently_played.items" @usermark-updated="usermark_upd_played" />
       </template>
       <template #footer>
         <nav class="level">
@@ -141,6 +141,17 @@ export default {
   methods: {
     open_browse: function (type) {
       this.$router.push({ path: '/music/browse/' + type })
+    },
+
+    usermark_upd_added: function (args) {
+      this.usermark_upd(this.recently_added_tracks.items, args)
+    },
+    usermark_upd_played: function (args) {
+      this.usermark_upd(this.recently_played.items, args)
+    },
+
+    usermark_upd: function (what, args) {
+      what.find(e => e.id === args.track_id).usermark = args.value
     }
   }
 }
