@@ -116,7 +116,18 @@
                     >{{ Math.floor(track.rating / 10) }} / 10</span
                   >
                 </p>
-                <p v-if="track.comment">
+                <div v-if="this.track.data_kind === 'file'">
+                  <p>
+                    <span class="heading">Usermark</span>
+                  </p>
+                  <div class="buttons">
+                    <button :disabled="usermark_is_set(1)" class="button is-small is-danger" @click="usermark_update(1)">Mark to delete</button>
+                    <button :disabled="usermark_is_set(2)" class="button is-small is-warning" @click="usermark_update(2)">Mark to rexcode</button>
+                    <button :disabled="usermark_is_set(4)" class="button is-small is-warning" @click="usermark_update(4)">Mark to review</button>
+                    <button :disabled="this.usermark === 0" class="button is-small is-success" @click="usermark_update(0)">Mark reset</button>
+                  </div>
+                 </div>
+                 <p v-if="track.comment">
                   <span class="heading">Comment</span>
                   <span class="title is-6">{{ track.comment }}</span>
                 </p>
@@ -160,10 +171,11 @@ export default {
   name: 'ModalDialogTrack',
 
   props: ['show', 'track'],
-  emits: ['close', 'play-count-changed'],
+  emits: ['close', 'play-count-changed', 'usermark-updated'],
 
   data() {
     return {
+      usermark: -1,
       spotify_track: {}
     }
   },
@@ -180,6 +192,13 @@ export default {
           })
       } else {
         this.spotify_track = {}
+        if (this.track.data_kind === 'file') {
+          webapi.library_track(this.track.id).then((response) => {
+            this.usermark = response.data.usermark
+          }).catch(() => {
+            this.usermark = -1
+          })
+        }
       }
     }
   },
@@ -233,6 +252,18 @@ export default {
       this.$emit('close')
       this.$router.push({
         path: '/music/spotify/albums/' + this.spotify_track.album.id
+      })
+    },
+
+    usermark_is_set: function (value) {
+      return (this.usermark & value) > 0
+    },
+
+    usermark_update: function (value) {
+      const newvalue = value === 0 ? 0 : value | this.usermark
+      webapi.library_track_set_usermark(this.track.id, newvalue).then(() => {
+        this.usermark = newvalue
+        this.$emit('usermark-updated', { value: this.usermark, track_id: this.track.id })
       })
     },
 
