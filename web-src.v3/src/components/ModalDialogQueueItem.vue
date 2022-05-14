@@ -88,6 +88,18 @@
                     <span v-if="item.bitrate"> | {{ item.bitrate }} Kb/s</span>
                   </span>
                 </p>
+                <div v-if="this.item.data_kind === 'file'">
+                  <p>
+                    <span class="heading">Usermark</span>
+                  </p>
+		    <p> {{ JSON.stringify(this.usermark) }} </p>
+                  <div class="buttons">
+                    <button :disabled="usermark_is_set(1)" class="button is-small is-danger" @click="usermark_update(1)">Mark to delete</button>
+                    <button :disabled="usermark_is_set(2)" class="button is-small is-warning" @click="usermark_update(2)">Mark to rexcode</button>
+                    <button :disabled="usermark_is_set(4)" class="button is-small is-warning" @click="usermark_update(4)">Mark to review</button>
+                    <button :disabled="this.usermark === 0" class="button is-small is-success" @click="usermark_update(0)">Mark reset</button>
+                  </div>
+                </div>
               </div>
             </div>
             <footer class="card-footer">
@@ -118,11 +130,12 @@ import SpotifyWebApi from 'spotify-web-api-js'
 
 export default {
   name: 'ModalDialogQueueItem',
-  props: ['show', 'item'],
-  emits: ['close'],
+  props: ['show', 'item', 'np_usermark'],
+  emits: ['close', 'close_usermark'],
 
   data() {
     return {
+      usermark: -1,
       spotify_track: {}
     }
   },
@@ -139,6 +152,18 @@ export default {
           })
       } else {
         this.spotify_track = {}
+        if (this.np_usermark !== undefined) {
+          this.usermark = this.np_usermark
+        } else if (this.item.data_kind === 'file') {
+          webapi.library_track(this.item.track_id).then((response) => {
+            this.usermark = response.data.usermark
+          }).catch((err) => {
+            this.usermark = -1
+            if (err.response.status === 404) {
+              webapi.queue_remove(this.item.id)
+            }
+          })
+        }
       }
     }
   },
@@ -184,6 +209,24 @@ export default {
       this.$router.push({
         path: '/music/spotify/albums/' + this.spotify_track.album.id
       })
+    },
+
+    usermark_is_set: function (value) {
+      return (this.usermark & value) > 0
+    },
+
+    usermark_update (value) {
+      const newvalue = value === 0 ? 0 : value | this.usermark
+      webapi.library_track_set_usermark(this.track_id, newvalue).then(() => {
+        this.usermark = newvalue
+      })
+    }
+  },
+
+  computed: {
+    track_id () {
+      const item = this.$store.state.queue.items.find((elem) => elem.id === this.item.id)
+      return (item === undefined) ? -1 : item.track_id
     }
   }
 }
