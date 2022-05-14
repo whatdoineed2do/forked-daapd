@@ -56,7 +56,10 @@
         v-model="queue_items"
         handle=".handle"
         item-key="id"
-        @end="move_item"
+        v-bind="drag_options"
+        @start="drag=true"
+        @update="move_item"
+        @end="drag=false"
       >
         <template #item="{ element, index }">
           <list-item-queue-item
@@ -126,6 +129,15 @@ export default {
   data() {
     return {
       edit_mode: false,
+      drag: false,
+      pre_move_queue_items: [],
+
+      drag_options: {
+       animation: 100,
+       group: 'description',
+       disabled: false,
+       ghostClass: 'ghost'
+      },
 
       show_details_modal: false,
       show_url_modal: false,
@@ -151,9 +163,11 @@ export default {
       get() {
         return this.$store.state.queue.items
       },
-      set(value) {
-        /* Do nothing? Send move request in @end event */
-      }
+     set (value) {
+       this.pre_move_queue_items = this.$store.state.queue.items
+       this.$store.state.queue.items = value
+       this.$store.commit(types.UPDATE_QUEUE, this.$store.state.queue)
+     }
     },
     current_position() {
       const nowPlaying = this.$store.getters.now_playing
@@ -183,7 +197,8 @@ export default {
       const oldPosition = !this.show_only_next_items
         ? e.oldIndex
         : e.oldIndex + this.current_position
-      const item = this.queue_items[oldPosition]
+      const item = this.pre_move_queue_items[oldPosition]
+      this.pre_move_queue_items = []
       const newPosition = item.position + (e.newIndex - e.oldIndex)
       if (newPosition !== oldPosition) {
         webapi.queue_move(item.id, newPosition)
