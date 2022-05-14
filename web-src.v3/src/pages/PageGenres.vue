@@ -2,6 +2,8 @@
   <div class="fd-page-with-tabs">
     <tabs-music />
 
+    <index-list :index="genres.indexList"></index-list>
+
     <content-with-heading>
       <template #options>
         <index-button-list :index="genres.indexList" />
@@ -22,6 +24,7 @@ import ContentWithHeading from '@/templates/ContentWithHeading.vue'
 import TabsMusic from '@/components/TabsMusic.vue'
 import IndexButtonList from '@/components/IndexButtonList.vue'
 import ListGenres from '@/components/ListGenres.vue'
+import IndexList from '@/components/IndexList.vue'
 import webapi from '@/webapi'
 import { byName, GroupByList } from '@/lib/GroupByList'
 
@@ -42,6 +45,7 @@ export default {
   components: {
     ContentWithHeading,
     TabsMusic,
+    IndexList,
     IndexButtonList,
     ListGenres
   },
