@@ -1,4 +1,9 @@
 <template>
+  <div class="fd-page-with-tabs">
+    <tabs-music />
+
+    <index-list :index="albums.indexList"></index-list>
+
   <content-with-heading>
     <template #options>
       <div class="columns">
@@ -37,7 +42,7 @@
           >{{ artist.track_count }} tracks</a
         >
       </p>
-      <list-albums :albums="albums" :hide_group_title="true" />
+      <list-albums :albums="albums" />
       <modal-dialog-artist
         :show="show_artist_details_modal"
         :artist="artist"
@@ -45,13 +50,16 @@
       />
     </template>
   </content-with-heading>
+  </div>
 </template>
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
+import TabsMusic from '@/components/TabsMusic.vue'
 import ListAlbums from '@/components/ListAlbums.vue'
 import ModalDialogArtist from '@/components/ModalDialogArtist.vue'
 import DropdownMenu from '@/components/DropdownMenu.vue'
+import IndexList from '@/components/IndexList.vue'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 import { bySortName, byYear, GroupByList } from '@/lib/GroupByList'
@@ -74,6 +82,8 @@ export default {
   name: 'PageArtist',
   components: {
     ContentWithHeading,
+    TabsMusic,
+    IndexList,
     ListAlbums,
     ModalDialogArtist,
     DropdownMenu
