@@ -17,7 +17,10 @@
         class="title is-6"
         :class="{
           'has-text-grey':
-            track.media_kind === 'podcast' && track.play_count > 0
+	    track.usermark > 0 ||
+            track.media_kind === 'podcast' && track.play_count > 0,
+	  'is-italic':
+	    track.usermark > 0
         }"
       >
         {{ track.title }}
@@ -49,6 +52,7 @@
       :track="selected_track"
       @close="show_details_modal = false"
       @play-count-changed="$emit('play-count-changed')"
+      @usermark-updated="usermark_upd"
     />
   </teleport>
 </template>
@@ -63,7 +67,7 @@ export default {
   components: { ModalDialogTrack, ProgressBar },
 
   props: ['tracks', 'uris', 'expression', 'show_progress', 'show_icon'],
-  emits: ['play-count-changed'],
+  emits: ['play-count-changed', 'usermark-updated'],
 
   data() {
     return {
@@ -81,6 +85,10 @@ export default {
       } else {
         webapi.player_play_uri(track.uri, false)
       }
+    },
+
+    usermark_upd: function (args) {
+      this.$emit('usermark-updated', args)
     },
 
     open_dialog: function (track) {
