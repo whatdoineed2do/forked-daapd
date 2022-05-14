@@ -1,6 +1,21 @@
 <template>
   <div>
+    <tabs-music />
+
+    <index-list :index="albums.indexList"></index-list>
+
     <content-with-heading>
+    <template #options>
+      <div class="columns">
+        <div class="column">
+          <p class="heading" style="margin-bottom: 24px">Sort by</p>
+          <dropdown-menu
+            v-model="selected_groupby_option_name"
+            :options="groupby_option_names"
+          />
+        </div>
+      </div>
+    </template>
       <template #heading-left>
         <p class="title is-4">
           {{ composer.name }}
@@ -43,10 +58,12 @@
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
+import TabsMusic from '@/components/TabsMusic.vue'
 import ListAlbums from '@/components/ListAlbums.vue'
 import ModalDialogComposer from '@/components/ModalDialogComposer.vue'
+import IndexList from '@/components/IndexList.vue'
 import webapi from '@/webapi'
-import { GroupByList } from '@/lib/GroupByList'
+import { bySortName, byYear, GroupByList } from '@/lib/GroupByList'
 
 const dataObject = {
   load: function (to) {
@@ -66,6 +83,8 @@ export default {
   name: 'PageComposer',
   components: {
     ContentWithHeading,
+    TabsMusic,
+    IndexList,
     ListAlbums,
     ModalDialogComposer
   },
@@ -87,7 +106,44 @@ export default {
     return {
       composer: {},
       albums_list: new GroupByList(),
+
+      // List of group by/sort options for itemsGroupByList
+      groupby_options: [
+        { name: 'Name', options: bySortName('name_sort') },
+        {
+          name: 'Release date',
+          options: byYear('date_released', {
+            direction: 'asc',
+            defaultValue: '0000'
+          })
+        }
+      ],
+
       show_composer_details_modal: false
+    }
+  },
+
+  computed: {
+    albums() {
+      const groupBy = this.groupby_options.find(
+        (o) => o.name === this.selected_groupby_option_name
+      )
+      this.albums_list.group(groupBy.options)
+
+      return this.albums_list
+    },
+
+    groupby_option_names() {
+      return [...this.groupby_options].map((o) => o.name)
+    },
+
+    selected_groupby_option_name: {
+      get() {
+        return this.$store.state.artist_albums_sort
+      },
+      set(value) {
+        this.$store.commit(types.ARTIST_ALBUMS_SORT, value)
+      }
     }
   },
 
