@@ -37,7 +37,7 @@
           >
           | {{ artist.track_count }} tracks
         </p>
-        <list-tracks :tracks="tracks.items" :uris="track_uris" />
+        <list-tracks :tracks="tracks.items" :uris="track_uris" @usermark-updated="usermark_upd" />
         <modal-dialog-artist
           :show="show_artist_details_modal"
           :artist="artist"
@@ -125,6 +125,10 @@ export default {
     open_artist: function () {
       this.show_details_modal = false
       this.$router.push({ path: '/music/artists/' + this.artist.id })
+    },
+
+    usermark_upd: function (args) {
+      this.tracks.items.find(e => e.id === args.track_id).usermark = args.value
     },
 
     play: function () {
