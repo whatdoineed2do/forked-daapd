@@ -8,7 +8,7 @@
         <p class="heading">tracks</p>
       </template>
       <template #content>
-        <list-tracks :tracks="recently_played.items" />
+        <list-tracks :tracks="recently_played.items" @usermark-updated="usermark_upd" />
       </template>
     </content-with-heading>
   </div>
@@ -55,6 +55,12 @@ export default {
   data() {
     return {
       recently_played: {}
+    }
+  },
+
+  methods: {
+    usermark_upd: function (args) {
+      this.recently_played.items.find(e => e.id === args.track_id).usermark = args.value
     }
   }
 }
