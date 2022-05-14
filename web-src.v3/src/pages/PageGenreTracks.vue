@@ -37,7 +37,7 @@
           >
           | {{ genre.track_count }} tracks
         </p>
-        <list-tracks :tracks="tracks.items" :expression="expression" />
+        <list-tracks :tracks="tracks.items" :expression="expression" @usermark-updated="usermark_upd" />
         <modal-dialog-genre
           :show="show_genre_details_modal"
           :genre="genre"
@@ -125,6 +125,10 @@ export default {
     open_genre: function () {
       this.show_details_modal = false
       this.$router.push({ name: 'Genre', params: { genre: this.genre.name } })
+    },
+
+    usermark_upd: function (args) {
+      this.tracks.items.find(e => e.id === args.track_id).usermark = args.value
     },
 
     play: function () {
