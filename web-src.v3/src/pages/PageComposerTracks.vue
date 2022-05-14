@@ -1,5 +1,10 @@
 <template>
   <div>
+    <tabs-music />
+
+    <index-list :index="index_list"></index-list>
+
+  <div>
     <content-with-heading>
       <template #heading-left>
         <p class="title is-4">
@@ -38,11 +43,14 @@
       </template>
     </content-with-heading>
   </div>
+  </div>
 </template>
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
+import TabsMusic from '@/components/TabsMusic.vue'
 import ListTracks from '@/components/ListTracks.vue'
+import IndexList from '@/components/IndexList.vue'
 import ModalDialogComposer from '@/components/ModalDialogComposer.vue'
 import webapi from '@/webapi'
 
@@ -64,6 +72,8 @@ export default {
   name: 'PageComposerTracks',
   components: {
     ContentWithHeading,
+    TabsMusic,
+    IndexList,
     ListTracks,
     ModalDialogComposer
   },
@@ -91,6 +101,16 @@ export default {
   },
 
   computed: {
+    index_list() {
+      return [
+        ...new Set(
+          this.tracks.items.map((track) =>
+            track.title_sort.charAt(0).toUpperCase()
+          )
+        )
+      ]
+    },
+
     play_expression() {
       return 'composer is "' + this.composer.name + '" and media_kind is music'
     }
