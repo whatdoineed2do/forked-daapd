@@ -12,6 +12,9 @@
       </div>
       <div class="fd-has-padding-left-right">
         <div class="container has-text-centered">
+         <p class="subtitle has-text-grey is-7" v-show="now_playing.samplerate > 0">
+         {{ now_playing.type }} | {{ now_playing.samplerate }} Hz | {{ now_playing_channels }} | {{ now_playing.bitrate }} Kb/s
+         </p>
           <p class="control has-text-centered fd-progress-now-playing">
             <Slider
               ref="slider"
@@ -118,6 +121,16 @@ export default {
 
     now_playing() {
       return this.$store.getters.now_playing
+    },
+
+    now_playing_channels () {
+      if (this.now_playing.channels === 2) {
+        return 'stereo'
+      }
+      if (this.now_playing.channels === 1) {
+        return 'mono'
+      }
+      return this.now_playing.channels
     },
 
     settings_option_show_composer_now_playing() {
