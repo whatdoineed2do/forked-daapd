@@ -18,7 +18,7 @@
     </template>
     <template #heading-left>
       <p class="title is-4">
-        {{ artist.name }}
+        {{ name }}
       </p>
     </template>
     <template #heading-right>
@@ -37,15 +37,15 @@
     </template>
     <template #content>
       <p class="heading has-text-centered-mobile">
-        {{ artist.album_count }} albums |
+        {{ albums.total }} albums |
         <a class="has-text-link" @click="open_tracks"
-          >{{ artist.track_count }} tracks</a
+          >{{ track_count }} tracks</a
         >
       </p>
       <list-albums :albums="albums" />
       <modal-dialog-artist
         :show="show_artist_details_modal"
-        :artist="artist"
+        :artist="modal_artist"
         @close="show_artist_details_modal = false"
       />
     </template>
@@ -73,8 +73,13 @@ const dataObject = {
   },
 
   set: function (vm, response) {
-    vm.artist = response[0].data
+    // vm.artist = response[0].data
     vm.albums_list = new GroupByList(response[1].data)
+
+    vm.name = response[0].data.name
+    vm.id = response[0].data.id
+    vm.artist = response[0].data.items
+    vm.albums = response[1].data
   }
 }
 
@@ -104,7 +109,10 @@ export default {
 
   data() {
     return {
-      artist: {},
+      name: '',
+      id: '',
+      artist: [],
+
       albums_list: new GroupByList(),
 
       // List of group by/sort options for itemsGroupByList
@@ -124,6 +132,25 @@ export default {
   },
 
   computed: {
+   modal_artist() {
+      return {
+        id: this.id,
+        name: this.name,
+        album_count: this.albums.items.length,
+        track_count: this.track_count,
+	//time_added: this.albums.items[0].time_added,
+	//data_kind: this.albums.items[0].data_kind,
+        uri: this.albums.items.map(a => a.uri).join(',')
+      }
+    },
+
+    track_count () {
+      return this.albums.items.reduce((acc, item) => {
+        acc += item.track_count
+        return acc
+      }, 0)
+    },
+
     albums() {
       const groupBy = this.groupby_options.find(
         (o) => o.name === this.selected_groupby_option_name
@@ -150,7 +177,7 @@ export default {
   methods: {
     open_tracks: function () {
       this.$router.push({
-        path: '/music/artists/' + this.artist.id + '/tracks'
+        path: '/music/artists/' + this.id + '/tracks'
       })
     },
 
