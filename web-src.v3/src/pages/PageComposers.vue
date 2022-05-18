@@ -9,7 +9,7 @@
         <index-button-list :index="composers.indexList" />
       </template>
       <template #heading-left>
-        <p class="title is-4">Composers</p>
+        <p class="title is-4">{{ heading }}</p>
         <p class="heading">{{ composers.total }} composers</p>
       </template>
       <template #content>
@@ -30,11 +30,20 @@ import { byName, GroupByList } from '@/lib/GroupByList'
 
 const dataObject = {
   load: function (to) {
+    if (to.params.genre) {
+      return webapi.library_genre_composers(to.params.genre)
+    }
     return webapi.library_composers('music')
   },
 
   set: function (vm, response) {
-    vm.composers = new GroupByList(response.data)
+    if (response.data.composers) {
+      vm.composers = new GroupByList(response.data.composers)
+      vm.heading = vm.$route.params.genre
+    } else {
+      vm.composers = new GroupByList(response.data)
+      vm.heading = 'Composers'
+    }
     vm.composers.group(byName('name_sort'))
   }
 }
@@ -63,6 +72,7 @@ export default {
 
   data() {
     return {
+      heading: '',
       composers: new GroupByList()
     }
   },
