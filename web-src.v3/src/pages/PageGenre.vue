@@ -32,9 +32,15 @@
       </template>
       <template #content>
         <p class="heading has-text-centered-mobile">
+          <a class="has-text-link" @click="open_artists"
+            >artists | </a
+          >
           {{ genre.album_count }} albums |
           <a class="has-text-link" @click="open_tracks"
             >{{ genre.track_count }} tracks</a
+          >
+          <a class="has-text-link" @click="open_composers"
+            >| composers</a
           >
         </p>
         <list-albums :albums="albums_list" />
@@ -117,6 +123,22 @@ export default {
       this.$router.push({
         name: 'GenreTracks',
         params: { genre: this.genre.name }
+      })
+    },
+
+    open_artists: function () {
+      this.show_details_modal = false
+      this.$router.push({ 
+        name: 'GenreArtists',
+	params: { genre: this.genre.name }
+      })
+    },
+
+    open_composers: function () {
+      this.show_details_modal = false
+      this.$router.push({
+        name: 'Composers',
+	params: { genre: this.genre.name }
       })
     },
 

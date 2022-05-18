@@ -54,7 +54,7 @@
         </div>
       </template>
       <template #heading-left>
-        <p class="title is-4">Artists</p>
+        <p class="title is-4">{{ genre }} </p>
         <p class="heading">{{ artists.count }} Artists</p>
       </template>
       <template #heading-right />
@@ -78,11 +78,12 @@ import { bySortName, byYear, GroupByList } from '@/lib/GroupByList'
 
 const dataObject = {
   load: function (to) {
-    return webapi.library_artists('music')
+    return webapi.library_genre_artists(to.params.genre)
   },
 
   set: function (vm, response) {
-    vm.artists_list = new GroupByList(response.data)
+    vm.genre = vm.$route.params.genre
+    vm.artists_list = new GroupByList(response.data.artists)
   }
 }
 
@@ -117,6 +118,8 @@ export default {
 
   data() {
     return {
+      genre: '',
+
       // Original data from API call
       artists_list: new GroupByList(),
 
