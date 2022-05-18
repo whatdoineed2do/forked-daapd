@@ -312,6 +312,26 @@ export default {
     })
   },
 
+  library_genre_artists (genre) {
+    const genreParams = {
+      type: 'artists',
+      expression: `genre is "${genre}" and media_kind is music`
+    }
+    return axios.get('/api/search', {
+      params: genreParams
+    })
+  },
+
+  library_genre_composers (genre) {
+    const genreParams = {
+      type: 'composers',
+      expression: `genre is "${genre}" and media_kind is music`
+    }
+    return axios.get('./api/search', {
+      params: genreParams
+    })
+  },
+
   library_genre_tracks(genre) {
     const genreParams = {
       type: 'tracks',
