@@ -118,24 +118,24 @@ const dataObject = {
     let N = store.getters.settings_option_recently_added_limit
 
     vm.recently_added_today = response[0].data.tracks
-    if (vm.recently_added_today.length > N) {
-      vm.recently_added_today.length = N
+    if (vm.recently_added_today.items.length > N) {
+      vm.recently_added_today.items.length = N
       N = 0
     } else {
-      N -= vm.recently_added_today.length
+      N -= vm.recently_added_today.items.length
     }
 
     vm.recently_added_week = response[1].data.tracks
-    if (vm.recently_added_week.length > N) {
-      vm.recently_added_week.length = N
+    if (vm.recently_added_week.items.length > N) {
+      vm.recently_added_week.items.length = N
       N = 0
     } else {
-      N -= vm.recently_added_week.length
+      N -= vm.recently_added_week.items.length
     }
 
     vm.recently_added_month = response[2].data.tracks
-    if (vm.recently_added_month.length > N) {
-      vm.recently_added_month.length = N
+    if (vm.recently_added_month.items.length > N) {
+      vm.recently_added_month.items.length = N
     }
   }
 }
