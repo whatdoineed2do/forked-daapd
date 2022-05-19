@@ -59,6 +59,12 @@
                     </td>
                   </tr>
                   <tr>
+                    <th>Local size</th>
+                    <td class="has-text-right">
+                      {{ $filters.number(library.file_size/(1024*1024*1024)) }} Gb
+                    </td>
+                  </tr>
+                  <tr>
                     <th>Total playtime</th>
                     <td class="has-text-right">
                       {{ $filters.durationInDays(library.db_playtime * 1000) }}
