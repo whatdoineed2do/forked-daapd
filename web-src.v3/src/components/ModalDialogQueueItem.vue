@@ -107,6 +107,10 @@
                 <span class="icon"><mdicon name="delete" size="16" /></span>
                 <span class="is-size-7">Remove</span>
               </a>
+              <a class="card-footer-item has-text-dark" @click="play_next">
+                <span class="icon"><mdicon name="playlist-play" size="16" /></span>
+                <span class="is-size-7">Play Next</span>
+              </a>
               <a class="card-footer-item has-text-dark" @click="play">
                 <span class="icon"><mdicon name="play" size="16" /></span>
                 <span class="is-size-7">Play</span>
@@ -172,6 +176,11 @@ export default {
     remove: function () {
       this.$emit('close')
       webapi.queue_remove(this.item.id)
+    },
+
+    play_next: function () {
+      this.$emit('close')
+      webapi.queue_add_next(this.item.uri)
     },
 
     play: function () {
