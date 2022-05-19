@@ -28,7 +28,7 @@ const dataObject = {
     return webapi.search({
       type: 'album',
       expression:
-        'media_kind is music having track_count > 3 order by time_added desc',
+        'media_kind is music order by time_added desc',
       limit: limit
     })
   },
