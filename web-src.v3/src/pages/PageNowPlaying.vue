@@ -1,6 +1,19 @@
 <template>
   <section>
     <div v-if="now_playing.id > 0" class="fd-is-fullheight">
+      <div class="has-text-centered fd-has-padding-left-right">
+      <star-rating v-model:rating="rating"
+	  :star-size="17"
+	  :padding="5"
+	  :show-rating="false"
+	  :max-rating="5"
+	  :increment="1"
+	  :inline="true"
+	  :clearable="true"
+	  :active-on-click="true"
+	  @update:rating="rate_track">
+	</star-rating>
+      </div>
       <div class="fd-is-expanded">
         <cover-artwork
           :artwork_url="now_playing.artwork_url"
@@ -93,12 +106,14 @@ import ModalDialogQueueItem from '@/components/ModalDialogQueueItem.vue'
 //import RangeSlider from 'vue-range-slider'
 import Slider from '@vueform/slider'
 import CoverArtwork from '@/components/CoverArtwork.vue'
+import StarRating from 'vue-star-rating'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'
 
 export default {
   name: 'PageNowPlaying',
   components: {
+    StarRating,
     ModalDialogQueueItem,
     //    RangeSlider,
     Slider,
@@ -111,6 +126,7 @@ export default {
       interval_id: 0,
       is_dragged: false,
 
+      rating: 0,
       usermark: 0,
 
       show_details_modal: false,
@@ -169,8 +185,10 @@ export default {
     'now_playing' () {
       if (this.now_playing.track_id !== undefined) {
         webapi.library_track(this.now_playing.track_id).then((response) => {
+          this.rating = response.data.rating / 20
           this.usermark = response.data.usermark
         }).catch((err) => {
+          this.rating = 0
           this.usermark = 0
           if (err.response.status === 404) {
             webapi.queue_remove(this.now_playing.id)
@@ -220,12 +238,10 @@ export default {
     },
 
     start_dragging: function () {
-      console.log('@start')
       this.is_dragged = true
     },
 
     end_dragging: function () {
-      console.log('@end')
       this.is_dragged = false
     },
 
@@ -233,6 +249,15 @@ export default {
       webapi.player_seek_to_pos(newPosition).catch(() => {
         this.item_progress_ms = this.state.item_progress_ms
       })
+    },
+
+    rate_track: function (rating) {
+      if (rating === 0.5) {
+        rating = 0
+      }
+      this.rating = Math.ceil(rating)
+      this.state.item_rating = this.rating * 20
+      webapi.library_track_set_rating(this.now_playing.track_id, this.rating * 20)
     },
 
     close_usermark_upd: function (args) {
