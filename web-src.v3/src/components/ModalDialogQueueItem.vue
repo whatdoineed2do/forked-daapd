@@ -228,6 +228,7 @@ export default {
       const newvalue = value === 0 ? 0 : value | this.usermark
       webapi.library_track_set_usermark(this.track_id, newvalue).then(() => {
         this.usermark = newvalue
+        this.$emit('close_usermark', { value: this.usermark })
       })
     }
   },
