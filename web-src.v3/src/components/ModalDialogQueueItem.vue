@@ -92,7 +92,6 @@
                   <p>
                     <span class="heading">Usermark</span>
                   </p>
-		    <p> {{ JSON.stringify(this.usermark) }} </p>
                   <div class="buttons">
                     <button :disabled="usermark_is_set(1)" class="button is-small is-danger" @click="usermark_update(1)">Mark to delete</button>
                     <button :disabled="usermark_is_set(2)" class="button is-small is-warning" @click="usermark_update(2)">Mark to rexcode</button>
@@ -228,6 +227,7 @@ export default {
       const newvalue = value === 0 ? 0 : value | this.usermark
       webapi.library_track_set_usermark(this.track_id, newvalue).then(() => {
         this.usermark = newvalue
+        this.$emit('close_usermark', { value: this.usermark })
       })
     }
   },
