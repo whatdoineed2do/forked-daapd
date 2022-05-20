@@ -22,6 +22,7 @@
     "reconnectingwebsocket": "^1.0.0",
     "spotify-web-api-js": "^1.5.2",
     "string-to-color": "^2.2.2",
+    "vue-star-rating": "^1.7.0",
     "vue": "^3.2.33",
     "vue-router": "^4.0.14",
     "vue-scrollto": "^2.20.0",
@@ -31,7 +32,7 @@
     "vuex": "^4.0.2"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^2.3.1",
+    "@vitejs/plugin-vue": "^2.3.3",
     "eslint": "^8.13.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-vue": "^8.6.0",
