@@ -49,7 +49,7 @@
       </div>
       <div class="fd-has-padding-left-right">
         <div class="container has-text-centered fd-has-margin-top">
-          <h1 class="title is-5">
+          <h1 :class="{ 'title': true, 'is-5': true, 'has-text-grey': this.usermark > 0, 'is-italic': this.usermark > 0}">
             {{ now_playing.title }}
           </h1>
           <h2 class="title is-6">
@@ -81,6 +81,8 @@
     <modal-dialog-queue-item
       :show="show_details_modal"
       :item="selected_item"
+      :np_usermark="this.usermark"
+      @close_usermark="close_usermark_upd"
       @close="show_details_modal = false"
     />
   </section>
@@ -108,6 +110,8 @@ export default {
       item_progress_ms: 0,
       interval_id: 0,
       is_dragged: false,
+
+      usermark: 0,
 
       show_details_modal: false,
       selected_item: {}
@@ -162,6 +166,19 @@ export default {
   },
 
   watch: {
+    'now_playing' () {
+      if (this.now_playing.track_id !== undefined) {
+        webapi.library_track(this.now_playing.track_id).then((response) => {
+          this.usermark = response.data.usermark
+        }).catch((err) => {
+          this.usermark = 0
+          if (err.response.status === 404) {
+            webapi.queue_remove(this.now_playing.id)
+          }
+        })
+      }
+    },
+
     state() {
       if (this.interval_id > 0) {
         window.clearTimeout(this.interval_id)
@@ -216,6 +233,11 @@ export default {
       webapi.player_seek_to_pos(newPosition).catch(() => {
         this.item_progress_ms = this.state.item_progress_ms
       })
+    },
+
+    close_usermark_upd: function (args) {
+      this.usermark = args.value
+      this.show_details_modal = false
     },
 
     open_dialog: function (item) {
