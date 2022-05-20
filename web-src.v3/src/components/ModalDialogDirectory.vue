@@ -27,6 +27,11 @@
                 <span class="icon"><mdicon name="play" size="16" /></span>
                 <span class="is-size-7">Play</span>
               </a>
+
+              <a class="card-footer-item has-text-dark" @click="update_rescan">
+                <span class="icon"><mdicon name="harddisk" size="16" /></span>
+                <span class="is-size-7">Update/Rescan</span>
+              </a>
             </footer>
           </div>
         </div>
@@ -55,6 +60,11 @@ export default {
         'path starts with "' + this.directory.path + '" order by path asc',
         false
       )
+    },
+
+    update_rescan: function () {
+      this.$emit('close')
+      webapi.library_update(null, this.directory.path)
     },
 
     queue_add: function () {
