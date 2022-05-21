@@ -3,7 +3,8 @@
     <div v-if="!album.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
       <span
         :id="'index_' + album.groupKey"
-        class="tag is-info is-light is-small has-text-weight-bold"
+        class="tag is-info is-light is-small has-text-weight-bold fd-has-action"
+        @click.prevent.stop="open_group_dialog(album)"
         >{{ album.groupKey }}</span
       >
     </div>
@@ -56,6 +57,16 @@
       @play-count-changed="play_count_changed()"
       @close="show_details_modal = false"
     />
+    <modal-dialog-tracks
+      :show="show_group_details_modal"
+      :title="selected_group.title"
+      :uris="selected_group.uris"
+      :album_count="selected_group.album_count"
+      :artist_count="selected_group.artist_count"
+      :track_count="selected_group.track_count"
+      @close="show_group_details_modal = false"
+      @play-count-changed="play_count_changed()"
+    />
     <modal-dialog
       :show="show_remove_podcast_modal"
       title="Remove podcast"
@@ -78,18 +89,27 @@
 <script>
 import ModalDialogAlbum from '@/components/ModalDialogAlbum.vue'
 import ModalDialog from '@/components/ModalDialog.vue'
+import ModalDialogTracks from '@/components/ModalDialogTracks.vue'
 import webapi from '@/webapi'
 import { renderSVG } from '@/lib/SVGRenderer'
 
 export default {
   name: 'ListAlbums',
-  components: { ModalDialogAlbum, ModalDialog },
+  components: { ModalDialogAlbum, ModalDialog, ModalDialogTracks },
 
   props: ['albums', 'media_kind', 'hide_group_title'],
   emits: ['play-count-changed', 'podcast-deleted'],
 
   data() {
     return {
+      show_group_details_modal: false,
+      selected_group: {
+	album_count: 0,
+	track_count: 0,
+	artist_count: 0,
+        uris: ''
+      },
+
       show_details_modal: false,
       selected_album: {},
 
@@ -163,6 +183,24 @@ export default {
             this.show_details_modal = false
           })
         })
+    },
+
+    open_group_dialog: function (album) {
+      let  group = this.albums.itemsByGroup[album.groupKey]
+
+      this.selected_group.title = album.groupKey
+      this.selected_group.uris = group.map(e => e.uri).join(',')
+      this.selected_group.album_count = group.length
+      this.selected_group.track_count = group.reduce((acc, item) => {
+        acc += item.track_count
+        return acc
+      }, 0)
+      this.selected_group.artist_count = group.reduce((acc, item) => {
+        acc += item.artist_count
+        return acc
+      }, 0)
+
+      this.show_group_details_modal = true
     },
 
     play_count_changed: function () {
