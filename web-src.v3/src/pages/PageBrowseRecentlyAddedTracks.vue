@@ -8,7 +8,7 @@
         <p class="heading">{{ recently_added.total }} tracks</p>
       </template>
       <template #content>
-        <list-tracks-w-headings :tracks="recently_added" />
+        <list-tracks-w-headings :tracks="recently_added" @usermark-updated="usermark_upd"/>
       </template>
     </content-with-heading>
   </div>
@@ -73,21 +73,8 @@ export default {
   },
 
   methods: {
-    usermark_upd_today: function (args) {
-      this.usermark_upd(this.recently_added_today.items, args)
-    },
-    usermark_upd_week: function (args) {
-      this.usermark_upd(this.recently_added_week.items, args)
-    },
-    usermark_upd_month: function (args) {
-      this.usermark_upd(this.recently_added_month.items, args)
-    },
-    usermark_upd_older: function (args) {
-      this.usermark_upd(this.recently_added_older.items, args)
-    },
-
-    usermark_upd: function (what, args) {
-      what.find(e => e.id === args.track_id).usermark = args.value
+    usermark_upd: function (args, what) {
+      this.recently_added.items.find(e => e.id === args.track_id).usermark = args.value
     }
   }
 }
