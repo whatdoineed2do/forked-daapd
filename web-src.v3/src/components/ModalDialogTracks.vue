@@ -18,7 +18,7 @@
                 </p>
                 <p>
                   <span class="heading">Tracks</span>
-                  <span class="title is-6">{{ tracks.items.length }}</span>
+                  <span class="title is-6">{{ track_count }}</span>
                 </p>
               </div>
             </div>
@@ -53,18 +53,28 @@ import webapi from '@/webapi'
 
 export default {
   name: 'ModalDialogTracks',
-  props: ['show', 'title', 'tracks'],
+  props: ['show', 'title', 'tracks', 'uris', 'album_count', 'artist_count', 'track_count'],
   emits: ['close', 'play-count-changed'],
 
   computed: {
     uris () {
-      return this.tracks.items.map(a => a.uri).join(',')
+      return (this.uris !== undefined) ? 
+        this.uris : 
+        this.tracks.items.map(a => a.uri).join(',')
+    },
+    track_count () {
+      return (this.track_count !== undefined) ?
+        this.track_count : this.tracks.items.length
     },
     artist_count () {
-      return new Set(this.tracks.items.map(a => a.artist_id)).size
+      return (this.artist_count !== undefined) ?
+        this.artist_count :
+        new Set(this.tracks.items.map(a => a.artist_id)).size
     },
     album_count () {
-      return new Set(this.tracks.items.map(a => a.album_id)).size
+      return (this.album_count !== undefined) ?
+        this.album_count :
+        new Set(this.tracks.items.map(a => a.album_id)).size
     }
   },
 
