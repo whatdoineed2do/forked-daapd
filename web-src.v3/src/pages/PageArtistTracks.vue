@@ -42,9 +42,9 @@
       <template #content>
         <p class="heading has-text-centered-mobile">
           <a class="has-text-link" @click="open_artist"
-            >{{ artist.album_count }} albums</a
+            >{{ album_count }} albums</a
           >
-          | {{ artist.track_count }} tracks
+          | {{ tracks.count }} tracks
         </p>
         <list-tracks :tracks="tracks" :uris="track_uris" @usermark-updated="usermark_upd" />
         <modal-dialog-artist
@@ -111,7 +111,7 @@ export default {
 
   data() {
     return {
-      artist: {},
+      artist: { items: [] },
 
       tracks_list: new GroupByList(),
 
@@ -152,6 +152,13 @@ export default {
       set(value) {
         this.$store.commit(types.TRACKS_SORT, value)
       }
+    },
+
+    album_count () {
+      return this.artist.items.reduce((acc, item) => {
+        acc += item.album_count
+        return acc
+      }, 0)
     },
 
     track_uris() {
