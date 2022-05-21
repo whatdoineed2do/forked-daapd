@@ -1,13 +1,13 @@
 <template>
   <template
     v-for="(track, index) in tracks"
-    :id="'index_' + track.item.title_sort.charAt(0).toUpperCase()"
     :key="track.item.id"
   >
    <div v-if="!track.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
       <span
         :id="'index_' + track.groupKey"
         class="tag is-info is-light is-small has-text-weight-bold"
+        @click.prevent.stop="open_group_dialog(index, track)"
         >{{ track.groupKey }}</span
       >
     </div>
@@ -51,22 +51,33 @@
       @play-count-changed="$emit('play-count-changed')"
       @usermark-updated="usermark_upd"
     />
+    <modal-dialog-tracks
+      :show="show_group_details_modal"
+      :title="selected_tracks.title"
+      :tracks="selected_tracks"
+      @close="show_group_details_modal = false"
+      @play-count-changed="$emit('play-count-changed')"
+    />
   </teleport>
 </template>
 
 <script>
 import ModalDialogTrack from '@/components/ModalDialogTrack.vue'
+import ModalDialogTracks from '@/components/ModalDialogTracks.vue'
 import webapi from '@/webapi'
 
 export default {
   name: 'ListTracksWHeadings',
-  components: { ModalDialogTrack },
+  components: { ModalDialogTrack, ModalDialogTracks },
 
   props: ['tracks', 'uris', 'expression', 'show_icon'],
   emits: ['play-count-changed', 'usermark-updated'],
 
   data() {
     return {
+      show_group_details_modal: false,
+      selected_tracks: { title: '', items: [] },
+
       show_details_modal: false,
       selected_track: {}
     }
@@ -79,6 +90,12 @@ export default {
 
     usermark_upd: function (args) {
       this.$emit('usermark-updated', args)
+    },
+
+    open_group_dialog: function (index, track) {
+      this.selected_tracks.title = track.groupKey
+      this.selected_tracks.items = this.tracks.itemsByGroup[track.groupKey]
+      this.show_group_details_modal = true
     },
 
     open_dialog: function (track) {
