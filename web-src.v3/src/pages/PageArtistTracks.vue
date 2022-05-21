@@ -124,6 +124,13 @@ export default {
             direction: 'asc',
             defaultValue: '0000'
           })
+        },
+        {
+          name: 'Date Added',
+          options: byYear('time_added', {
+            direction: 'desc',
+            defaultValue: '0000'
+          })
         }
       ],
 
