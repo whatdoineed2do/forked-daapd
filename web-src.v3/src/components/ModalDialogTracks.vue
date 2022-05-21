@@ -18,19 +18,26 @@
                 </p>
                 <p>
                   <span class="heading">Tracks</span>
-                  <span class="title is-6">{{ tracks.total }}</span>
+                  <span class="title is-6">{{ tracks.items.length }}</span>
                 </p>
               </div>
             </div>
             <footer class="card-footer">
               <a class="card-footer-item has-text-dark" @click="queue_add">
-                <span class="icon"><i class="mdi mdi-playlist-plus"></i></span> <span class="is-size-7">Add</span>
+                <span class="icon"
+                  ><mdicon name="playlist-plus" size="16"
+                /></span>
+                <span class="is-size-7">Add</span>
               </a>
               <a class="card-footer-item has-text-dark" @click="queue_add_next">
-                <span class="icon"><i class="mdi mdi-playlist-play"></i></span> <span class="is-size-7">Add Next</span>
+                <span class="icon"
+                  ><mdicon name="playlist-play" size="16"
+                /></span>
+                <span class="is-size-7">Add Next</span>
               </a>
-              <a class="card-footer-item has-text-dark" @click="play">
-                <span class="icon"><i class="mdi mdi-play"></i></span> <span class="is-size-7">Play</span>
+              <a class="card-footer-item has-text-dark" @click="play_track">
+                <span class="icon"><mdicon name="play" size="16" /></span>
+                <span class="is-size-7">Play</span>
               </a>
             </footer>
           </div>
@@ -45,7 +52,7 @@
 import webapi from '@/webapi'
 
 export default {
-  name: 'ModalDialog',
+  name: 'ModalDialogTracks',
   props: ['show', 'title', 'tracks'],
   emits: ['close', 'play-count-changed'],
 
