@@ -59,6 +59,7 @@ export default createStore({
       artists_sort: 'Name',
       artist_albums_sort: 'Name',
       albums_sort: 'Name',
+      tracks_sort: 'Name',
       show_only_next_items: false,
       show_burger_menu: false,
       show_player_menu: false,
@@ -237,6 +238,9 @@ export default createStore({
     },
     [types.ALBUMS_SORT](state, sort) {
       state.albums_sort = sort
+    },
+    [types.TRACKS_SORT](state, sort) {
+      state.tracks_sort = sort
     },
     [types.SHOW_ONLY_NEXT_ITEMS](state, showOnlyNextItems) {
       state.show_only_next_items = showOnlyNextItems
