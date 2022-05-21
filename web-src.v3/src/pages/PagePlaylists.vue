@@ -1,4 +1,7 @@
 <template>
+  <div class="fd-page-with-tabs">
+    <tabs-music />
+
   <content-with-heading>
     <template #heading-left>
       <p class="title is-4">
@@ -10,10 +13,12 @@
       <list-playlists :playlists="playlists" />
     </template>
   </content-with-heading>
+  </div>
 </template>
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
+import TabsMusic from '@/components/TabsMusic.vue'
 import ListPlaylists from '@/components/ListPlaylists.vue'
 import webapi from '@/webapi'
 import { GroupByList, noop } from '@/lib/GroupByList'
@@ -34,7 +39,7 @@ const dataObject = {
 
 export default {
   name: 'PagePlaylists',
-  components: { ContentWithHeading, ListPlaylists },
+  components: { ContentWithHeading, TabsMusic, ListPlaylists },
 
   beforeRouteEnter(to, from, next) {
     dataObject.load(to).then((response) => {
