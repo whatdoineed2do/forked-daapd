@@ -1,5 +1,38 @@
 <template>
   <div>
+    <section class="section fd-tabs-section">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column is-four-fifths">
+            <div class="tabs is-centered is-small">
+              <ul>
+                <li :class="[ view === 'dir_view' ? 'is-active' : '']">
+                  <a @click="view='dir_view'">
+                    <span class="icon is-small"><mdicon name="folder" size="16"/></span>
+                    <span>Directories ({{ files.directories.length }})</span>
+                  </a>
+                </li>
+                <li :class="[ view === 'file_view' ? 'is-active' : '']">
+                  <a @click="view='file_view'">
+                    <span class="icon is-small"><mdicon name="file" size="16"/></span>
+                    <span>Files ({{ files.tracks.items.length }})</span>
+                  </a>
+                </li>
+                <li :class="[ view === 'pls_view' ? 'is-active' : '']">
+                  <a @click="view='pls_view'">
+                    <span class="icon is-small"><mdicon name="library-music" size="16"/></span>
+                    <span>Playlists ({{ files.playlists.items.length }})</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <index-list :index="index_list"></index-list>
+
     <content-with-heading>
       <template #heading-left>
         <p class="title is-4">Files</p>
@@ -24,14 +57,15 @@
         </div>
       </template>
       <template #content>
-        <list-directories :directories="files.directories" />
+        <list-directories :directories="files.directories" v-if="view === 'dir_view'"/>
 
-        <list-playlists :playlists="files.playlists.items" />
+	<list-playlists :playlists="playlists_list" v-if="view === 'pls_view'"/>
 
         <list-tracks
-          :tracks="files.tracks.items"
+          :tracks="tracks_list.items"
           :expression="play_expression"
           :show_icon="true"
+	  v-if="view === 'file_view'"
         />
 
         <modal-dialog-directory
@@ -51,6 +85,8 @@ import ListDirectories from '@/components/ListDirectories.vue'
 import ListPlaylists from '@/components/ListPlaylists.vue'
 import ListTracks from '@/components/ListTracks.vue'
 import webapi from '@/webapi'
+import IndexList from '@/components/IndexList.vue'
+import { GroupByList, byName, noop } from '@/lib/GroupByList'
 
 const dataObject = {
   load: function (to) {
@@ -61,8 +97,23 @@ const dataObject = {
   },
 
   set: function (vm, response) {
+    vm.view = 'dir_view'
     if (response) {
       vm.files = response.data
+
+      vm.tracks_list = new GroupByList(vm.files.tracks)
+      vm.tracks_list.group(byName())
+
+      vm.playlists_list = new GroupByList(vm.files.playlists)
+      vm.playlists_list.group(byName())
+
+      if (vm.files.tracks.items.length > 0) {
+        vm.view = 'file_view'
+      } else if (vm.files.directories.length > 0) {
+        vm.view = 'dir_view'
+      } else if (vm.files.playlists.items.length > 0) {
+        vm.view = 'pls_view'
+      }
     } else {
       vm.files = {
         directories: vm.$store.state.config.directories.map((dir) => {
@@ -79,6 +130,7 @@ export default {
   name: 'PageFiles',
   components: {
     ModalDialogDirectory,
+    IndexList,
     ContentWithHeading,
     ListDirectories,
     ListPlaylists,
@@ -104,7 +156,12 @@ export default {
         directories: [],
         tracks: { items: [] },
         playlists: { items: [] }
-      }
+      },
+
+      view: '',
+
+      tracks_list: new GroupByList(),
+      playlist_list: new GroupByList()
     }
   },
 
@@ -116,6 +173,28 @@ export default {
       return '/'
     },
 
+    index_list () {
+      let items = []
+
+      if (this.view === 'pls_view') {
+        return this.playlists_list.indexList
+      }
+
+      if (this.view === 'file_view') {
+        return this.tracks_list.indexList
+      }
+
+      if (this.view === 'dir_view') {
+        items = this.files.directories
+      }
+
+      if (items.length === 0) {
+        return [...new Set()]
+      }
+      return [...new Set(items
+        .map(dirent => this.basename(dirent.path).charAt(0).toUpperCase()))]
+    },
+
     play_expression() {
       return (
         'path starts with "' + this.current_directory + '" order by path asc'
@@ -124,6 +203,10 @@ export default {
   },
 
   methods: {
+    basename: function (path) {
+      return path.slice(this.current_directory === '/' ? path.lastIndexOf('/') + 1 : this.current_directory.length + 1, path.length)
+    },
+
     play: function () {
       webapi.player_play_expression(this.play_expression, false)
     }
