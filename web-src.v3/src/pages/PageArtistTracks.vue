@@ -49,7 +49,7 @@
         <list-tracks :tracks="tracks" :uris="track_uris" @usermark-updated="usermark_upd" />
         <modal-dialog-artist
           :show="show_artist_details_modal"
-          :artist="artist"
+          :artist="modal_artist"
           @close="show_artist_details_modal = false"
         />
       </template>
@@ -132,6 +132,16 @@ export default {
   },
 
   computed: {
+   modal_artist() {
+      return {
+        id: this.id,
+        name: this.name,
+        album_count: this.album_count,
+        track_count: this.tracks.count,
+        uri: this.track_uris
+      }
+    },
+
     tracks() {
       const groupBy = this.groupby_options.find(
         (o) => o.name === this.selected_groupby_option_name
