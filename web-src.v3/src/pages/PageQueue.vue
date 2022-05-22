@@ -1,8 +1,12 @@
 <template>
   <content-with-heading>
     <template #heading-left>
-      <p class="heading">{{ queue.count }} tracks</p>
       <p class="title is-4">Queue</p>
+      <p class="heading">{{ queue.count }} tracks | {{ queue_duration }} Playtime</p>
+      <a class="subtitle has-text-link is-7" v-show="queue_items.length > 0 && now_playing.id !== undefined"
+         href='#' v-scroll-to="{ el: '#index_' + now_playing.id, offset: -165 }">Now Playing
+      </a>
+
     </template>
     <template #heading-right>
       <div class="buttons is-centered">
@@ -156,6 +160,23 @@ export default {
         this.$store.state.config.default_playlist_directory
       )
     },
+
+    queue_duration () {
+      const seconds = this.queue.items.reduce((acc, item) => {
+        acc += item.length_ms
+        return acc
+      }, 0) / 1000
+
+      const h = Math.floor(seconds / 3600)
+      const m = Math.floor(seconds % 3600 / 60)
+      const s = Math.floor(seconds % 3600 % 60)
+
+      return [h > 0 ? h + ':' : ''] + ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2)
+    },
+    now_playing () {
+      return this.$store.getters.now_playing
+    },
+
     queue() {
       return this.$store.state.queue
     },
