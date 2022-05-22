@@ -1,5 +1,5 @@
 <template>
-  <div v-if="is_next || !show_only_next_items" class="media">
+  <div v-if="is_next || !show_only_next_items" class="media" :id="'index_' + item.id">
     <div v-if="edit_mode" class="media-left">
       <span class="icon has-text-grey fd-is-movable handle"
         ><mdicon name="drag-horizontal" size="16"
