@@ -2,6 +2,8 @@
   <template
     v-for="(track, index) in tracks"
     :key="track.item.id"
+    class="media"
+    :class="{ 'with-progress': show_progress }"
   >
    <div v-if="!track.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
       <span
@@ -12,13 +14,19 @@
       >
     </div>
     <div v-else-if="track.isItem" class="media" @click="play_track(index, track)">
+      <figure v-if="show_icon" class="media-left fd-has-action">
+        <span class="icon">
+          <mdicon name="file-outline" size="16" />
+        </span>
+      </figure>
       <div class="media-content fd-has-action is-clipped">
         <div style="margin-top: 0.7rem">
 	  <h1
 	    class="title is-6"
 	    :class="{
 	      'has-text-grey':
-		track.item.usermark > 0,
+		track.item.usermark > 0 ||
+		track.item.media_kind === 'podcast' && track.item.play_count > 0,
 	      'is-italic':
 		track.item.usermark > 0
 	    }"
@@ -31,6 +39,11 @@
           <h2 class="subtitle is-7 has-text-grey">
             <b>{{ track.item.album }}</b>
           </h2>
+	  <progress-bar
+	    v-if="show_progress"
+	    :max="track.length_ms"
+	    :value="track.seek_ms"
+	  />
         </div>
       </div>
       <div class="media-right" style="padding-top: 0.7rem">
@@ -64,13 +77,14 @@
 <script>
 import ModalDialogTrack from '@/components/ModalDialogTrack.vue'
 import ModalDialogTracks from '@/components/ModalDialogTracks.vue'
+import ProgressBar from '@/components/ProgressBar.vue'
 import webapi from '@/webapi'
 
 export default {
   name: 'ListTracksWHeadings',
-  components: { ModalDialogTrack, ModalDialogTracks },
+  components: { ModalDialogTrack, ModalDialogTracks, ProgressBar },
 
-  props: ['tracks', 'uris', 'expression', 'show_icon'],
+  props: ['tracks', 'uris', 'expression', 'show_progress', 'show_icon', 'hide_group_title'],
   emits: ['play-count-changed', 'usermark-updated'],
 
   data() {
@@ -85,7 +99,13 @@ export default {
 
   methods: {
     play_track: function (position, track) {
-      webapi.player_play_uri(track.item.uri, false)
+      if (this.uris) {
+        webapi.player_play_uri(this.uris, false, position)
+      } else if (this.expression) {
+        webapi.player_play_expression(this.expression, false, position)
+      } else {
+       webapi.player_play_uri(track.item.uri, false)
+      }
     },
 
     usermark_upd: function (args) {
