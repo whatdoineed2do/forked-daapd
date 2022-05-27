@@ -106,6 +106,32 @@ export function byRating({ direction = 'desc', defaultValue = 0 }) {
   }
 }
 
+function basename(path) {
+  return path.slice(path.lastIndexOf('/') + 1, path.length)
+}
+
+export function byPath({ direction = 'asc', defaultValue = '_' }) {
+  return {
+    compareFn: (a, b) => {
+      let fieldA = a['path'] || defaultValue
+      let fieldB = b['path'] || defaultValue
+
+      fieldA = basename(fieldA)
+      fieldB = basename(fieldB)
+
+      const result = fieldA < fieldB ? -1 : fieldA > fieldB ? 1 : 0
+      return direction === 'asc' ? result : result * -1
+    },
+
+    groupKeyFn: (item) => {
+      let fieldValue = item['path'] || defaultValue
+      fieldValue = basename(fieldValue)
+      return fieldValue.charAt(0).toUpperCase()
+    }
+  }
+}
+
+
 export class GroupByList {
   constructor({ items = [], total = 0, offset = 0, limit = -1 } = {}) {
     this.items = items
