@@ -62,7 +62,7 @@
 	<list-playlists :playlists="playlists_list" v-if="view === 'pls_view'"/>
 
         <list-tracks
-          :tracks="tracks_list.items"
+          :tracks="tracks_list"
           :expression="play_expression"
           :show_icon="true"
 	  v-if="view === 'file_view'"
@@ -83,10 +83,10 @@ import ContentWithHeading from '@/templates/ContentWithHeading.vue'
 import ModalDialogDirectory from '@/components/ModalDialogDirectory.vue'
 import ListDirectories from '@/components/ListDirectories.vue'
 import ListPlaylists from '@/components/ListPlaylists.vue'
-import ListTracks from '@/components/ListTracks.vue'
+import ListTracks from '@/components/ListTracksWHeadings.vue'
 import webapi from '@/webapi'
 import IndexList from '@/components/IndexList.vue'
-import { GroupByList, byName, noop } from '@/lib/GroupByList'
+import { GroupByList, byName, byPath, noop } from '@/lib/GroupByList'
 
 const dataObject = {
   load: function (to) {
@@ -102,10 +102,10 @@ const dataObject = {
       vm.files = response.data
 
       vm.tracks_list = new GroupByList(vm.files.tracks)
-      vm.tracks_list.group(byName())
+      vm.tracks_list.group(byPath('path'))
 
       vm.playlists_list = new GroupByList(vm.files.playlists)
-      vm.playlists_list.group(byName())
+      vm.playlists_list.group(byPath('path'))
 
       if (vm.files.tracks.items.length > 0) {
         vm.view = 'file_view'
