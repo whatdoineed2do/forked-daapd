@@ -65,6 +65,7 @@
           :tracks="tracks_list"
           :expression="play_expression"
           :show_icon="true"
+          @usermark-updated="usermark_upd"
 	  v-if="view === 'file_view'"
         />
 
@@ -204,6 +205,10 @@ export default {
   methods: {
     basename: function (path) {
       return path.slice(this.current_directory === '/' ? path.lastIndexOf('/') + 1 : this.current_directory.length + 1, path.length)
+    },
+
+    usermark_upd: function (args) {
+      this.tracks_list.items.find(e => e.id === args.track_id).usermark = args.value
     },
 
     play: function () {
