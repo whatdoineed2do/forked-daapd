@@ -16,23 +16,32 @@
       <slot name="actions" />
     </div>
   </div>
-  <template v-for="directory in directories" :key="directory.path">
-    <div class="media" @click="open_directory(directory)">
+  <template v-for="directory in directories" :key="directory.item.path">
+   <div v-if="!directory.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
+      <span
+        :id="'index_' + directory.groupKey"
+        class="tag is-info is-light is-small has-text-weight-bold"
+        >{{ directory.groupKey }}</span
+      >
+    </div>
+    <div v-else-if="directory.isItem" class="media" @click="open_directory(directory.item)">
       <figure class="media-left fd-has-action">
         <span class="icon">
           <mdicon name="folder" size="16" />
         </span>
       </figure>
       <div class="media-content fd-has-action is-clipped">
-        <h1 class="title is-6">
-          {{ directory.path.substring(directory.path.lastIndexOf('/') + 1) }}
-        </h1>
-        <h2 class="subtitle is-7 has-text-grey-light">
-          {{ directory.path }}
-        </h2>
+	<div style="margin-top: 0.7rem">
+	  <h1 class="title is-6">
+	    {{ directory.item.path.substring(directory.item.path.lastIndexOf('/') + 1) }}
+	  </h1>
+	  <h2 class="subtitle is-7 has-text-grey-light">
+	    {{ directory.item.path }}
+	  </h2>
+	</div>
       </div>
-      <div class="media-right">
-        <a @click.prevent.stop="open_dialog(directory)">
+      <div class="media-right" style="padding-top: 0.7rem">
+        <a @click.prevent.stop="open_dialog(directory.item)">
           <span class="icon has-text-dark"
             ><mdicon name="dots-vertical" size="16"
           /></span>
