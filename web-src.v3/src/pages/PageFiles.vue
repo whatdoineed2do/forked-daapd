@@ -57,7 +57,7 @@
         </div>
       </template>
       <template #content>
-        <list-directories :directories="files.directories" v-if="view === 'dir_view'"/>
+        <list-directories :directories="dirs_list" v-if="view === 'dir_view'"/>
 
 	<list-playlists :playlists="playlists_list" v-if="view === 'pls_view'"/>
 
@@ -123,6 +123,8 @@ const dataObject = {
         playlists: { items: [] }
       }
     }
+    vm.dirs_list = new GroupByList({ items: vm.files.directories})
+    vm.dirs_list.group(byPath('path'))
   }
 }
 
@@ -160,6 +162,7 @@ export default {
 
       view: '',
 
+      dirs_list: new GroupByList(),
       tracks_list: new GroupByList(),
       playlists_list: new GroupByList()
     }
@@ -185,14 +188,10 @@ export default {
       }
 
       if (this.view === 'dir_view') {
-        items = this.files.directories
+        return this.dirs_list.indexList
       }
 
-      if (items.length === 0) {
-        return [...new Set()]
-      }
-      return [...new Set(items
-        .map(dirent => this.basename(dirent.path).charAt(0).toUpperCase()))]
+      return [...new Set()]
     },
 
     play_expression() {
