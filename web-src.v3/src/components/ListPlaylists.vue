@@ -1,29 +1,39 @@
 <template>
-  <div
+  <template
     v-for="playlist in playlists"
     :key="playlist.itemId"
     class="media"
     :playlist="playlist"
-    @click="open_playlist(playlist.item)"
   >
-    <figure class="media-left fd-has-action">
-      <span class="icon">
-        <mdicon :name="icon_name(playlist.item)" size="16" />
-      </span>
-    </figure>
-    <div class="media-content fd-has-action is-clipped">
-      <h1 class="title is-6">
-        {{ playlist.item.name }}
-      </h1>
+   <div v-if="!playlist.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
+      <span
+        :id="'index_' + playlist.groupKey"
+        class="tag is-info is-light is-small has-text-weight-bold"
+        >{{ playlist.groupKey }}</span
+      >
     </div>
-    <div class="media-right">
-      <a @click.prevent.stop="open_dialog(playlist.item)">
-        <span class="icon has-text-dark"
-          ><mdicon name="dots-vertical" size="16"
-        /></span>
-      </a>
+    <div v-else-if="playlist.isItem" class="media" @click="open_playlist(playlist.item)">
+      <figure vi-if="show_icon" class="media-left fd-has-action">
+	<span class="icon">
+	  <mdicon :name="icon_name(playlist.item)" size="16" />
+	</span>
+      </figure>
+      <div class="media-content fd-has-action is-clipped">
+	<div style="margin-top: 0.7rem">
+	  <h1 class="title is-6">
+	    {{ playlist.item.name }}
+	  </h1>
+	</div>
+      </div>
+      <div class="media-right" style="padding-top: 0.7rem">
+	<a @click.prevent.stop="open_dialog(playlist.item)">
+	  <span class="icon has-text-dark"
+	    ><mdicon name="dots-vertical" size="16"
+	  /></span>
+	</a>
+      </div>
     </div>
-  </div>
+  </template>
   <teleport to="#app">
     <modal-dialog-playlist
       :show="show_details_modal"
@@ -40,7 +50,7 @@ export default {
   name: 'ListPlaylists',
   components: { ModalDialogPlaylist },
 
-  props: ['playlists'],
+  props: ['playlists', 'show-icon', 'hide_group_title'],
 
   data() {
     return {
