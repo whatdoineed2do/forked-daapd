@@ -8,7 +8,7 @@
         <p class="heading">{{ recently_added.total }} tracks</p>
       </template>
       <template #content>
-        <list-tracks-w-headings :tracks="recently_added" @usermark-updated="usermark_upd"/>
+        <list-tracks :tracks="recently_added" :show_group_title="true" @usermark-updated="usermark_upd"/>
       </template>
     </content-with-heading>
   </div>
@@ -17,7 +17,7 @@
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
 import TabsMusic from '@/components/TabsMusic.vue'
-import ListTracksWHeadings from '@/components/ListTracksWHeadings.vue'
+import ListTracks from '@/components/ListTracks.vue'
 import ModalDialogTracks from '@/components/ModalDialogTracks.vue'
 import webapi from '@/webapi'
 import store from '@/store'
@@ -46,7 +46,7 @@ const dataObject = {
 
 export default {
   name: 'PageBrowseType',
-  components: { ContentWithHeading, TabsMusic, ListTracksWHeadings, ModalDialogTracks },
+  components: { ContentWithHeading, TabsMusic, ListTracks, ModalDialogTracks },
 
   beforeRouteEnter(to, from, next) {
     dataObject.load(to).then((response) => {

@@ -65,6 +65,7 @@
           :tracks="tracks_list"
           :expression="play_expression"
           :show_icon="true"
+	  :show_group_title="true"
           @usermark-updated="usermark_upd"
 	  v-if="view === 'file_view'"
         />
@@ -84,7 +85,7 @@ import ContentWithHeading from '@/templates/ContentWithHeading.vue'
 import ModalDialogDirectory from '@/components/ModalDialogDirectory.vue'
 import ListDirectories from '@/components/ListDirectories.vue'
 import ListPlaylists from '@/components/ListPlaylists.vue'
-import ListTracks from '@/components/ListTracksWHeadings.vue'
+import ListTracks from '@/components/ListTracks.vue'
 import webapi from '@/webapi'
 import IndexList from '@/components/IndexList.vue'
 import { GroupByList, byName, byPath, noop } from '@/lib/GroupByList'

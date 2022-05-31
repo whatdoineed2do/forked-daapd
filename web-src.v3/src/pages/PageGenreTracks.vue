@@ -46,7 +46,7 @@
           >
           | {{ genre.track_count }} tracks
         </p>
-        <list-tracks :tracks="tracks" :expression="expression" @usermark-updated="usermark_upd" />
+        <list-tracks :tracks="tracks" :expression="expression" :show_group_title="true" @usermark-updated="usermark_upd" />
         <modal-dialog-genre
           :show="show_genre_details_modal"
           :genre="genre"
@@ -64,7 +64,7 @@ import TabsMusic from '@/components/TabsMusic.vue'
 import DropdownMenu from '@/components/DropdownMenu.vue'
 import IndexList from '@/components/IndexList.vue'
 import IndexButtonList from '@/components/IndexButtonList.vue'
-import ListTracks from '@/components/ListTracksWHeadings.vue'
+import ListTracks from '@/components/ListTracks.vue'
 import ModalDialogGenre from '@/components/ModalDialogGenre.vue'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'

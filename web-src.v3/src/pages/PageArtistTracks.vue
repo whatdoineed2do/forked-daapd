@@ -46,7 +46,7 @@
           >
           | {{ tracks.count }} tracks
         </p>
-        <list-tracks :tracks="tracks" :uris="track_uris" @usermark-updated="usermark_upd" />
+        <list-tracks :tracks="tracks" :uris="track_uris" :show_group_title="true" @usermark-updated="usermark_upd" />
         <modal-dialog-artist
           :show="show_artist_details_modal"
           :artist="modal_artist"
@@ -64,7 +64,7 @@ import TabsMusic from '@/components/TabsMusic.vue'
 import DropdownMenu from '@/components/DropdownMenu.vue'
 import IndexList from '@/components/IndexList.vue'
 import IndexButtonList from '@/components/IndexButtonList.vue'
-import ListTracks from '@/components/ListTracksWHeadings.vue'
+import ListTracks from '@/components/ListTracks.vue'
 import ModalDialogArtist from '@/components/ModalDialogArtist.vue'
 import webapi from '@/webapi'
 import * as types from '@/store/mutation_types'

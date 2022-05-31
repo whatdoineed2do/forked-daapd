@@ -1,50 +1,60 @@
 <template>
-  <div
+  <template
     v-for="(track, index) in tracks"
-    :id="'index_' + track.title_sort.charAt(0).toUpperCase()"
-    :key="track.id"
+    :key="track.item.id"
     class="media"
     :class="{ 'with-progress': show_progress }"
-    @click="play_track(index, track)"
   >
-    <figure v-if="show_icon" class="media-left fd-has-action">
-      <span class="icon">
-        <mdicon name="file-outline" size="16" />
-      </span>
-    </figure>
-    <div class="media-content fd-has-action is-clipped">
-      <h1
-        class="title is-6"
-        :class="{
-          'has-text-grey':
-	    track.usermark > 0 ||
-            track.media_kind === 'podcast' && track.play_count > 0,
-	  'is-italic':
-	    track.usermark > 0
-        }"
+   <div v-if="!track.isItem && show_group_title" class="mt-6 mb-5 py-2">
+      <span
+        :id="'index_' + track.groupKey"
+        class="tag is-info is-light is-small has-text-weight-bold"
+        @click.prevent.stop="open_group_dialog(index, track)"
+        >{{ track.groupKey }}</span
       >
-        {{ track.title }}
-      </h1>
-      <h2 class="subtitle is-7 has-text-grey">
-        <b>{{ track.artist }}</b>
-      </h2>
-      <h2 class="subtitle is-7 has-text-grey">
-        {{ track.album }}
-      </h2>
-      <progress-bar
-        v-if="show_progress"
-        :max="track.length_ms"
-        :value="track.seek_ms"
-      />
     </div>
-    <div class="media-right">
-      <a @click.prevent.stop="open_dialog(track)">
-        <span class="icon has-text-dark"
-          ><mdicon name="dots-vertical" size="16"
-        /></span>
-      </a>
+    <div v-else-if="track.isItem" class="media" @click="play_track(index, track)">
+      <figure v-if="show_icon" class="media-left fd-has-action">
+        <span class="icon">
+          <mdicon name="file-outline" size="16" />
+        </span>
+      </figure>
+      <div class="media-content fd-has-action is-clipped">
+        <div style="margin-top: 0.7rem">
+	  <h1
+	    class="title is-6"
+	    :class="{
+	      'has-text-grey':
+		track.item.usermark > 0 ||
+		track.item.media_kind === 'podcast' && track.item.play_count > 0,
+	      'is-italic':
+		track.item.usermark > 0
+	    }"
+	  >
+            {{ track.item.title }}
+	  </h1>
+          <h2 class="subtitle is-7 has-text-grey">
+            <b>{{ track.item.artist }}</b>
+          </h2>
+          <h2 class="subtitle is-7 has-text-grey">
+            <b>{{ track.item.album }}</b>
+          </h2>
+	  <progress-bar
+	    v-if="show_progress"
+	    :max="track.length_ms"
+	    :value="track.seek_ms"
+	  />
+        </div>
+      </div>
+      <div class="media-right" style="padding-top: 0.7rem">
+        <a @click.prevent.stop="open_dialog(track.item)">
+          <span class="icon has-text-dark"
+            ><mdicon name="dots-vertical" size="16"
+          /></span>
+        </a>
+      </div>
     </div>
-  </div>
+  </template>
 
   <teleport to="#app">
     <modal-dialog-track
@@ -54,23 +64,34 @@
       @play-count-changed="$emit('play-count-changed')"
       @usermark-updated="usermark_upd"
     />
+    <modal-dialog-tracks
+      :show="show_group_details_modal"
+      :title="selected_tracks.title"
+      :tracks="selected_tracks"
+      @close="show_group_details_modal = false"
+      @play-count-changed="$emit('play-count-changed')"
+    />
   </teleport>
 </template>
 
 <script>
 import ModalDialogTrack from '@/components/ModalDialogTrack.vue'
+import ModalDialogTracks from '@/components/ModalDialogTracks.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import webapi from '@/webapi'
 
 export default {
-  name: 'ListTracks',
-  components: { ModalDialogTrack, ProgressBar },
+  name: 'ListTracksWHeadings',
+  components: { ModalDialogTrack, ModalDialogTracks, ProgressBar },
 
-  props: ['tracks', 'uris', 'expression', 'show_progress', 'show_icon'],
+  props: ['tracks', 'uris', 'expression', 'show_progress', 'show_icon', 'show_group_title'],
   emits: ['play-count-changed', 'usermark-updated'],
 
   data() {
     return {
+      show_group_details_modal: false,
+      selected_tracks: { title: '', items: [] },
+
       show_details_modal: false,
       selected_track: {}
     }
@@ -83,12 +104,18 @@ export default {
       } else if (this.expression) {
         webapi.player_play_expression(this.expression, false, position)
       } else {
-        webapi.player_play_uri(track.uri, false)
+       webapi.player_play_uri(track.item.uri, false)
       }
     },
 
     usermark_upd: function (args) {
       this.$emit('usermark-updated', args)
+    },
+
+    open_group_dialog: function (index, track) {
+      this.selected_tracks.title = track.groupKey
+      this.selected_tracks.items = this.tracks.itemsByGroup[track.groupKey]
+      this.show_group_details_modal = true
     },
 
     open_dialog: function (track) {
