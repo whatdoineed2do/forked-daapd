@@ -31,7 +31,7 @@
         <p class="heading">Tracks</p>
       </template>
       <template #content>
-        <list-tracks :tracks="recently_added_tracks.items" @usermark-updated="usermark_upd_added" />
+        <list-tracks :tracks="recently_added_tracks" @usermark-updated="usermark_upd_added" />
       </template>
       <template #footer>
         <nav class="level">
@@ -53,7 +53,7 @@
         <p class="heading">tracks</p>
       </template>
       <template #content>
-        <list-tracks :tracks="recently_played.items" @usermark-updated="usermark_upd_played" />
+        <list-tracks :tracks="recently_played" @usermark-updated="usermark_upd_played" />
       </template>
       <template #footer>
         <nav class="level">
@@ -104,8 +104,8 @@ const dataObject = {
 
   set: function (vm, response) {
     vm.recently_added = new GroupByList(response[0].data.albums)
-    vm.recently_played = response[1].data.tracks
-    vm.recently_added_tracks = response[2].data.tracks
+    vm.recently_played = new GroupByList(response[1].data.tracks)
+    vm.recently_added_tracks = new GroupByList(response[2].data.tracks)
   }
 }
 
@@ -129,9 +129,9 @@ export default {
 
   data() {
     return {
-      recently_added: [],
-      recently_played: { items: [] },
-      recently_added_tracks: { items: [] },
+      recently_added: new GroupByList(),
+      recently_played: new GroupByList(),
+      recently_added_tracks: new GroupByList(),
 
       show_track_details_modal: false,
       selected_track: {}

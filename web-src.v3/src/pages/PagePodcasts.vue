@@ -16,7 +16,7 @@
       </template>
       <template #content>
         <list-tracks
-          :tracks="new_episodes.items"
+          :tracks="new_episodes"
           :show_progress="true"
           @play-count-changed="reload_new_episodes"
         />
@@ -79,7 +79,7 @@ const dataObject = {
 
   set: function (vm, response) {
     vm.albums = new GroupByList(response[0].data)
-    vm.new_episodes = response[1].data.tracks
+    vm.new_episodes = new GroupByList(response[1].data.tracks)
   }
 }
 
@@ -109,7 +109,7 @@ export default {
   data() {
     return {
       albums: [],
-      new_episodes: { items: [] },
+      new_episodes: new GroupByList(),
 
       show_url_modal: false
     }
@@ -126,7 +126,7 @@ export default {
       this.new_episodes.items.forEach((ep) => {
         webapi.library_track_update(ep.id, { play_count: 'increment' })
       })
-      this.new_episodes.items = {}
+      this.new_episodes = new GroupByList()
     },
 
     open_add_podcast_dialog: function (item) {
@@ -135,7 +135,7 @@ export default {
 
     reload_new_episodes: function () {
       webapi.library_podcasts_new_episodes().then(({ data }) => {
-        this.new_episodes = data.tracks
+        this.new_episodes = new GroupByList(data.tracks)
       })
     },
 

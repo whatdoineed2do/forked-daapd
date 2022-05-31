@@ -34,7 +34,7 @@
           >
           | {{ composer.track_count }} tracks
         </p>
-        <list-tracks :tracks="tracks.items" :expression="play_expression" />
+        <list-tracks :tracks="tracks" :expression="play_expression" />
         <modal-dialog-composer
           :show="show_composer_details_modal"
           :composer="composer"
@@ -53,6 +53,7 @@ import ListTracks from '@/components/ListTracks.vue'
 import IndexList from '@/components/IndexList.vue'
 import ModalDialogComposer from '@/components/ModalDialogComposer.vue'
 import webapi from '@/webapi'
+import { GroupByList } from '@/lib/GroupByList'
 
 const dataObject = {
   load: function (to) {
@@ -64,7 +65,7 @@ const dataObject = {
 
   set: function (vm, response) {
     vm.composer = response[0].data
-    vm.tracks = response[1].data.tracks
+    vm.tracks = new GroupByList(response[1].data.tracks)
   }
 }
 
@@ -93,7 +94,7 @@ export default {
 
   data() {
     return {
-      tracks: { items: [] },
+      tracks: new GroupByList(),
       composer: {},
 
       show_composer_details_modal: false

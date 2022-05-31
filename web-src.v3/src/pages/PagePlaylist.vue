@@ -20,7 +20,7 @@
       </div>
     </template>
     <template #content>
-      <p class="heading has-text-centered-mobile">{{ tracks.length }} tracks</p>
+      <p class="heading has-text-centered-mobile">{{ tracks.total}} tracks</p>
       <list-tracks :tracks="tracks" :uris="uris" />
       <modal-dialog-playlist
         :show="show_playlist_details_modal"
@@ -37,6 +37,7 @@ import ContentWithHeading from '@/templates/ContentWithHeading.vue'
 import ListTracks from '@/components/ListTracks.vue'
 import ModalDialogPlaylist from '@/components/ModalDialogPlaylist.vue'
 import webapi from '@/webapi'
+import { GroupByList } from '@/lib/GroupByList'
 
 const dataObject = {
   load: function (to) {
@@ -48,7 +49,7 @@ const dataObject = {
 
   set: function (vm, response) {
     vm.playlist = response[0].data
-    vm.tracks = response[1].data.items
+    vm.tracks = new GroupByList(response[1].data)
   }
 }
 
@@ -72,7 +73,7 @@ export default {
   data() {
     return {
       playlist: {},
-      tracks: [],
+      tracks: new GroupByList(),
 
       show_playlist_details_modal: false
     }
