@@ -5,7 +5,7 @@
     <content-with-heading>
       <template #heading-left>
         <p class="title is-4">Recently added</p>
-        <p class="heading">albums</p>
+        <p class="heading">{{ recently_added.count }} albums</p>
       </template>
       <template #content>
         <list-albums :albums="recently_added" />
