@@ -51,6 +51,14 @@ export default {
     return axios.put('./api/update', undefined, { params: params })
   },
 
+  library_update_path(path) {
+    const params = {}
+    if (path) {
+      params.path = path
+    }
+    return axios.put('./api/update', undefined, { params: params })
+  },
+
   library_rescan(scanKind) {
     const params = {}
     if (scanKind) {
