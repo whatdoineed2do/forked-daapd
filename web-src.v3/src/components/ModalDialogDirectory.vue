@@ -64,7 +64,7 @@ export default {
 
     update_rescan: function () {
       this.$emit('close')
-      webapi.library_update(null, this.directory.path)
+      webapi.library_update_path(this.directory.path)
     },
 
     queue_add: function () {
