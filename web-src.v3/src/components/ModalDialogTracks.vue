@@ -35,7 +35,7 @@
                 /></span>
                 <span class="is-size-7">Add Next</span>
               </a>
-              <a class="card-footer-item has-text-dark" @click="play_track">
+              <a class="card-footer-item has-text-dark" @click="play">
                 <span class="icon"><mdicon name="play" size="16" /></span>
                 <span class="is-size-7">Play</span>
               </a>
