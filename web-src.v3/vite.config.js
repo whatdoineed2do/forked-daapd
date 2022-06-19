@@ -8,7 +8,7 @@ import vue from '@vitejs/plugin-vue'
 //     VITE_OWNTONE_URL=https://owntone.local:3689 npm run serve
 //
 // will connect the web interface with a remote OwnTone server.
-const owntoneUrl = process.env.VITE_OWNTONE_URL ?? 'http://localhost:3689'
+const owntoneUrl = process.env.VITE_OWNTONE_URL ?? 'http://localhost:13689'
 
 // https://vitejs.dev/config/
 export default defineConfig({
