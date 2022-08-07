@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a href="#" v-scroll-to="{ el: '#index_' + anchor, offset: -100 }">{{ name }}</a>
+    <a href="#" v-scroll-to="{ el: filtered_anchor, offset: -100 }">{{ name }}</a>
   </div>
 </template>
 
@@ -8,7 +8,13 @@
 export default {
   name: 'ListIdxNav',
 
-  props: ['name', 'anchor']
+  props: ['name', 'anchor'],
+
+  computed: {
+    filtered_anchor () {
+      return '#index_' + this.anchor.replace(' ', '')
+    }
+  }
 }
 </script>
 
