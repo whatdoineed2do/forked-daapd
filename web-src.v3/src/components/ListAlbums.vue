@@ -2,7 +2,7 @@
   <template v-for="album in albums" :key="album.itemId">
     <div v-if="!album.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
       <span
-        :id="'index_' + album.groupKey"
+        :id="'index_' + groupKey(album)"
         class="tag is-info is-light is-small has-text-weight-bold fd-has-action"
         @click.prevent.stop="open_group_dialog(album)"
         >{{ album.groupKey }}</span
@@ -239,6 +239,11 @@ export default {
       if (artist) {
         return artist.substring(0, 2)
       }
+      return ''
+    },
+
+    groupKey: function (where) {
+      if (where.groupKey) return where.groupKey.replace(' ', '')
       return ''
     },
 

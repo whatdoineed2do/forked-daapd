@@ -3,7 +3,7 @@
     <div v-if="!composer.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
       <div class="media-content is-clipped">
         <span
-          :id="'index_' + composer.groupKey"
+          :id="'index_' + groupKey(composer)"
           class="tag is-info is-light is-small has-text-weight-bold"
           >{{ composer.groupKey }}</span
         >
@@ -69,6 +69,12 @@ export default {
         name: 'ComposerTracks',
         params: { composer: composer.name }
       })
+    },
+
+    groupKey: function (where) {
+      if (where.groupKey) return where.groupKey.replace(' ', '')
+
+      return ''
     },
 
     open_dialog: function (composer) {

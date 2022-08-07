@@ -19,7 +19,7 @@
   <template v-for="directory in directories" :key="directory.item.path">
    <div v-if="!directory.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
       <span
-        :id="'index_' + directory.groupKey"
+        :id="'index_' + groupKey(directory)"
         class="tag is-info is-light is-small has-text-weight-bold"
         >{{ directory.groupKey }}</span
       >
@@ -112,6 +112,12 @@ export default {
         path: '/files',
         query: { directory: directory.path }
       })
+    },
+
+    groupKey: function (where) {
+      if (where.groupKey) return where.groupKey.replace(' ', '')
+
+      return ''
     },
 
     open_dialog: function (directory) {
