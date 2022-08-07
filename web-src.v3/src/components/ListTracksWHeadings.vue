@@ -7,7 +7,7 @@
   >
    <div v-if="!track.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
       <span
-        :id="'index_' + track.groupKey"
+        :id="'index_' + groupKey(track)"
         class="tag is-info is-light is-small has-text-weight-bold fd-has-action"
         @click.prevent.stop="open_group_dialog(index, track)"
         >{{ track.groupKey }}</span
@@ -110,6 +110,12 @@ export default {
 
     usermark_upd: function (args) {
       this.$emit('usermark-updated', args)
+    },
+
+    groupKey: function (where) {
+      if (where.groupKey) return where.groupKey.replace(' ', '')
+
+      return ''
     },
 
     open_group_dialog: function (index, track) {

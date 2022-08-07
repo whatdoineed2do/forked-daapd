@@ -3,7 +3,7 @@
     <div v-if="!genre.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
       <div class="media-content is-clipped">
         <span
-          :id="'index_' + genre.groupKey"
+          :id="'index_' + groupKey(genre)"
           class="tag is-info is-light is-small has-text-weight-bold"
           >{{ genre.groupKey }}</span
         >
@@ -58,6 +58,12 @@ export default {
   methods: {
     open_genre: function (genre) {
       this.$router.push({ name: 'Genre', params: { genre: genre.name } })
+    },
+
+    groupKey: function (where) {
+      if (where.groupKey) return where.groupKey.replace(' ', '')
+
+      return ''
     },
 
     open_dialog: function (genre) {
