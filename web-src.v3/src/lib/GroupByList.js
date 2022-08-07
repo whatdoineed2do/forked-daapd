@@ -83,6 +83,9 @@ export function byDateSinceToday(field, defaultValue = '0000') {
       } else if (diff < 2592000000) {
         // 30 days
         return 'Last month'
+      } else if (diff < 7776000000) {
+        // 90 days
+        return 'Last quarter'
       }
       return fieldValue.substring(0, 4)
     }
