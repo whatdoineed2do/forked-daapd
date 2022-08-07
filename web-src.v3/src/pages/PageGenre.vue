@@ -2,12 +2,22 @@
   <div class="fd-page-with-tabs">
     <tabs-music />
 
-    <index-list :index="albums_list.indexList"></index-list>
+    <index-list :index="albums.indexList"></index-list>
 
   <div>
     <content-with-heading>
       <template #options>
-        <index-button-list :index="albums_list.indexList" />
+        <index-button-list :index="albums.indexList" />
+
+        <div class="columns">
+          <div class="column">
+            <p class="heading" style="margin-bottom: 24px">Sort by</p>
+            <dropdown-menu
+              v-model="selected_groupby_option_name"
+              :options="groupby_option_names"
+            />
+          </div>
+        </div>
       </template>
       <template #heading-left>
         <p class="title is-4">
@@ -43,7 +53,7 @@
             >| composers</a
           >
         </p>
-        <list-albums :albums="albums_list" />
+        <list-albums :albums="albums" />
         <modal-dialog-genre
           :show="show_genre_details_modal"
           :genre="genre"
@@ -60,10 +70,12 @@ import ContentWithHeading from '@/templates/ContentWithHeading.vue'
 import TabsMusic from '@/components/TabsMusic.vue'
 import IndexButtonList from '@/components/IndexButtonList.vue'
 import ListAlbums from '@/components/ListAlbums.vue'
+import DropdownMenu from '@/components/DropdownMenu.vue'
 import ModalDialogGenre from '@/components/ModalDialogGenre.vue'
 import IndexList from '@/components/IndexList.vue'
 import webapi from '@/webapi'
-import { bySortName, GroupByList } from '@/lib/GroupByList'
+import * as types from '@/store/mutation_types'
+import { bySortName, byYear, GroupByList } from '@/lib/GroupByList'
 
 const dataObject = {
   load: function (to) {
@@ -88,6 +100,7 @@ export default {
     IndexList,
     IndexButtonList,
     ListAlbums,
+    DropdownMenu,
     ModalDialogGenre
   },
 
@@ -113,7 +126,50 @@ export default {
       genre: {},
       albums_list: new GroupByList(),
 
+      // List of group by/sort options for itemsGroupByList
+      groupby_options: [
+        { name: 'Name', options: bySortName('name_sort') },
+        {
+          name: 'Recently added',
+          options: byYear('time_added', {
+            direction: 'desc',
+            defaultValue: '0000'
+          })
+        },
+        {
+          name: 'Recently released',
+          options: byYear('date_released', {
+            direction: 'desc',
+            defaultValue: '0000'
+          })
+        }
+      ],
+
       show_genre_details_modal: false
+    }
+  },
+
+  computed: {
+    albums() {
+      const groupBy = this.groupby_options.find(
+        (o) => o.name === this.selected_groupby_option_name
+      )
+      this.albums_list.group(groupBy.options, [ ])
+
+      return this.albums_list
+    },
+
+    groupby_option_names() {
+      return [...this.groupby_options].map((o) => o.name)
+    },
+
+    selected_groupby_option_name: {
+      get() {
+        return this.$store.state.albums_sort
+      },
+      set(value) {
+        this.$store.commit(types.ALBUMS_SORT, value)
+      }
     }
   },
 
