@@ -7,7 +7,7 @@
   >
    <div v-if="!playlist.isItem && !hide_group_title" class="mt-6 mb-5 py-2">
       <span
-        :id="'index_' + playlist.groupKey"
+        :id="'index_' + groupKey(playlist)"
         class="tag is-info is-light is-small has-text-weight-bold"
         >{{ playlist.groupKey }}</span
       >
@@ -71,6 +71,12 @@ export default {
     open_dialog: function (playlist) {
       this.selected_playlist = playlist
       this.show_details_modal = true
+    },
+
+    groupKey: function (where) {
+      if (where.groupKey) return where.groupKey.replace(' ', '')
+
+      return ''
     },
 
     icon_name: function (playlist) {
