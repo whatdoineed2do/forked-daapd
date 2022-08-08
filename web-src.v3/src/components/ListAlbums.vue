@@ -192,15 +192,8 @@ export default {
       this.selected_group.title = album.groupKey
       this.selected_group.uris = group.map(e => e.uri).join(',')
       this.selected_group.album_count = group.length
-      this.selected_group.track_count = group.reduce((acc, item) => {
-        acc += item.track_count
-        return acc
-      }, 0)
-      this.selected_group.artist_count = group.reduce((acc, item) => {
-        acc += item.artist_count
-        return acc
-      }, 0)
-
+      this.selected_group.track_count = group.reduce((acc, item) => acc += item.track_count, 0)
+      this.selected_group.artist_count = new Set(group.map(e => e.artist_id)).size
       this.show_group_details_modal = true
     },
 
