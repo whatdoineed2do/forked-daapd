@@ -113,9 +113,12 @@ export default {
     },
 
     groupKey: function (where) {
-      if (where.groupKey) return where.groupKey.replace(' ', '')
-
-      return ''
+      try {
+	if (where.groupKey) return where.groupKey.replace(' ', '')
+	return ''
+      } catch (err) {
+        return where.groupKey
+      }
     },
 
     open_group_dialog: function (index, track) {

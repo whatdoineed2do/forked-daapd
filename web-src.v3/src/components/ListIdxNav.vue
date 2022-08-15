@@ -12,7 +12,12 @@ export default {
 
   computed: {
     filtered_anchor () {
-      return '#index_' + this.anchor.replace(' ', '')
+      try {
+	  return '#index_' + this.anchor.replace(' ', '')
+      }
+      catch (err) {
+	  return '#index_' + this.anchor
+      }
     }
   }
 }
