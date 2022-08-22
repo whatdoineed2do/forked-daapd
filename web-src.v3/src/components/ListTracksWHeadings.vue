@@ -67,6 +67,7 @@
     <modal-dialog-tracks
       :show="show_group_details_modal"
       :title="selected_tracks.title"
+      :uris="selected_tracks.uris"
       :tracks="selected_tracks"
       @close="show_group_details_modal = false"
       @play-count-changed="$emit('play-count-changed')"
@@ -124,6 +125,7 @@ export default {
     open_group_dialog: function (index, track) {
       this.selected_tracks.title = track.groupKey
       this.selected_tracks.items = this.tracks.itemsByGroup[track.groupKey]
+      this.selected_tracks.uris = this.selected_tracks.items.map(e => e.uri).join(',')
       this.show_group_details_modal = true
     },
 
