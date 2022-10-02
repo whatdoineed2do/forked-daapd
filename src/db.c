@@ -52,6 +52,7 @@
 #include "db_init.h"
 #include "db_upgrade.h"
 #include "rng.h"
+#include "settings.h"
 
 
 // Inotify cookies are uint32_t
@@ -5226,6 +5227,44 @@ db_queue_add_next(struct db_queue_add_info *queue_add_info, struct db_queue_item
   return ret;
 }
 
+static int  queue_enum_fetch(struct query_params *qp, struct db_queue_item *qi, int must_strdup);  //fwd
+static int  queue_delete_item(struct db_queue_item *qi, int queue_version);  // fwd
+static void
+queue_handle_dupls(uint32_t item_id, const int queue_version)
+{
+    struct settings_category*  category = settings_category_get("custom");
+    bool replace = settings_option_getbool(settings_option_get(category, "queue_add_replace_tracks"));
+    char*  query;
+    int  ret = 0;
+
+    if (!replace) {
+	return;
+    }
+
+    /* only find the dupls and hand it off the to existing queue_delete_item()
+     * to take care of all the 'pos' handling etc instead of
+     *    "DELETE FROM queue WHERE id IN ..."
+     */
+    query = sqlite3_mprintf("SELECT id FROM queue WHERE id > %d GROUP BY file_id HAVING COUNT(*) >1", item_id);
+
+    struct query_params  qp = { 0 };
+
+    // dont use db_query_start() since it foces us to have specifc queries
+    ret = db_blocking_prepare_v2(query, -1, (sqlite3_stmt**)&qp.stmt, NULL);
+    sqlite3_free(query);
+    if (ret != SQLITE_OK) {
+	DPRINTF(E_LOG, L_DB, "Failed to start query to remove duplications on queue on add - %d\n", ret);
+	return;
+    }
+
+    struct db_queue_item  qi;
+    while ((ret = queue_enum_fetch(&qp, &qi, 0)) == 0 && qi.id > 0) {
+	DPRINTF(E_DBG, L_DB, "replacing queue_item id=%d pos=%d title=%s\n", qi.id, qi.pos, qi.title);
+	queue_delete_item(&qi, queue_version);
+    }
+    db_query_end(&qp);
+}
+
 /*
  * Adds the files matching the given query to the queue
  *
@@ -5335,6 +5374,9 @@ db_queue_add_by_query(struct query_params *qp, char reshuffle, uint32_t item_id,
 
   if (ret < 0)
     goto end_transaction;
+
+  // should queue incl dupls?
+  queue_handle_dupls(item_id, queue_version);
 
   // Reshuffle after adding new items, if no queue position was specified - this
   // case would indicate an 'add next' condition where if shuffling invalidates
