@@ -88,6 +88,21 @@
         <div class="content has-text-centered">
           <h1 class="title is-5">Your play queue is empty</h1>
           <p>Add some tracks by browsing your library</p>
+
+<div>
+<h1 class="title is-5">queue </h1>
+<p>length: {{ this.$store.state.queue.items.length }}</p>
+<p>version: {{ this.$store.state.queue.version }}</p>
+<p>count: {{ this.$store.state.queue.count }}</p>
+</div>
+
+<div>
+<p></p>
+<h1 class="title is-5">player</h1>
+<p>id {{ this.$store.state.player.item_id }}</p>
+<p>state {{ this.$store.state.player.state }}</p>
+</div>
+
         </div>
       </div>
     </div>
