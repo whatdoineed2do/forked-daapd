@@ -39,7 +39,8 @@
 #define L_AIRPLAY     30
 #define L_RCP         31
 
-#define N_LOGDOMAINS  32
+#define L_HACK 32
+#define N_LOGDOMAINS  33
 
 /* Severities */
 #define E_FATAL   0
