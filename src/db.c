@@ -5302,7 +5302,7 @@ queue_handle_dupls(uint32_t item_id, const int queue_version)
      * to take care of all the 'pos' handling etc instead of
      *    "DELETE FROM queue WHERE id IN ..."
      */
-    query = sqlite3_mprintf("SELECT id FROM queue WHERE id > %d GROUP BY file_id HAVING COUNT(*) >1", item_id);
+    query = sqlite3_mprintf("SELECT id, file_id, pos, shuffle_pos FROM queue WHERE id > %d GROUP BY file_id HAVING COUNT(*) >1", item_id);
 
     struct query_params  qp = { 0 };
 
@@ -5316,7 +5316,7 @@ queue_handle_dupls(uint32_t item_id, const int queue_version)
 
     struct db_queue_item  qi;
     while ((ret = queue_enum_fetch(&qp, &qi, 0)) == 0 && qi.id > 0) {
-	DPRINTF(E_DBG, L_DB, "replacing queue_item id=%d pos=%d title=%s\n", qi.id, qi.pos, qi.title);
+	DPRINTF(E_DBG, L_DB, "replacing queue_item id=%d pos=%d shuffle_pos=%d track_id=%d\n", qi.id, qi.pos, qi.shuffle_pos, qi.file_id);
 	queue_delete_item(&qi, queue_version);
     }
     db_query_end(&qp);
