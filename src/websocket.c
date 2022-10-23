@@ -203,6 +203,7 @@ send_notify_reply(short events, struct lws* wsi)
   json_object* notify;
 
   DPRINTF(E_DBG, L_WEB, "notify callback reply: %d\n", events);
+  DPRINTF(E_DBG, L_HACK, "notify callback reply (UPD=%d  DB=%d  VOL=%d  SPK=%d  Q=%d  PLY=%d) : %d\n", LISTENER_UPDATE, LISTENER_DATABASE, LISTENER_VOLUME, LISTENER_SPEAKER, LISTENER_QUEUE, LISTENER_PLAYER, events);
 
   notify = json_object_new_array();
   if (events & LISTENER_UPDATE)
