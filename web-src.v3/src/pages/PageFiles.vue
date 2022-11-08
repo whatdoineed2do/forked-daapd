@@ -44,7 +44,7 @@
         <div class="buttons is-centered">
           <a
             class="button is-small is-light is-rounded"
-            @click="open_directory_dialog({ path: current_directory })"
+            @click="show_directory_details_modal = true"
           >
             <span class="icon"
               ><mdicon name="dots-horizontal" size="16"
@@ -71,7 +71,7 @@
 
         <modal-dialog-directory
           :show="show_directory_details_modal"
-          :directory="selected_directory"
+          :directory="current_directory"
           @close="show_directory_details_modal = false"
         />
       </template>
@@ -162,6 +162,7 @@ export default {
       },
 
       view: '',
+      show_directory_details_modal: false,
 
       dirs_list: new GroupByList(),
       tracks_list: new GroupByList(),
