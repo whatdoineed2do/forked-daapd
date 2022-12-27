@@ -1,8 +1,9 @@
 These are empty music files containing various tags that can be used to populate a dummy database for testing
 
-Possible way to generated sample files using sox:
+Possible way to generated sample files using sox or ffmpeg:
 
     sox -n -c 2 -r 48000 foo.mp3 synth 5 sin 500-20 fade h 0.2 5 0.2
+    ffmpeg -f lavfi -i "sine=frequency=500:duration=5" -af "afade=t=out:st=3:d=2" -ac 2 -ar 48000 foo.mp3
 
 and add meta with ffmpeg
 
