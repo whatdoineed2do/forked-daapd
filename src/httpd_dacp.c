@@ -1273,7 +1273,7 @@ dacp_reply_cue_play(struct httpd_request *hreq)
             if ( (queue_item = db_queue_fetch_byposrelativetoitem(-pos, status.item_id, status.shuffle)) == NULL ) {
               DPRINTF(E_LOG, L_DACP, "Could not start playback from earlier in queue, qcount=%d pos=%d\n", qcount, pos);
 
-              dmap_send_error(hreq->req, "cacr", "Playback failed to start");
+              dacp_send_error(hreq, "cacr", "Playback failed to start");
               return -1;
             }
           }
@@ -2564,7 +2564,7 @@ dacp_reply_getproperty(struct httpd_request *hreq)
                        db_queue_fetch_bypos(0, status.shuffle);
       if (!queue_item)
        	{
-	  dmap_send_error(hreq->req, "cmgt", "Server error");
+	  dacp_send_error(hreq, "cmgt", "Server error");
 	  goto out_free_proplist;
 	}
     }
