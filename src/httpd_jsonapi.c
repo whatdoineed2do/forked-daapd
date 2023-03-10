@@ -3169,10 +3169,10 @@ jsonapi_reply_library_artist_tracks(struct httpd_request *hreq)
   int total;
   int ret = 0;
 
-  if (!is_modified(hreq->req, DB_ADMIN_DB_UPDATE))
+  if (!is_modified(hreq, DB_ADMIN_DB_UPDATE))
     return HTTP_NOTMODIFIED;
 
-  artist_id = hreq->uri_parsed->path_parts[3];
+  artist_id = hreq->path_parts[3];
 
   reply = json_object_new_object();
   items = json_object_new_array();
@@ -3198,7 +3198,7 @@ jsonapi_reply_library_artist_tracks(struct httpd_request *hreq)
   json_object_object_add(reply, "offset", json_object_new_int(query_params.offset));
   json_object_object_add(reply, "limit", json_object_new_int(query_params.limit));
 
-  ret = evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(reply));
+  ret = evbuffer_add_printf(hreq->out_body, "%s", json_object_to_json_string(reply));
   if (ret < 0)
     DPRINTF(E_LOG, L_WEB, "browse: Couldn't add artist tracks to response buffer.\n");
 
@@ -3238,7 +3238,7 @@ jsonapi_reply_library_albums(struct httpd_request *hreq)
  
       // Ask client not to cache this type of media since it can change
       if (media_kind == MEDIA_KIND_PODCAST)
-        httpd_response_not_cachable(hreq->req);
+        httpd_response_not_cachable(hreq);
     }
 
   reply = json_object_new_object();
@@ -4868,7 +4868,7 @@ jsonapi_reply_library_maint_dup(struct httpd_request *hreq)
   json_object_object_add(reply, "total", json_object_new_int(total));
   json_object_object_add(reply, "groups", json_object_new_int(groupttl));
 
-  ret = evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(reply));
+  ret = evbuffer_add_printf(hreq->out_body, "%s", json_object_to_json_string(reply));
   if (ret < 0)
     DPRINTF(E_LOG, L_WEB, "dup: Couldn't add dup to response buffer.\n");
 
@@ -4995,7 +4995,7 @@ jsonapi_reply_library_maint_junkmeta(struct httpd_request *hreq)
   json_object_object_add(reply, "total", json_object_new_int(total));
   json_object_object_add(reply, "groups", json_object_new_int(groupttl));
 
-  ret = evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(reply));
+  ret = evbuffer_add_printf(hreq->out_body, "%s", json_object_to_json_string(reply));
   if (ret < 0)
     DPRINTF(E_LOG, L_WEB, "junk meta: Couldn't add junk to response buffer.\n");
 
@@ -5030,10 +5030,10 @@ jsonapi_reply_library_schema(struct httpd_request *hreq)
     const char* name;
   };
   struct Endpoints endpoints[] = {
-    { EVHTTP_REQ_GET, "GET" },
-    { EVHTTP_REQ_PUT, "PUT" },
-    { EVHTTP_REQ_DELETE, "DELETE" },
-    { EVHTTP_REQ_POST, "POST" },
+    { HTTPD_METHOD_GET, "GET" },
+    { HTTPD_METHOD_PUT, "PUT" },
+    { HTTPD_METHOD_DELETE, "DELETE" },
+    { HTTPD_METHOD_POST, "POST" },
     { 0, NULL }
   };
   while (apiptr->regexp)
@@ -5062,7 +5062,7 @@ jsonapi_reply_library_schema(struct httpd_request *hreq)
 
   json_object_object_add(reply, "total", json_object_new_int(total));
 
-  ret = evbuffer_add_printf(hreq->reply, "%s", json_object_to_json_string(reply));
+  ret = evbuffer_add_printf(hreq->out_body, "%s", json_object_to_json_string(reply));
 
   jparse_free(reply);
 
@@ -5080,10 +5080,10 @@ jsonapi_reply_library_sync_timeadded(struct httpd_request *hreq)
   uint32_t  limit = 0;
   uint32_t  batch = 100;
 
-  if ( (param = evhttp_find_header(hreq->query, "limit")) ) {
+  if ( (param = httpd_query_value_find(hreq->query, "limit")) ) {
     safe_atou32(param, &limit);
   }
-  if ( (param = evhttp_find_header(hreq->query, "batch")) ) {
+  if ( (param = httpd_query_value_find(hreq->query, "batch")) ) {
     safe_atou32(param, &batch);
   }
 
@@ -5182,11 +5182,11 @@ static struct httpd_uri_map adm_handlers[] =
 
     { HTTPD_METHOD_GET,    "^/api/search$",                                jsonapi_reply_search },
 
-    { EVHTTP_REQ_GET,    "^/api/library/maint/dup$",                     jsonapi_reply_library_maint_dup},
-    { EVHTTP_REQ_GET,    "^/api/library/maint/junkmeta$",                jsonapi_reply_library_maint_junkmeta},
-    { EVHTTP_REQ_GET,    "^/api/schema$",                                jsonapi_reply_library_schema},
-    { EVHTTP_REQ_PUT,    "^/api/library/sync_timeadded$",                jsonapi_reply_library_sync_timeadded},
-    { EVHTTP_REQ_PUT,    "^/api/update/rss$",                            jsonapi_reply_update_rss },
+    { HTTPD_METHOD_GET,    "^/api/library/maint/dup$",                     jsonapi_reply_library_maint_dup},
+    { HTTPD_METHOD_GET,    "^/api/library/maint/junkmeta$",                jsonapi_reply_library_maint_junkmeta},
+    { HTTPD_METHOD_GET,    "^/api/schema$",                                jsonapi_reply_library_schema},
+    { HTTPD_METHOD_PUT,    "^/api/library/sync_timeadded$",                jsonapi_reply_library_sync_timeadded},
+    { HTTPD_METHOD_PUT,    "^/api/update/rss$",                            jsonapi_reply_update_rss },
 
     { 0, NULL, NULL }
   };
