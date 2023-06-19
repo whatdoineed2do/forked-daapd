@@ -22,6 +22,6 @@
 #include <sqlite3.h>
 
 int
-db_upgrade(sqlite3 *hdl, int db_ver);
+db_upgrade(sqlite3 *hdl, int db_ver, int db_ver_ray);
 
 #endif /* SRC_DB_UPGRADE_H_ */
