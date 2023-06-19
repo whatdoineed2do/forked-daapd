@@ -1340,6 +1340,7 @@ static const struct db_upgrade_query db_upgrade_v2202_queries[] =
     { U_v2202_SCVER_MINOR,    "set schema_version_minor to 02" },
   };
 
+
 /* ---- DB UPG RAY ---- */
 /* ---------------------------- 0 -> 1 ------------------------------ */
 #define U_RAY_v001_ALTER_FILES_AUDIOHASH \
