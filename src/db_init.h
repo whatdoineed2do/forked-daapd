@@ -30,6 +30,8 @@
 
 #define SCHEMA_VERSION_RAY 1
 
+#define SCHEMA_VERSION_RAY 1
+
 int
 db_init_indices(sqlite3 *hdl);
 
