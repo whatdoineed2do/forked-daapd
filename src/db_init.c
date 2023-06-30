@@ -261,6 +261,9 @@
 #define Q_SCVER_MINOR					\
   "INSERT INTO admin (key, value) VALUES ('schema_version_minor', '%02d');"
 
+#define Q_SCVER_RAY					\
+  "INSERT INTO admin (key, value) VALUES ('schema_version_ray', '%d');"
+
 struct db_init_query {
   char *query;
   char *desc;
@@ -528,6 +531,18 @@ db_init_tables(sqlite3 *hdl)
     }
 
   query = sqlite3_mprintf(Q_SCVER_MINOR, SCHEMA_VERSION_MINOR);
+  DPRINTF(E_DBG, L_DB, "DB init table query: %s\n", query);
+
+  ret = sqlite3_exec(hdl, query, NULL, NULL, &errmsg);
+  sqlite3_free(query);
+  if (ret != SQLITE_OK)
+    {
+      DPRINTF(E_FATAL, L_DB, "DB init error: %s\n", errmsg);
+      sqlite3_free(errmsg);
+      return -1;
+    }
+
+  query = sqlite3_mprintf(Q_SCVER_RAY, SCHEMA_VERSION_RAY);
   DPRINTF(E_DBG, L_DB, "DB init table query: %s\n", query);
 
   ret = sqlite3_exec(hdl, query, NULL, NULL, &errmsg);
