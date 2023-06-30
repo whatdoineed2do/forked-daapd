@@ -1303,25 +1303,54 @@ static const struct db_upgrade_query db_upgrade_v2200_queries[] =
     { U_v2200_SCVER_MINOR,    "set schema_version_minor to 00" },
   };
 
-/* ---------------------------- 22.00 -> 22.01 ------------------------------ */
-#define U_v2201_ALTER_FILES_AUDIOHASH \
+
+/* ---- DB UPG RAY ---- */
+/* ---------------------------- 0 -> 1 ------------------------------ */
+#define U_RAY_v001_ALTER_FILES_AUDIOHASH \
   "ALTER TABLE files ADD COLUMN audio_hash VARCHAR(128) DEFAULT NULL;"
-#define U_v2201_SCVER_MINOR                    \
-  "UPDATE admin SET value = '01' WHERE key = 'schema_version_minor';"
+#define U_RAY_v001_SCVER_MINOR                    \
+  "INSERT INTO admin (key, value) VALUES ('schema_version_ray', '1');"
 
-static const struct db_upgrade_query db_upgrade_v2201_queries[] =
+static const struct db_upgrade_query db_upgrade_ray_v001_queries[] =
   {
-    { U_v2201_ALTER_FILES_AUDIOHASH, "update files adding audio_hash" },
+    { U_RAY_v001_ALTER_FILES_AUDIOHASH, "update files adding audio_hash" },
 
-    { U_v2201_SCVER_MINOR,    "set schema_version_minor to 01" },
+    { U_RAY_v001_SCVER_MINOR,    "set schema_version_ray to 1" },
   };
 
 
 
 /* -------------------------- Main upgrade handler -------------------------- */
 
+#include "db_init.h"
 int
-db_upgrade(sqlite3 *hdl, int db_ver)
+db_upgrade_ray(sqlite3 *hdl, int db_ver_ray)
+{
+      // nothing to do
+      if (db_ver_ray == SCHEMA_VERSION_RAY)
+          return 0;
+
+      int  ret;
+      switch (db_ver_ray)
+      {
+          case 0:
+	      ret = db_generic_upgrade(hdl, db_upgrade_ray_v001_queries, ARRAY_SIZE(db_upgrade_ray_v001_queries));
+	      if (ret < 0)
+	          return -1;
+
+	      // ONLY LAST CASE STATEMENT HAS BREAK
+	      break;
+
+	  default:
+	      DPRINTF(E_FATAL, L_DB, "No local upgrade path from the current DB schema to %d\n", db_ver_ray);
+	      return -1;
+      }
+
+      return 0;
+}
+
+int
+db_upgrade(sqlite3 *hdl, int db_ver, int db_ver_ray)
 {
   int ret;
 
@@ -1541,17 +1570,14 @@ db_upgrade(sqlite3 *hdl, int db_ver)
       if (ret < 0)
 	return -1;
 
-      /* FALLTHROUGH */
-
-    case 2200:
-      ret = db_generic_upgrade(hdl, db_upgrade_v2201_queries, ARRAY_SIZE(db_upgrade_v2201_queries));
-      if (ret < 0)
-	return -1;
-
       /* Last case statement is the only one that ends with a break statement! */
       break;
 
     default:
+      // handle special upgrades
+      if ( (ret = db_upgrade_ray(hdl, db_ver_ray)) == 0)
+        return 0;
+
       DPRINTF(E_FATAL, L_DB, "No upgrade path from the current DB schema\n");
       return -1;
     }

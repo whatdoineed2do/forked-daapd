@@ -70,6 +70,7 @@ enum query_type {
 
 #define DB_ADMIN_SCHEMA_VERSION_MAJOR "schema_version_major"
 #define DB_ADMIN_SCHEMA_VERSION_MINOR "schema_version_minor"
+#define DB_ADMIN_SCHEMA_VERSION_RAY "schema_version_ray"
 #define DB_ADMIN_SCHEMA_VERSION "schema_version"
 #define DB_ADMIN_QUEUE_VERSION "queue_version"
 #define DB_ADMIN_DB_UPDATE "db_update"

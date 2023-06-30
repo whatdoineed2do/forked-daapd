@@ -7464,6 +7464,7 @@ db_check_version(void)
   char *errmsg;
   int db_ver_major = 0;
   int db_ver_minor = 0;
+  int db_ver_ray = 0;
   int db_ver;
   int vacuum;
   int ret;
@@ -7479,6 +7480,8 @@ db_check_version(void)
 
   db_admin_getint(&db_ver_minor, DB_ADMIN_SCHEMA_VERSION_MINOR);
 
+  db_admin_getint(&db_ver_ray, DB_ADMIN_SCHEMA_VERSION_RAY);
+
   db_ver = db_ver_major * 100 + db_ver_minor;
 
   if (db_ver_major < 17)
@@ -7493,10 +7496,10 @@ db_check_version(void)
 
       return -1;
     }
-  else if (db_ver < (SCHEMA_VERSION_MAJOR * 100 + SCHEMA_VERSION_MINOR))
+  else if ((db_ver < (SCHEMA_VERSION_MAJOR * 100 + SCHEMA_VERSION_MINOR) || db_ver_ray < SCHEMA_VERSION_RAY))
     {
-      DPRINTF(E_LOG, L_DB, "Database schema outdated, upgrading schema v%d.%d -> v%d.%d...\n",
-                           db_ver_major, db_ver_minor, SCHEMA_VERSION_MAJOR, SCHEMA_VERSION_MINOR);
+      DPRINTF(E_LOG, L_DB, "Database schema outdated, upgrading schema v%d.%d -> v%d.%d  (%d -> %d)...\n",
+                           db_ver_major, db_ver_minor, SCHEMA_VERSION_MAJOR, SCHEMA_VERSION_MINOR, db_ver_ray, SCHEMA_VERSION_RAY);
 
       ret = sqlite3_exec(hdl, "BEGIN TRANSACTION;", NULL, NULL, &errmsg);
       if (ret != SQLITE_OK)
@@ -7508,7 +7511,7 @@ db_check_version(void)
 	}
 
       // Will drop indices and triggers
-      ret = db_upgrade(hdl, db_ver);
+      ret = db_upgrade(hdl, db_ver, db_ver_ray);
       if (ret < 0)
 	{
 	  DPRINTF(E_LOG, L_DB, "Database upgrade errored out, rolling back changes ...\n");
@@ -7526,7 +7529,7 @@ db_check_version(void)
       ret = db_init_indices(hdl);
       if (ret < 0)
 	{
-	  DPRINTF(E_LOG, L_DB, "Database upgrade errored out, rolling back changes ...\n");
+	  DPRINTF(E_LOG, L_DB, "Database upgrade (idx) errored out, rolling back changes ...\n");
 	  ret = sqlite3_exec(hdl, "ROLLBACK TRANSACTION;", NULL, NULL, &errmsg);
 	  if (ret != SQLITE_OK)
 	    {
@@ -7541,7 +7544,7 @@ db_check_version(void)
       ret = db_init_triggers(hdl);
       if (ret < 0)
 	{
-	  DPRINTF(E_LOG, L_DB, "Database upgrade errored out, rolling back changes ...\n");
+	  DPRINTF(E_LOG, L_DB, "Database upgrade (triggers) errored out, rolling back changes ...\n");
 	  ret = sqlite3_exec(hdl, "ROLLBACK TRANSACTION;", NULL, NULL, &errmsg);
 	  if (ret != SQLITE_OK)
 	    {
