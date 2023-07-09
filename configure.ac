@@ -371,6 +371,11 @@ AC_SUBST([SYSTEMD_DIR])
 
 dnl --- End options ---
 
+dnl taglib
+OWNTONE_ARG_WITH_CHECK([OWNTONE_OPTS], [TAGLIB support], [taglib_c], [TAGLIB],
+	[taglib_c], [taglib_property_set], [taglib/tag_c.h])
+AM_CONDITIONAL([COND_TAGLIB], [[test "x$with_taglib_c" = "xyes"]])
+
 dnl Unconditional since we always want to produce Makefiles for dist targets
 AC_CONFIG_SUBDIRS([
 	src/inputs/librespot-c
