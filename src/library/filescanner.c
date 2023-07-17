@@ -578,8 +578,10 @@ process_regular_file(const char *file, struct stat *sb, int type, int flags, int
   mfi.path = strdup(file);
 
   mfi.time_modified = sb->st_mtime;
+/* need to figure out how to limit this
   if (flags & F_SCAN_TIMEADDED_FILE)
     mfi.time_added = sb->st_mtime;
+ */
   mfi.file_size = sb->st_size;
 
   snprintf(virtual_path, PATH_MAX, "/file:%s", file);
