@@ -19,6 +19,7 @@ import PageArtistTracks from '@/pages/PageArtistTracks.vue'
 import PageComposers from '@/pages/PageComposers.vue'
 import PageComposer from '@/pages/PageComposer.vue'
 import PageComposerTracks from '@/pages/PageComposerTracks.vue'
+import PageDuplicates from '@/pages/PageDuplicates.vue'
 import PagePodcasts from '@/pages/PagePodcasts.vue'
 import PagePodcast from '@/pages/PagePodcast.vue'
 import PageAudiobooksAlbums from '@/pages/PageAudiobooksAlbums.vue'
@@ -143,6 +144,12 @@ export const router = createRouter({
       name: 'GenreTracks',
       component: PageGenreTracks,
       meta: { show_progress: true, has_index: true }
+    },
+    {
+      path: '/music/duplicates',
+      name: 'Duplicates',
+      component: PageDuplicates,
+      meta: { show_progress: true, has_tabs: true, has_index: true }
     },
     {
       path: '/music/composers',

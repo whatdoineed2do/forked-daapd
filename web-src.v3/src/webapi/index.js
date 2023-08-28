@@ -391,6 +391,17 @@ export default {
     })
   },
 
+  library_duplicates() {
+    return axios.get('./api/library/tracks/dup')
+  },
+
+  library_duplicates_by_meta() {
+    const p = {
+      type: "meta"
+    }
+    return axios.get('./api/library/tracks/dup', { params: p })
+  },
+
   library_artist_tracks(artist) {
     if (artist) {
       const artistParams = {
