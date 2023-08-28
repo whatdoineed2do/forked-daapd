@@ -62,6 +62,7 @@ enum query_type {
 
   Q_DUP_ITEMS        = 100,
   Q_JUNK_META_ITEMS  = 101,
+  Q_DUP_AUDIO_HASH_ITEMS = 102,
 };
 
 #define ARTWORK_UNKNOWN   0
