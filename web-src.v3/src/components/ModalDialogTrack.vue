@@ -105,6 +105,12 @@
                   </span>
                 </p>
                 <p>
+                  <span class="heading">Audio hash</span>
+                  <span class="title is-6">
+                    {{ track.audio_hash}}
+                  </span>
+                </p>
+                <p>
                   <span class="heading">Added at</span>
                   <span class="title is-6">{{
                     $filters.datetime(track.time_added)
