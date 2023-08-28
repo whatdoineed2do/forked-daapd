@@ -76,6 +76,20 @@
                 </li>
               </router-link>
               <router-link
+                v-slot="{ navigate, isActive }"
+                to="/music/duplicates"
+                custom
+              >
+                <li :class="{ 'is-active': isActive }">
+                  <a @click="navigate" @keypress.enter="navigate">
+                    <span class="icon is-small"
+                      ><mdicon name="content-duplicate" size="16"
+                    /></span>
+                    <span class="">Duplicates</span>
+                  </a>
+                </li>
+              </router-link>
+              <router-link
                 v-if="spotify_enabled"
                 v-slot="{ navigate, isActive }"
                 to="/music/spotify"
