@@ -2484,6 +2484,34 @@ db_build_query_dup_items(struct query_params *qp, struct query_clause *qc)
   return query;
 }
 
+static char *
+db_build_query_dup_audio_hash_items(struct query_params *qp, struct query_clause *qc)
+{
+  char *query;
+
+  qp->results = 1;
+
+  query = sqlite3_mprintf(
+    "WITH cte AS "
+    "( "
+        "SELECT audio_hash,count(*) count "
+          "FROM files f_hash "
+      "GROUP BY f_hash.audio_hash "
+        "HAVING count > 1 "
+    ") "
+    "SELECT * "
+      "FROM files f "
+"INNER JOIN cte "
+        "ON cte.audio_hash = f.audio_hash AND "
+           "f.data_kind = 0 "
+  "ORDER BY f.audio_hash,f.title,f.artist;");
+ 
+  if (!query)
+    DPRINTF(E_LOG, L_DB, "Out of memory for query string\n");
+
+  return query;
+}
+
 int
 db_query_start(struct query_params *qp)
 {
@@ -2540,6 +2568,11 @@ db_query_start(struct query_params *qp)
       case Q_DUP_ITEMS:
 	query = db_build_query_dup_items(qp, NULL);
 	break;
+
+      case Q_DUP_AUDIO_HASH_ITEMS:
+	query = db_build_query_dup_audio_hash_items(qp, NULL);
+	break;
+
 
       case Q_JUNK_META_ITEMS:
 	query = db_build_query_junk_meta_items(qp, NULL);
