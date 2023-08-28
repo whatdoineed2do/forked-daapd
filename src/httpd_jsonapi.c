@@ -4756,7 +4756,7 @@ jsonapi_reply_library_backup(struct httpd_request *hreq)
 
 // MAINT ///////////////////////////////////////////////////////////////////////
 static int
-fetch_dup(struct query_params *query_params, json_object *items, int *total, int *groupttl)
+fetch_dup_groups(struct query_params *query_params, json_object *items, int *total, int *groupttl)
 {
     struct db_media_file_info dbmfi;
     json_object *group = NULL;
@@ -4816,6 +4816,7 @@ fetch_dup(struct query_params *query_params, json_object *items, int *total, int
         safe_json_add_int_from_string(item, "samplerate", dbmfi.samplerate);
         safe_json_add_int_from_string(item, "channels", dbmfi.channels);
         safe_json_add_int_from_string(item, "bitrate", dbmfi.bitrate);
+        safe_json_add_string(item, "audio_hash", dbmfi.audio_hash);
 
         json_object_array_add(group_items, item);
 
@@ -4839,12 +4840,48 @@ fetch_dup(struct query_params *query_params, json_object *items, int *total, int
 }
 
 static int
+fetch_dup_tracks(struct query_params *query_params, json_object *items, int *total)
+{
+  struct db_media_file_info dbmfi;
+  json_object *item;
+  int ret;
+
+  ret = db_query_start(query_params);
+  if (ret < 0)
+    goto error;
+
+  // fake req type
+  query_params->type = Q_ITEMS;
+  while ((ret = db_query_fetch_file(&dbmfi, query_params)) == 0)
+    {
+      item = track_to_json(&dbmfi);
+      if (!item)
+	{
+	  ret = -1;
+	  goto error;
+	}
+
+      json_object_array_add(items, item);
+
+    if (total)
+      ++(*total);
+    }
+
+ error:
+  db_query_end(query_params);
+
+  return ret;
+}
+
+
+static int
 jsonapi_reply_library_maint_dup(struct httpd_request *hreq)
 {
   struct query_params query_params;
   json_object *reply;
   json_object *items;
   int total, groupttl;
+  const char*  query;
   int ret = 0;
 
   reply = json_object_new_object();
@@ -4857,16 +4894,35 @@ jsonapi_reply_library_maint_dup(struct httpd_request *hreq)
   if (ret < 0)
     goto error;
 
-  query_params.type = Q_DUP_ITEMS;
+  query_params.type = Q_DUP_AUDIO_HASH_ITEMS;
+  if ( (query = httpd_query_value_find(hreq->query, "type")) ) {
+      if (strcmp(query, "hash") == 0) {
+	  query_params.type = Q_DUP_AUDIO_HASH_ITEMS;
+      }
+      else
+     {
+	  if (strcmp(query, "meta") == 0) {
+	      query_params.type = Q_DUP_ITEMS;
+	      query_params.sort = S_NAME;
+	  }
+      }
+  }
 
   total = 0;
-  groupttl = 0;
-  ret = fetch_dup(&query_params, items, &total, &groupttl);
-  if (ret < 0)
-    goto error;
+  if ( (query = httpd_query_value_find(hreq->query, "group")) && strcmp(query, "meta") == 0) {
+      groupttl = 0;
+      ret = fetch_dup_groups(&query_params, items, &total, &groupttl);
+      if (ret < 0)
+	goto error;
 
+      json_object_object_add(reply, "groups", json_object_new_int(groupttl));
+  }
+  else {
+      ret = fetch_dup_tracks(&query_params, items, &total);
+      if (ret < 0)
+        goto error;
+  }
   json_object_object_add(reply, "total", json_object_new_int(total));
-  json_object_object_add(reply, "groups", json_object_new_int(groupttl));
 
   ret = evbuffer_add_printf(hreq->out_body, "%s", json_object_to_json_string(reply));
   if (ret < 0)
@@ -5182,7 +5238,7 @@ static struct httpd_uri_map adm_handlers[] =
 
     { HTTPD_METHOD_GET,    "^/api/search$",                                jsonapi_reply_search },
 
-    { HTTPD_METHOD_GET,    "^/api/library/maint/dup$",                     jsonapi_reply_library_maint_dup},
+    { HTTPD_METHOD_GET,    "^/api/library/tracks/dup$",                    jsonapi_reply_library_maint_dup},
     { HTTPD_METHOD_GET,    "^/api/library/maint/junkmeta$",                jsonapi_reply_library_maint_junkmeta},
     { HTTPD_METHOD_GET,    "^/api/schema$",                                jsonapi_reply_library_schema},
     { HTTPD_METHOD_PUT,    "^/api/library/sync_timeadded$",                jsonapi_reply_library_sync_timeadded},
