@@ -30,6 +30,7 @@ enum player_seek_mode {
 
 enum player_format {
   PLAYER_FORMAT_MP3,
+  PLAYER_FORMAT_AAC,
 };
 
 struct player_speaker_info {

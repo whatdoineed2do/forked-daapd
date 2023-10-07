@@ -296,11 +296,51 @@ streaming_mp3_handler(struct httpd_request *hreq)
   return 0;
 }
 
+static int
+streaming_aac_handler(struct httpd_request *hreq)
+{
+  struct streaming_session *session = NULL;
+  const char *name = cfg_getstr(cfg_getsec(cfg, "library"), "name");
+  const char *param;
+  bool icy_is_requested;
+  char buf[9];
+
+  param = httpd_header_find(hreq->in_headers, "Icy-MetaData");
+  icy_is_requested = (param && strcmp(param, "1") == 0);
+  if (icy_is_requested)
+    {
+      httpd_header_add(hreq->out_headers, "icy-name", name);
+      snprintf(buf, sizeof(buf), "%d", streaming_icy_metaint);
+      httpd_header_add(hreq->out_headers, "icy-metaint", buf);
+    }
+
+  session = session_new(hreq, icy_is_requested, PLAYER_FORMAT_AAC, streaming_default_quality);
+  if (!session)
+    return -1; // Error sent by caller
+
+  httpd_request_close_cb_set(hreq, conn_close_cb, session);
+
+  httpd_header_add(hreq->out_headers, "Content-Type", "audio/m4a");
+  httpd_header_add(hreq->out_headers, "Server", PACKAGE_NAME "/" VERSION);
+  httpd_header_add(hreq->out_headers, "Cache-Control", "no-cache");
+  httpd_header_add(hreq->out_headers, "Pragma", "no-cache");
+  httpd_header_add(hreq->out_headers, "Expires", "Mon, 31 Aug 2015 06:00:00 GMT");
+
+  httpd_send_reply_start(hreq, HTTP_OK, "OK");
+
+  return 0;
+}
+
 static struct httpd_uri_map streaming_handlers[] =
   {
     {
       .regexp = "^/stream.mp3$",
       .handler = streaming_mp3_handler,
+      .flags = HTTPD_HANDLER_REALTIME,
+    },
+    {
+      .regexp = "^/stream.m4a$",
+      .handler = streaming_aac_handler,
       .flags = HTTPD_HANDLER_REALTIME,
     },
     {
@@ -373,7 +413,7 @@ struct httpd_module httpd_streaming =
   .name = "Streaming",
   .type = MODULE_STREAMING,
   .logdomain = L_STREAMING,
-  .fullpaths = { "/stream.mp3", NULL },
+  .fullpaths = { "/stream.mp3", "/stream.m4a", NULL },
   .handlers = streaming_handlers,
   .init = streaming_init,
   .request = streaming_request,

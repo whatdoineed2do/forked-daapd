@@ -117,6 +117,21 @@ encoder_setup(enum player_format format, struct media_quality *quality)
 {
   struct decode_ctx *decode_ctx = NULL;
   struct encode_ctx *encode_ctx = NULL;
+  enum transcode_profile xcode_format = XCODE_MP3;
+
+  switch (format)
+  {
+    case PLAYER_FORMAT_MP3:
+      xcode_format = XCODE_MP3;
+      break;
+    case PLAYER_FORMAT_AAC:
+      xcode_format = XCODE_AAC;
+      break;
+
+    default:
+      DPRINTF(E_LOG, L_STREAMING, "Bug: unexpected streaming player format %d\n", format);
+      goto out;
+  }
 
   if (quality->bits_per_sample == 16)
     decode_ctx = transcode_decode_setup_raw(XCODE_PCM16, quality);
@@ -132,8 +147,7 @@ encoder_setup(enum player_format format, struct media_quality *quality)
       goto out;
     }
 
-  if (format == PLAYER_FORMAT_MP3)
-    encode_ctx = transcode_encode_setup(XCODE_MP3, quality, decode_ctx, NULL, 0, 0);
+  encode_ctx = transcode_encode_setup(xcode_format, quality, decode_ctx, NULL, 0, 0);
 
   if (!encode_ctx)
     {

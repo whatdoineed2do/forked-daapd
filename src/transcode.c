@@ -271,6 +271,14 @@ init_settings(struct settings_ctx *settings, enum transcode_profile profile, str
 	settings->sample_format = AV_SAMPLE_FMT_S16P;
 	break;
 
+      case XCODE_AAC:
+	settings->encode_audio = true;
+	settings->format = "adts";
+	settings->audio_codec = AV_CODEC_ID_AAC;
+	settings->sample_format = AV_SAMPLE_FMT_FLTP;
+	//settings->sample_format = AV_SAMPLE_FMT_S16P;
+	break;
+
       case XCODE_OPUS:
 	settings->encode_audio = true;
 	settings->format = "data"; // Means we get the raw packet from the encoder, no muxing
@@ -358,7 +366,7 @@ init_settings(struct settings_ctx *settings, enum transcode_profile profile, str
       settings->bit_rate    = quality->bit_rate;
     }
 
-  if (quality && quality->bits_per_sample && (quality->bits_per_sample != 8 * av_get_bytes_per_sample(settings->sample_format)))
+  if (profile != XCODE_AAC && quality && quality->bits_per_sample && (quality->bits_per_sample != 8 * av_get_bytes_per_sample(settings->sample_format)))
     {
       DPRINTF(E_LOG, L_XCODE, "Bug! Mismatch between profile (%d bps) and media quality (%d bps)\n", 8 * av_get_bytes_per_sample(settings->sample_format), quality->bits_per_sample);
       return -1;
