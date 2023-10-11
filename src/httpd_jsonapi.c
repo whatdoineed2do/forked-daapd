@@ -5297,22 +5297,143 @@ end:
 }
 
 static int
-jsonapi_reply_library_sync_rating(struct httpd_request *hreq)
+track_sync_rating(const struct db_media_file_info *dbmfi, unsigned *updated, unsigned *updated_ttl)
+{
+    int ret;
+
+    AVFormatContext*  ctx = NULL;
+    if ( (ret = avformat_open_input(&ctx, dbmfi->path, NULL, NULL)) != 0) {
+	DPRINTF(E_LOG, L_WEB, "failed to open library file for rating metadata update '%s' - %s\n", dbmfi->path, av_err2str(ret));
+	return ENOENT;
+    }
+
+    char rating[5] = { '\0' };
+    safe_snprintf_cat(rating, 4, "%s", dbmfi->rating);
+
+    // save a potential write
+    AVDictionaryEntry*  entry = av_dict_get(ctx->metadata, "rating", NULL, 0);
+    if (entry == NULL || (entry && entry->value == NULL) || (entry && strcmp(entry->value, rating) != 0) ) {
+	++*updated_ttl;
+
+	// ensure that we have write permissions on the library file to overwrite it with the updated rated data
+	if (access(dbmfi->path, W_OK) != 0)  {
+	    DPRINTF(E_WARN, L_WEB, "no write permissions to update rating metadata on '%s' - skipping\n", dbmfi->path);
+	    ret = EPERM;
+	}
+	else
+	{
+	    av_dict_set(&ctx->metadata, "rating", rating, 0);
+	    DPRINTF(E_LOG, L_WEB, "updating rating to %s on '%s'\n", rating, dbmfi->path);
+
+	    char  dest[PATH_MAX];
+	    sprintf(dest, "%s-%d.rating", ctx->url, getpid());
+
+	    if ( (ret = _metaclone(ctx, dest)) == 0)
+	    {
+		ret = rename(dest, ctx->url);
+		if (ret < 0) {
+		    DPRINTF(E_LOG, L_WEB, "failed to replace library rating file '%s' with temp '%s' - %s\n", ctx->url, dest, strerror(errno));
+		    unlink(dest);
+		    ret = EACCES;
+		}
+		else {
+		    ++*updated;
+		}
+	    }
+	    else {
+		unlink(dest);
+		ret = EIO;
+	    }
+	}
+    }
+    avformat_close_input(&ctx);
+    return ret;
+}
+
+static int
+search_sync_rated_tracks(json_object *reply, struct httpd_request *hreq, unsigned* updated, unsigned* updated_ttl, unsigned* total)
 {
   struct smartpl smartpl_expression;
-  json_object *reply;
-  int ret = 0;
+  json_object *type;
+  json_object *items;
+  json_object *failed_items;
+  struct query_params query_params;
+  int ret;
 
-  reply = NULL;
+  memset(&query_params, 0, sizeof(struct query_params));
 
   memset(&smartpl_expression, 0, sizeof(struct smartpl));
   ret = smartpl_query_parse_string(&smartpl_expression, "\"query\" { rating > 0 and data_kind is files }" );
   if (ret < 0)
-    goto error;
+    goto out;
+
+  type = json_object_new_object();
+  json_object_object_add(reply, "tracks", type);
+  items = json_object_new_array();
+  json_object_object_add(type, "items", items);
+  failed_items = json_object_new_array();
+  json_object_object_add(type, "failed", failed_items);
+
+  query_params.type = Q_ITEMS;
+  query_params.sort = S_NAME_ARTIST_ALBUM;
+
+  ret = query_params_limit_set(&query_params, hreq);
+  if (ret < 0)
+    goto out;
+
+  query_params.filter = strdup(smartpl_expression.query_where);
+  query_params.order = safe_strdup(smartpl_expression.order);
+
+  ret = db_query_start(&query_params);
+  if (ret < 0)
+    goto out;
+
+  struct db_media_file_info dbmfi;
+  json_object *item;
+  while ((ret = db_query_fetch_file(&dbmfi, &query_params)) == 0)
+    {
+      ret = track_sync_rating(&dbmfi, updated, updated_ttl);
+      item = track_to_json(&dbmfi);
+      if (ret == 0) {
+	  json_object_array_add(items, item);
+      }
+      else {
+	  safe_json_add_string(item, "error", strerror(ret));
+	  json_object_array_add(failed_items, item);
+      }
+    }
+
+  *total = query_params.results;
+
+  json_object_object_add(type, "total", json_object_new_int(*total));
+  json_object_object_add(type, "updated", json_object_new_int(*updated));
+  json_object_object_add(type, "updated_total", json_object_new_int(*updated_ttl));
+
+ out:
+  db_query_end(&query_params);
+  free_query_params(&query_params, 1);
+  free_smartpl(&smartpl_expression, 1);
+
+  return ret;
+}
+
+
+static int
+jsonapi_reply_library_sync_rating(struct httpd_request *hreq)
+{
+  json_object *reply;
+  unsigned  updated = 0;
+  unsigned  updated_ttl = 0;
+  unsigned  n = 0;
+  int ret = 0;
 
   reply = json_object_new_object();
 
-  ret = search_tracks(reply, hreq, NULL, &smartpl_expression, MEDIA_KIND_MUSIC);
+  DPRINTF(E_DBG, L_WEB, "disabling library scanning for rated tracks sync\n");
+  cfg_setbool(cfg_getsec(cfg, "library"), "filescan_disable", true);
+  library_deinit();
+
+  ret = search_sync_rated_tracks(reply, hreq, &updated, &updated_ttl, &n);
   if (ret < 0)
     goto error;
 
@@ -5320,102 +5441,13 @@ jsonapi_reply_library_sync_rating(struct httpd_request *hreq)
   if (ret < 0)
     DPRINTF(E_LOG, L_WEB, "sync rating tracks: Couldn't add tracks to response buffer.\n");
 
-
-  // this is ugly but it'll do for now
-  struct json_object* tracks = json_object_object_get(reply, "tracks");
-  if (tracks)
-  {
-      struct json_object* items = json_object_object_get(tracks, "items");
-      if (items)
-      {
-	  const int  n = json_object_array_length(items);
-	  DPRINTF(E_DBG, L_WEB, "rated tracks in library=%d\n", n);
-          if (n == 0) {
-	      goto error;
-	  }
-
-	  DPRINTF(E_DBG, L_WEB, "disabling library scanning for rated tracks sync\n");
-	  cfg_setbool(cfg_getsec(cfg, "library"), "filescan_disable", true);
-	  library_deinit();
-
-	  unsigned  updated = 0;
-	  unsigned  updated_ttl = 0;
-
-	  for (int i=0; i<n; ++i)
-	  {
-	      struct json_object*  track;
-	      struct json_object*  path;
-	      struct json_object*  rating;
-
-	      track = json_object_array_get_idx(items, i);
-	      if ( (path = json_object_object_get(track, "path")) == NULL ) {
-		  DPRINTF(E_LOG, L_WEB, "Bug: unable to obtain rated track path!\n");
-	          continue;
-	      }
-
-	      const char*  path_str = json_object_get_string(path);
-	      rating = json_object_object_get(track, "rating");
-	      if (!rating) {
-		  DPRINTF(E_LOG, L_WEB, "Bug: unable to obtain rated track rating!\n");
-		  continue;
-	      }
-
-	      AVFormatContext*  ctx = NULL;
-	      if ( (ret = avformat_open_input(&ctx, path_str, NULL, NULL)) != 0) {
-		  DPRINTF(E_LOG, L_WEB, "failed to open library file for rating metadata update '%s' - %s\n", path_str, av_err2str(ret));
-		  continue;
-	      }
-
-	      const int  rating_int = json_object_get_int(rating);
-	      char rating_str[5] = { '\0' };
-	      safe_snprintf_cat(rating_str, 4, "%d", rating_int);
-
-	      // save a potential write
-	      AVDictionaryEntry*  entry = av_dict_get(ctx->metadata, "rating", NULL, 0);
-	      if (entry == NULL || (entry && entry->value == NULL) || (entry && strcmp(entry->value, rating_str) != 0) ) {
-		  ++updated_ttl;
-
-		  // ensure that we have write permissions on the library file to overwrite it with the updated rated data
-		  if (access(path_str, W_OK) != 0)  {
-		      DPRINTF(E_WARN, L_WEB, "no write permissions to update rating metadata on '%s' - skipping\n", path_str);
-		  }
-		  else
-		  {
-		      av_dict_set(&ctx->metadata, "rating", rating_str, 0);
-		      DPRINTF(E_LOG, L_WEB, "updating rating to %s on '%s'\n", rating_str, path_str);
-
-		      char  dest[PATH_MAX];
-		      sprintf(dest, "%s-%d.rating", ctx->url, getpid());
-
-		      if ( (ret = _metaclone(ctx, dest)) == 0)
-		      {
-			  // TODO - disable and then re-enable intofiy
-			  ret = rename(dest, ctx->url);
-			  if (ret < 0) {
-			      DPRINTF(E_LOG, L_WEB, "failed to replace library rating file '%s' with temp '%s' - %s\n", ctx->url, dest, strerror(errno));
-			      unlink(dest);
-			  }
-			  else {
-			      ++updated;
-			  }
-		      }
-		      else {
-			  unlink(dest);
-		      }
-		  }
-	      }
-	      avformat_close_input(&ctx);
-	  }
-	  DPRINTF(E_DBG, L_WEB, "re-enabling library post rated tracks sync\n");
-	  library_init();
-
-	  DPRINTF(E_LOG, L_WEB, "rating updated / changed  / rated library files:  %d/%d/%d\n", updated, updated_ttl, n);
-      }
-  }
-
  error:
   jparse_free(reply);
-  free_smartpl(&smartpl_expression, 1);
+
+  DPRINTF(E_DBG, L_WEB, "re-enabling library post rated tracks sync\n");
+  library_init();
+
+  DPRINTF(E_LOG, L_WEB, "rating updated / changed  / rated library files:  %d/%d/%d\n", updated, updated_ttl, n);
 
   if (ret < 0)
     return HTTP_INTERNAL;
