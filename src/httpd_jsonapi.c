@@ -5300,6 +5300,11 @@ static int
 track_sync_rating(const struct db_media_file_info *dbmfi, unsigned *updated, unsigned *updated_ttl)
 {
     int ret;
+    if (strcmp(dbmfi->codectype, "mp4a") == 0) {
+        // unsupported rating, dont bother - could use stream[x]]->codecpar but this is already known in db and via dbmfi
+	DPRINTF(E_WARN, L_WEB, "unsupported metadata for 'rating' on '%s' - skipping\n", dbmfi->path);
+	return ENOEXEC;
+    }
 
     AVFormatContext*  ctx = NULL;
     if ( (ret = avformat_open_input(&ctx, dbmfi->path, NULL, NULL)) != 0) {
