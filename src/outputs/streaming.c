@@ -282,6 +282,9 @@ wanted_add(struct streaming_wanted **wanted, enum player_format format, struct m
   struct streaming_wanted *w;
 
   w = wanted_new(format, quality);
+  if (w == NULL)
+    return w;
+
   w->next = *wanted;
   *wanted = w;
 
@@ -625,7 +628,14 @@ streaming_start(struct output_device *device, int callback_id)
   pthread_mutex_lock(&streaming_wanted_lck);
   w = wanted_find_byformat(streaming.wanted, device->format, device->quality);
   if (!w)
-    w = wanted_add(&streaming.wanted, device->format, device->quality);
+    {
+      w = wanted_add(&streaming.wanted, device->format, device->quality);
+      if (!w)
+	{
+	  DPRINTF(E_LOG, L_STREAMING, "Cannot add streaming session for format %d and quality %d/%d/%d\n", device->format, device->quality.sample_rate, device->quality.bits_per_sample, device->quality.channels);
+	  goto error;
+	}
+    }
   ret = wanted_session_add(&device->audio_fd, &device->metadata_fd, w);
   if (ret < 0)
     goto error;
@@ -639,7 +649,7 @@ streaming_start(struct output_device *device, int callback_id)
   return 0;
 
  error:
-  if (w->num_sessions == 0)
+  if (w && w->num_sessions == 0)
     wanted_remove(&streaming.wanted, w);
   pthread_mutex_unlock(&streaming_wanted_lck);
   return -1;
