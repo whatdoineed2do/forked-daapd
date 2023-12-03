@@ -974,9 +974,10 @@ filescanner_ffmpeg_write_rating(const struct media_file_info *mfi)
   if ( (ret = avformat_open_input(&ctx, mfi->path, NULL, NULL)) != 0)
     {
       DPRINTF(E_LOG, L_SCAN, "Failed to open library file for rating metadata update '%s' - %s\n", mfi->path, av_err2str(ret));
-      return ENOENT;
+      return -1;
     }
 
+  ret = -1;
   for (i=0; i<ctx->nb_streams && !supported; ++i)
   {
       if (ctx->streams[i]->codecpar->codec_type != AVMEDIA_TYPE_AUDIO)
@@ -1005,7 +1006,10 @@ filescanner_ffmpeg_write_rating(const struct media_file_info *mfi)
   // Save a potential write if metadata on the underlying file matches requested rating
   entry = av_dict_get(ctx->metadata, "rating", NULL, 0);
   if ( !(entry == NULL || (entry && entry->value == NULL) || (entry && strcmp(entry->value, rating) != 0) ))
-    goto end;
+    {
+      ret = 0;
+      goto end;
+    }
 
   av_dict_set(&ctx->metadata, "rating", rating, 0);
   DPRINTF(E_LOG, L_SCAN, "Updating rating to %s on '%s'\n", rating, mfi->path);
@@ -1018,6 +1022,7 @@ filescanner_ffmpeg_write_rating(const struct media_file_info *mfi)
   if (fd < 0)
     {
       DPRINTF(E_WARN, L_SCAN, "Failed to create temp rating file '%s - %s'\n", new_rating_file, strerror(errno));
+      ret = -1;
       goto end;
     }
 
@@ -1028,11 +1033,11 @@ filescanner_ffmpeg_write_rating(const struct media_file_info *mfi)
     {
       DPRINTF(E_LOG, L_SCAN, "Failed to replace library rating file '%s' with temp '%s' - %s\n", ctx->url, new_rating_file, strerror(errno));
       unlink(new_rating_file);
-      ret = EACCES;
     }
 
 end:
   avformat_close_input(&ctx);
-  close(fd);
+  if (fd)
+    close(fd);
   return ret;
 }
