@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      - 'web-src/**'
+      - 'web-src.v3/**'
 
 jobs:
   build:
@@ -14,13 +14,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        working-directory: web-src
+        working-directory: web-src.v3
         run: npm install
 
       # Build for production with minification (will update web interface
       # in "../htdocs")
       - name: Build htdocs
-        working-directory: web-src
+        working-directory: web-src.v3
         run: npm run build
 
       - name: Count changed files
