@@ -183,18 +183,6 @@ virtual_path_make(char *virtual_path, int virtual_path_len, const char *path)
   return 0;
 }
 
-static const char *
-virtual_path_to_path(const char *virtual_path)
-{
-  if (strncmp(virtual_path, "/file:", strlen("/file:")) == 0)
-    return virtual_path + strlen("/file:");
-
-  if (strncmp(virtual_path, "file:", strlen("file:")) == 0)
-    return virtual_path + strlen("file:");
-
-  return NULL;
-}
-
 static int
 get_parent_dir_id(const char *path)
 {
@@ -1850,6 +1838,18 @@ queue_item_stream_add(const char *path, int position, char reshuffle, uint32_t i
   free_queue_item(&qi, 1);
   free_mfi(&mfi, 1);
   return -1;
+}
+
+static const char *
+virtual_path_to_path(const char *virtual_path)
+{
+  if (strncmp(virtual_path, "/file:", strlen("/file:")) == 0)
+    return virtual_path + strlen("/file:");
+
+  if (strncmp(virtual_path, "file:", strlen("file:")) == 0)
+    return virtual_path + strlen("file:");
+
+  return NULL;
 }
 
 static int
