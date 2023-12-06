@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - _testing
     paths:
       - 'web-src.v3/**'
 
