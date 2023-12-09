@@ -1,51 +1,47 @@
 <template>
-  <div
-    v-for="(track, index) in tracks"
-    :id="'index_' + track.title_sort.charAt(0).toUpperCase()"
-    :key="track.id"
-    class="media"
-    :class="{ 'with-progress': show_progress }"
-    @click="play_track(index, track)"
-  >
-    <figure v-if="show_icon" class="media-left fd-has-action">
-      <span class="icon">
-        <mdicon name="file-outline" size="16" />
-      </span>
-    </figure>
-    <div class="media-content fd-has-action is-clipped">
-      <h1
-        class="title is-6"
-        :class="{
-          'has-text-grey':
-	    track.usermark > 0 ||
-            track.media_kind === 'podcast' && track.play_count > 0,
-	  'is-italic':
-	    track.usermark > 0
-        }"
-      >
-        {{ track.title }}
-      </h1>
-      <h2 class="subtitle is-7 has-text-grey">
-        <b>{{ track.artist }}</b>
-      </h2>
-      <h2 class="subtitle is-7 has-text-grey">
-        {{ track.album }}
-      </h2>
-      <progress-bar
-        v-if="show_progress"
-        :max="track.length_ms"
-        :value="track.seek_ms"
+  <template v-for="track in tracks" :key="track.itemId">
+    <div v-if="!track.isItem" class="mt-6 mb-5 py-2">
+      <span
+        :id="'index_' + track.groupKey"
+        class="tag is-info is-light is-small has-text-weight-bold"
+        v-text="track.groupKey"
       />
     </div>
-    <div class="media-right">
-      <a @click.prevent.stop="open_dialog(track)">
-        <span class="icon has-text-dark"
-          ><mdicon name="dots-vertical" size="16"
-        /></span>
-      </a>
+    <div
+      v-else
+      class="media is-align-items-center"
+      :class="{ 'with-progress': show_progress }"
+      @click="play_track(track.item)"
+    >
+      <figure v-if="show_icon" class="media-left is-clickable">
+        <mdicon class="icon" name="file-outline" size="16" />
+      </figure>
+      <div class="media-content is-clickable is-clipped">
+        <h1
+          class="title is-6"
+          :class="{
+            'has-text-grey':
+              track.item.media_kind === 'podcast' && track.item.play_count > 0,
+	    'is-italic':
+	      track.item.usermark > 0
+          }"
+          v-text="track.item.title"
+        />
+        <h2 class="subtitle is-7 has-text-grey" v-text="track.item.artist" />
+        <h2 class="subtitle is-7 has-text-grey" v-text="track.item.album" />
+        <progress-bar
+          v-if="show_progress"
+          :max="track.item.length_ms"
+          :value="track.item.seek_ms"
+        />
+      </div>
+      <div class="media-right">
+        <a @click.prevent.stop="open_dialog(track.item)">
+          <mdicon class="icon has-text-dark" name="dots-vertical" size="16" />
+        </a>
+      </div>
     </div>
-  </div>
-
+  </template>
   <teleport to="#app">
     <modal-dialog-track
       :show="show_details_modal"
@@ -77,11 +73,19 @@ export default {
   },
 
   methods: {
-    play_track: function (position, track) {
+    play_track(track) {
       if (this.uris) {
-        webapi.player_play_uri(this.uris, false, position)
+        webapi.player_play_uri(
+          this.uris,
+          false,
+          this.tracks.items.indexOf(track)
+        )
       } else if (this.expression) {
-        webapi.player_play_expression(this.expression, false, position)
+        webapi.player_play_expression(
+          this.expression,
+          false,
+          this.tracks.items.indexOf(track)
+        )
       } else {
         webapi.player_play_uri(track.uri, false)
       }
@@ -91,7 +95,7 @@ export default {
       this.$emit('usermark-updated', args)
     },
 
-    open_dialog: function (track) {
+    open_dialog(track) {
       this.selected_track = track
       this.show_details_modal = true
     }

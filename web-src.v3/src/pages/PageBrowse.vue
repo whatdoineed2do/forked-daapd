@@ -31,7 +31,7 @@
         <p class="heading">Tracks</p>
       </template>
       <template #content>
-        <list-tracks :tracks="recently_added_tracks.items" @usermark-updated="usermark_upd_added" />
+        <list-tracks :tracks="recently_added_tracks" @usermark-updated="usermark_upd_added" />
       </template>
       <template #footer>
         <nav class="level">
@@ -53,7 +53,7 @@
         <p class="heading">tracks</p>
       </template>
       <template #content>
-        <list-tracks :tracks="recently_played.items" @usermark-updated="usermark_upd_played" />
+        <list-tracks :tracks="recently_played" @usermark-updated="usermark_upd_played" />
       </template>
       <template #footer>
         <nav class="level">
@@ -72,11 +72,11 @@
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
+import { GroupByList } from '@/lib/GroupByList'
 import TabsMusic from '@/components/TabsMusic.vue'
 import ListAlbums from '@/components/ListAlbums.vue'
 import ListTracks from '@/components/ListTracks.vue'
 import webapi from '@/webapi'
-import { GroupByList } from '@/lib/GroupByList'
 
 const dataObject = {
   load: function (to) {
@@ -104,8 +104,8 @@ const dataObject = {
 
   set: function (vm, response) {
     vm.recently_added = new GroupByList(response[0].data.albums)
-    vm.recently_played = response[1].data.tracks
-    vm.recently_added_tracks = response[2].data.tracks
+    vm.recently_played = new GroupByList(response[1].data.tracks)
+    vm.recently_added_tracks = new GroupByList(response[2].data.tracks)
   }
 }
 
