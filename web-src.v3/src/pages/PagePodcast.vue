@@ -61,6 +61,7 @@
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
+import { GroupByList } from '@/lib/GroupByList'
 import ListTracks from '@/components/ListTracks.vue'
 import ModalDialogAlbum from '@/components/ModalDialogAlbum.vue'
 import ModalDialog from '@/components/ModalDialog.vue'
@@ -76,7 +77,7 @@ const dataObject = {
 
   set: function (vm, response) {
     vm.album = response[0].data
-    vm.tracks = response[1].data.tracks.items
+    vm.tracks = new GroupByList(response[1].data.tracks)
   }
 }
 
@@ -105,18 +106,16 @@ export default {
   data() {
     return {
       album: {},
-      tracks: [],
-
+      rss_playlist_to_remove: {},
       show_album_details_modal: false,
-
       show_remove_podcast_modal: false,
-      rss_playlist_to_remove: {}
+      tracks: new GroupByList()
     }
   },
 
   computed: {
     new_tracks() {
-      return this.tracks.filter((track) => track.play_count === 0).length
+      return this.tracks.items.filter((track) => track.play_count === 0).length
     }
   },
 
@@ -127,7 +126,9 @@ export default {
 
     open_remove_podcast_dialog: function () {
       this.show_album_details_modal = false
-      webapi.library_track_playlists(this.tracks[0].id).then(({ data }) => {
+      webapi
+         .library_track_playlists(this.tracks[0].id)
+         .then(({ data }) => {
         const rssPlaylists = data.items.filter((pl) => pl.type === 'rss')
         if (rssPlaylists.length !== 1) {
           this.$store.dispatch('add_notification', {
@@ -153,7 +154,7 @@ export default {
 
     reload_tracks: function () {
       webapi.library_podcast_episodes(this.album.id).then(({ data }) => {
-        this.tracks = data.tracks.items
+        this.tracks = new GroupByList(data.tracks)
       })
     }
   }

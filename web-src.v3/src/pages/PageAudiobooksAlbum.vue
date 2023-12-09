@@ -48,6 +48,7 @@
 
 <script>
 import ContentWithHero from '@/templates/ContentWithHero.vue'
+import { GroupByList } from '@/lib/GroupByList'
 import ListTracks from '@/components/ListTracks.vue'
 import ModalDialogAlbum from '@/components/ModalDialogAlbum.vue'
 import CoverArtwork from '@/components/CoverArtwork.vue'
@@ -63,7 +64,7 @@ const dataObject = {
 
   set: function (vm, response) {
     vm.album = response[0].data
-    vm.tracks = response[1].data.items
+    vm.tracks = new GroupByList(response[1].data)
   }
 }
 
@@ -87,7 +88,7 @@ export default {
   data() {
     return {
       album: {},
-      tracks: [],
+      tracks: new GroupByList(),
 
       show_album_details_modal: false
     }
