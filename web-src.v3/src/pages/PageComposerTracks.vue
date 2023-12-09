@@ -34,7 +34,7 @@
           >
           | {{ composer.track_count }} tracks
         </p>
-        <list-tracks :tracks="tracks" :expression="play_expression" />
+        <list-tracks :tracks="tracks" :expression="play_expression" @usermark-updated="usermark_upd"/>
         <modal-dialog-composer
           :show="show_composer_details_modal"
           :composer="composer"
@@ -125,6 +125,11 @@ export default {
         params: { composer: this.composer.name }
       })
     },
+
+    usermark_upd: function (args) {
+      this.tracks.items.find(e => e.id === args.track_id).usermark = args.value
+    },
+
 
     play: function () {
       webapi.player_play_expression(this.play_expression, true)
