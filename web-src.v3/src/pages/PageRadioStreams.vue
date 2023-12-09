@@ -8,7 +8,7 @@
         <p class="heading has-text-centered-mobile">
           {{ tracks.total }} tracks
         </p>
-        <list-tracks :tracks="tracks.items" />
+        <list-tracks :tracks="tracks" />
       </template>
     </content-with-heading>
   </div>
@@ -16,6 +16,7 @@
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
+import { GroupByList } from '@/lib/GroupByList'
 import ListTracks from '@/components/ListTracks.vue'
 import webapi from '@/webapi'
 
@@ -25,7 +26,7 @@ const dataObject = {
   },
 
   set: function (vm, response) {
-    vm.tracks = response.data.tracks
+    vm.tracks = new GroupByList(response.data.tracks)
   }
 }
 
@@ -48,7 +49,7 @@ export default {
 
   data() {
     return {
-      tracks: { items: [] }
+      tracks: new GroupByList()
     }
   }
 }
