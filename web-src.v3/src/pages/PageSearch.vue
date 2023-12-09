@@ -53,7 +53,7 @@
         <p class="title is-4">Tracks</p>
       </template>
       <template #content>
-        <list-tracks :tracks="tracks.items" @usermark-updated="usermark_upd" />
+        <list-tracks :tracks="tracks" @usermark-updated="usermark_upd" />
       </template>
       <template #footer>
         <nav v-if="show_all_tracks_button" class="level">
@@ -261,7 +261,7 @@ export default {
     return {
       search_query: '',
 
-      tracks: { items: [], total: 0 },
+      tracks: new GroupByList(),
       artists: new GroupByList(),
       albums: new GroupByList(),
       composers: new GroupByList(),
@@ -393,7 +393,7 @@ export default {
       }
 
       webapi.search(searchParams).then(({ data }) => {
-        this.tracks = data.tracks ? data.tracks : { items: [], total: 0 }
+        this.tracks = new GroupByList(data.tracks)
         this.artists = new GroupByList(data.artists)
         this.albums = new GroupByList(data.albums)
         this.composers = new GroupByList(data.composers)

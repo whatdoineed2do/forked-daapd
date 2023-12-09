@@ -167,7 +167,7 @@ export default {
         return this.$store.state.tracks_sort
       },
       set(value) {
-        this.$store.commit(types.TRACKS_SORT, value)
+        this.$store.commit(types.ARTIST_TRACKS_SORT, value)
       }
     },
 
