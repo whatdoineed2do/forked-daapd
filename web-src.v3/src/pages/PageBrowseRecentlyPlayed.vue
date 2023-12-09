@@ -8,7 +8,7 @@
         <p class="heading">tracks</p>
       </template>
       <template #content>
-        <list-tracks :tracks="recently_played.items" @usermark-updated="usermark_upd" />
+        <list-tracks :tracks="recently_played" @usermark-updated="usermark_upd" />
       </template>
     </content-with-heading>
   </div>
@@ -16,6 +16,7 @@
 
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
+import { GroupByList } from '@/lib/GroupByList'
 import TabsMusic from '@/components/TabsMusic.vue'
 import ListTracks from '@/components/ListTracks.vue'
 import webapi from '@/webapi'
@@ -31,7 +32,7 @@ const dataObject = {
   },
 
   set: function (vm, response) {
-    vm.recently_played = response.data.tracks
+    vm.recently_played = new GroupByList(response.data.tracks)
   }
 }
 

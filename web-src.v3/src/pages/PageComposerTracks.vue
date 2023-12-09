@@ -2,7 +2,7 @@
   <div>
     <tabs-music />
 
-    <index-list :index="index_list"></index-list>
+    <index-list :index="tracks.indexList"></index-list>
 
   <div>
     <content-with-heading>
@@ -34,7 +34,7 @@
           >
           | {{ composer.track_count }} tracks
         </p>
-        <list-tracks :tracks="tracks.items" :expression="play_expression" />
+        <list-tracks :tracks="tracks" :expression="play_expression" />
         <modal-dialog-composer
           :show="show_composer_details_modal"
           :composer="composer"
@@ -49,6 +49,7 @@
 <script>
 import ContentWithHeading from '@/templates/ContentWithHeading.vue'
 import TabsMusic from '@/components/TabsMusic.vue'
+import { bySortName, byYear, byRating, GroupByList } from '@/lib/GroupByList'
 import ListTracks from '@/components/ListTracks.vue'
 import IndexList from '@/components/IndexList.vue'
 import ModalDialogComposer from '@/components/ModalDialogComposer.vue'
@@ -64,7 +65,7 @@ const dataObject = {
 
   set: function (vm, response) {
     vm.composer = response[0].data
-    vm.tracks = response[1].data.tracks
+    vm.tracks_list = new GroupByList(response[1].data.tracks)
   }
 }
 
@@ -93,23 +94,23 @@ export default {
 
   data() {
     return {
-      tracks: { items: [] },
+      tracks_list: new GroupByList(),
       composer: {},
-
+      groupby_options: [
+        { name: 'Name', options: bySortName('title_sort') }
+      ],
+ 
       show_composer_details_modal: false
     }
   },
 
   computed: {
-    index_list() {
-      return [
-        ...new Set(
-          this.tracks.items.map((track) =>
-            track.title_sort.charAt(0).toUpperCase()
-          )
-        )
-      ]
+    tracks() {
+      this.tracks_list.group(this.groupby_options[0].options)
+
+      return this.tracks_list
     },
+
 
     play_expression() {
       return 'composer is "' + this.composer.name + '" and media_kind is music'
