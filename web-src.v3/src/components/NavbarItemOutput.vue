@@ -21,25 +21,12 @@
             >
               {{ output.name }}
             </p>
-            <Slider
-              v-model="volume"
-              :min="0"
+            <control-slider
+              v-model:value="volume"
               :max="100"
-              :step="1"
-              :tooltips="false"
-              :disabled="!output.selected"
-              :classes="{ target: 'slider' }"
+	      :cursor="cursor"
               @change="set_volume"
             />
-            <!--range-slider
-              class="slider fd-has-action"
-              min="0"
-              max="100"
-              step="1"
-              :disabled="!output.selected"
-              :value="volume"
-              @change="set_volume" >
-            </range-slider-->
           </div>
         </div>
       </div>
@@ -48,18 +35,15 @@
 </template>
 
 <script>
-//import RangeSlider from 'vue-range-slider'
-import Slider from '@vueform/slider'
+import ControlSlider from '@/components/ControlSlider.vue'
 import webapi from '@/webapi'
 
 export default {
   name: 'NavbarItemOutput',
-  components: {
-    //    RangeSlider
-    Slider
-  },
-
   props: ['output'],
+  components: {
+    ControlSlider
+  },
 
   computed: {
     type_class() {
