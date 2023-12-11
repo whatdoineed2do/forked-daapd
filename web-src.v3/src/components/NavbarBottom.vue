@@ -117,13 +117,9 @@
                 <div class="level-item fd-expanded">
                   <div class="fd-expanded">
                     <p class="heading">Volume</p>
-                    <Slider
-                      v-model="player.volume"
-                      :min="0"
+                    <control-slider
+                      v-model:value="player.volume"
                       :max="100"
-                      :step="1"
-                      :tooltips="false"
-                      :classes="{ target: 'slider' }"
                       @change="set_volume"
                     />
                     <!--range-slider
@@ -178,14 +174,11 @@
                         ><span class="is-lowercase">(stream.mp3)</span></a
                       >
                     </p>
-                    <Slider
+                    <control-slider
                       v-model="stream_volume"
-                      :min="0"
-                      :max="100"
-                      :step="1"
-                      :tooltips="false"
                       :disabled="!playing"
-                      :classes="{ target: 'slider' }"
+                      :max="100"
+                      :cursor="cursor"
                       @change="set_stream_volume"
                     />
                     <!--range-slider
@@ -254,13 +247,9 @@
               <div class="level-item fd-expanded">
                 <div class="fd-expanded">
                   <p class="heading">Volume</p>
-                  <Slider
-                    v-model="player.volume"
-                    :min="0"
+                  <control-slider
+                    v-model:value="player.volume"
                     :max="100"
-                    :step="1"
-                    :tooltips="false"
-                    :classes="{ target: 'slider' }"
                     @change="set_volume"
                   />
                   <!--range-slider
@@ -316,25 +305,12 @@
                       ><span class="is-lowercase">(stream.mp3)</span></a
                     >
                   </p>
-                  <Slider
-                    v-model="stream_volume"
-                    :min="0"
-                    :max="100"
-                    :step="1"
-                    :tooltips="false"
+                  <control-slider
+                    v-model:value="stream_volume"
                     :disabled="!playing"
-                    :classes="{ target: 'slider' }"
+                    :max="100"
                     @change="set_stream_volume"
                   />
-                  <!-- range-slider
-                    class="slider fd-has-action"
-                    min="0"
-                    max="100"
-                    step="1"
-                    :disabled="!playing"
-                    :value="stream_volume"
-                    @change="set_stream_volume">
-                  </range-slider-->
                 </div>
               </div>
             </div>
@@ -346,7 +322,7 @@
 </template>
 
 <script>
-import webapi from '@/webapi'
+import * as types from '@/store/mutation_types'
 import _audio from '@/audio'
 import NavbarItemLink from './NavbarItemLink.vue'
 import NavbarItemOutput from './NavbarItemOutput.vue'
@@ -358,17 +334,15 @@ import PlayerButtonConsume from '@/components/PlayerButtonConsume.vue'
 import PlayerButtonRepeat from '@/components/PlayerButtonRepeat.vue'
 import PlayerButtonSeekBack from '@/components/PlayerButtonSeekBack.vue'
 import PlayerButtonSeekForward from '@/components/PlayerButtonSeekForward.vue'
-//import RangeSlider from 'vue-range-slider'
-import Slider from '@vueform/slider'
-import * as types from '@/store/mutation_types'
+import ControlSlider from '@/components/ControlSlider.vue'
+import webapi from '@/webapi'
 
 export default {
   name: 'NavbarBottom',
   components: {
+    ControlSlider,
     NavbarItemLink,
     NavbarItemOutput,
-    //RangeSlider,
-    Slider,
     PlayerButtonPlayPause,
     PlayerButtonNext,
     PlayerButtonPrevious,
