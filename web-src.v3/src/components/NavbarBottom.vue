@@ -120,16 +120,8 @@
                     <control-slider
                       v-model:value="player.volume"
                       :max="100"
-                      @change="set_volume"
+                      @change="change_volume"
                     />
-                    <!--range-slider
-                      class="slider fd-has-action"
-                      min="0"
-                      max="100"
-                      step="1"
-                      :value="player.volume"
-                      @change="set_volume">
-                    </range-slider-->
                   </div>
                 </div>
               </div>
@@ -179,17 +171,8 @@
                       :disabled="!playing"
                       :max="100"
                       :cursor="cursor"
-                      @change="set_stream_volume"
+                      @change="change_stream_volume"
                     />
-                    <!--range-slider
-                      class="slider fd-has-action"
-                      min="0"
-                      max="100"
-                      step="1"
-                      :disabled="!playing"
-                      :value="stream_volume"
-                      @change="set_stream_volume">
-                    </range-slider-->
                   </div>
                 </div>
               </div>
@@ -250,16 +233,8 @@
                   <control-slider
                     v-model:value="player.volume"
                     :max="100"
-                    @change="set_volume"
+                    @change="change_volume"
                   />
-                  <!--range-slider
-                    class="slider fd-has-action"
-                    min="0"
-                    max="100"
-                    step="1"
-                    :value="player.volume"
-                    @change="set_volume">
-                  </range-slider-->
                 </div>
               </div>
             </div>
@@ -309,7 +284,8 @@
                     v-model:value="stream_volume"
                     :disabled="!playing"
                     :max="100"
-                    @change="set_stream_volume"
+		    :cursor="cursor"
+                    @change="change_stream_volume"
                   />
                 </div>
               </div>
@@ -335,6 +311,7 @@ import PlayerButtonRepeat from '@/components/PlayerButtonRepeat.vue'
 import PlayerButtonSeekBack from '@/components/PlayerButtonSeekBack.vue'
 import PlayerButtonSeekForward from '@/components/PlayerButtonSeekForward.vue'
 import ControlSlider from '@/components/ControlSlider.vue'
+import { mdiCancel } from '@mdi/js'
 import webapi from '@/webapi'
 
 export default {
@@ -355,6 +332,7 @@ export default {
 
   data() {
     return {
+      cursor: mdiCancel,
       old_volume: 0,
 
       playing: false,
@@ -437,16 +415,13 @@ export default {
       this.show_outputs_menu = false
     },
 
-    set_volume: function (newVolume) {
-      webapi.player_volume(newVolume)
+    change_volume() {
+      webapi.player_volume(this.player.volume)
     },
 
-    toggle_mute_volume: function () {
-      if (this.player.volume > 0) {
-        this.set_volume(0)
-      } else {
-        this.set_volume(this.old_volume)
-      }
+    toggle_mute_volume() {
+      this.player.volume = this.player.volume > 0 ? 0 : this.old_volume
+      this.change_volume()
     },
 
     setupAudio: function () {
@@ -502,8 +477,7 @@ export default {
       return this.playChannel()
     },
 
-    set_stream_volume: function (newVolume) {
-      this.stream_volume = newVolume
+    change_stream_volume() {
       _audio.setVolume(this.stream_volume / 100)
     }
   }
