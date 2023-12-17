@@ -64,6 +64,8 @@ export default {
         return 'cast'
       } else if (this.output.type === 'fifo') {
         return 'pipe'
+      } else if (this.output.type === 'RCP/SoundBridge') {
+        return 'cast-audio'
       }
       return 'server'
     }
