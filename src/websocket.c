@@ -464,7 +464,7 @@ logger_libwebsockets(int level, const char *line)
         break;
     }
 
-  DPRINTF(severity, L_WEB, "LWS %s", line);
+  DPRINTF(severity, L_WEB, "LWS %s\n", line);
 }
 
 int
