@@ -13,7 +13,7 @@
         >{{ track.groupKey }}</span
       >
     </div>
-    <div v-else-if="track.isItem" class="media" @click="play_track(index, track)">
+    <div v-else-if="track.isItem" class="media" @click="play_track(track.item)">
       <figure v-if="show_icon" class="media-left fd-has-action">
         <span class="icon">
           <mdicon name="file-outline" size="16" />
@@ -99,11 +99,19 @@ export default {
   },
 
   methods: {
-    play_track: function (position, track) {
+    play_track: function (track) {
       if (this.uris) {
-        webapi.player_play_uri(this.uris, false, position)
+        webapi.player_play_uri(
+          this.uris,
+          false,
+          this.tracks.items.indexOf(track)
+        )
       } else if (this.expression) {
-        webapi.player_play_expression(this.expression, false, position)
+        webapi.player_play_expression(
+          this.expression,
+          false,
+          this.tracks.items.indexOf(track)
+        )
       } else {
        webapi.player_play_uri(track.item.uri, false)
       }
