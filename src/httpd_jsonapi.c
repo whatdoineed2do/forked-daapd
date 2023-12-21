@@ -2519,14 +2519,6 @@ jsonapi_reply_queue_tracks_add(struct httpd_request *hreq)
 	ret = queue_tracks_add_byexpression(param_expression, status.shuffle, status.item_id, pos, -1, &total_count, &new_item_id);
     }
 
-  if (ret == 0)
-    {
-      reply = json_object_new_object();
-      json_object_object_add(reply, "count", json_object_new_int(total_count));
-
-      ret = evbuffer_add_printf(hreq->out_body, "%s", json_object_to_json_string(reply));
-      jparse_free(reply);
-    }
   if (ret < 0)
     return HTTP_INTERNAL;
 
