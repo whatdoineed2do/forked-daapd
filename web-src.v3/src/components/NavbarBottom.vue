@@ -37,7 +37,6 @@
 
       <!-- Skip previous (not visible on "now playing" page) -->
       <player-button-previous
-        v-if="is_now_playing_page"
         class="navbar-item fd-margin-left-auto"
         :icon_size="24"
       />
@@ -61,7 +60,6 @@
       />
       <!-- Skip next (not visible on "now playing" page) -->
       <player-button-next
-        v-if="is_now_playing_page"
         class="navbar-item"
         :icon_size="24"
       />
