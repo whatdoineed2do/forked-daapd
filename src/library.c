@@ -680,6 +680,7 @@ item_attrib_save(void *arg, int *retval)
 
       case LIBRARY_ATTRIB_USERMARK:
 	mfi->usermark = param->value;
+	mfi->time_modified = time(NULL);
 	break;
 
       case LIBRARY_ATTRIB_PLAY_COUNT:
