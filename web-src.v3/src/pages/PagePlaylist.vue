@@ -81,7 +81,7 @@ export default {
   computed: {
     uris() {
       if (this.playlist.random) {
-        return this.tracks.map((a) => a.uri).join(',')
+        return this.tracks.items.map((a) => a.uri).join(',')
       }
       return this.playlist.uri
     }
