@@ -353,17 +353,17 @@ export default {
 
   methods: {
     search: function (route) {
-      if (!route.query.query || route.query.query === '') {
-        this.search_query = ''
+      this.search_query = route.query.query?.trim()
+      if (!this.search_query) {
         this.$refs.search_field.focus()
         return
       }
 
-      this.search_query = route.query.query
+      route.query.query = this.search_query
       this.searchMusic(route.query)
       this.searchAudiobooks(route.query)
       this.searchPodcasts(route.query)
-      this.$store.commit(types.ADD_RECENT_SEARCH, route.query.query)
+      this.$store.commit(types.ADD_RECENT_SEARCH, this.search_query)
     },
 
     searchMusic: function (query) {
