@@ -7403,7 +7403,7 @@ db_backup(void)
 	  if (realpath(backup_dir, resolved_bp) == NULL)
 	    {
 	      DPRINTF(E_LOG, L_DB, "Failed to resolve real dir of backup path (%s): %s\n", backup_path, strerror(errno));
-	      goto error;
+	      return -1;
 	    }
 
 	  // recreate the full path
@@ -7412,7 +7412,7 @@ db_backup(void)
       else
 	{
 	  DPRINTF(E_LOG, L_DB, "Failed to resolve real path of backup path (%s): %s\n", backup_path, strerror(errno));
-	  goto error;
+	  return -1;
 	}
     }
 
