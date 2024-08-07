@@ -7,7 +7,7 @@
   <div>
     <content-with-heading>
       <template #options>
-        <index-button-list :index="index_list" />
+        <index-button-list :index="tracks.indexList" />
 	<div class="columns">
 	  <div class="column">
 	    <p class="heading" style="margin-bottom: 24px">Sort by</p>
@@ -170,16 +170,6 @@ export default {
 
     track_uris() {
       return this.tracks.items.map((a) => a.uri).join(',')
-    },
-
-    index_list() {
-      return [
-        ...new Set(
-          this.tracks.items.map((track) =>
-            track.title_sort.charAt(0).toUpperCase()
-          )
-        )
-      ]
     },
 
     expression() {
