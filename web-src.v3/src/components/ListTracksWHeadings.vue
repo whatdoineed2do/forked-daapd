@@ -1,7 +1,7 @@
 <template>
   <template
     v-for="(track, index) in tracks"
-    :key="track.item.id"
+    :key="(track && track.isItem) ? ('item-' + track.item.id) : ('group-' + (track.groupKey || index))"
     class="media"
     :class="{ 'with-progress': show_progress }"
   >
@@ -97,6 +97,35 @@ export default {
       selected_track: {}
     }
   },
+
+  /*
+  watch: {
+    tracks: {
+      handler(newVal) {
+        try {
+          console.debug('[ListTracksWHeadings] tracks changed', {
+            isArray: Array.isArray(newVal),
+            hasItems: newVal && newVal.items && Array.isArray(newVal.items),
+            itemsLength: newVal && newVal.items ? newVal.items.length : undefined,
+            count: newVal && newVal.count,
+            indexList: newVal && newVal.indexList
+          })
+        } catch (e) {
+          console.debug('[ListTracksWHeadings] tracks watch error', e)
+        }
+      },
+      deep: false
+    }
+  },
+
+  mounted() {
+    try {
+      console.debug('[ListTracksWHeadings] mounted tracks', this.tracks)
+    } catch (e) {
+      console.debug('[ListTracksWHeadings] mounted log error', e)
+    }
+  },
+   */
 
   methods: {
     play_track: function (track) {
