@@ -132,9 +132,14 @@ export default createStore({
         (elem) => elem.name === categoryName
       )
       if (!category) {
-        return {}
+        // Return a stable shape so callers can safely access `.value`
+        return { value: null }
       }
-      return category.options.find((elem) => elem.name === optionName)
+      // Try to find the option; if missing return a fallback object with
+      // a `value` property to avoid runtime TypeError when callers do
+      // `this.$store.getters.settings_option(...).value`.
+      const option = category.options.find((elem) => elem.name === optionName)
+      return option || { value: null }
     }
   },
 
