@@ -35,16 +35,29 @@ import webapi from '@/webapi'
 import store from '@/store'
 import { byDateSinceToday, GroupByList } from '@/lib/GroupByList'
 
+const CACHE_PREFIX = 'fd.page.recently_added:'
+
 const dataObject = {
   load: function (page = 1) {
     const perPage = store.getters.settings_option_recently_added_limit
     const offset = perPage * (page - 1)
-    console.debug('[PageBrowseRecentlyAddedTracks] dataObject.load', { page, perPage, offset })
     return webapi.search({
       type: 'track',
       expression: 'media_kind is music order by time_added desc',
       limit: perPage,
       offset: offset
+    })
+  },
+
+  // Load the cumulative items for N pages (useful for rehydrating previously requested pages)
+  loadForPages: function (pages = 1) {
+    const perPage = store.getters.settings_option_recently_added_limit
+    const limit = perPage * Math.max(1, pages)
+    return webapi.search({
+      type: 'track',
+      expression: 'media_kind is music order by time_added desc',
+      limit: limit,
+      offset: 0
     })
   },
 
@@ -105,13 +118,13 @@ const dataObject = {
         )
       }
 
-      /*
-      console.debug('[PageBrowseRecentlyAddedTracks] dataObject.set completed', {
-        currentCount: vm.recently_added.count,
-        indexList: vm.recently_added.indexList,
-        groups: Object.keys(vm.recently_added.itemsByGroup || {}).length
-      })
-       */
+      // Persist cache after applying the data so back-navigation can restore it reliably
+      try {
+        if (vm && typeof vm.saveCache === 'function') vm.saveCache()
+      } catch (e) {
+        console.debug('[PageBrowseRecentlyAddedTracks] auto saveCache failed in dataObject.set', e)
+      }
+
     } catch (err) {
       console.error('[PageBrowseRecentlyAddedTracks] dataObject.set error', err)
       throw err
@@ -129,8 +142,84 @@ export default {
   },
 
   beforeRouteEnter(to, from, next) {
+    // Prefer restoring pagination from Vuex so we can re-request the correct
+    // number of items from the backend rather than storing all items in sessionStorage.
+    try {
+      const pages = store.getters.recently_added_pagnation || 1
+      if (pages && pages > 1) {
+        dataObject.loadForPages(pages).then((response) => {
+          next((vm) => {
+            // set pagnation to what the store says and set the returned cumulative items
+            vm.pagnation = pages
+            // Use page=1 when applying the cumulative response so it replaces the list
+            dataObject.set(vm, response, 1)
+            // also persist to sessionStorage as a fallback (non-destructive)
+            try { vm.saveCache() } catch (e) { /* ignore */ }
+          })
+        }).catch((err) => {
+          dataObject.load(1).then((response) => {
+            next((vm) => {
+              dataObject.set(vm, response, 1)
+              vm.pagnation = 1
+              try { vm.saveCache() } catch (e) { /* ignore */ }
+            })
+          }).catch((err2) => {
+            console.error('[PageBrowseRecentlyAddedTracks] beforeRouteEnter load error', err2)
+            next()
+          })
+        })
+        return
+      }
+    } catch (e) {
+      console.debug('[PageBrowseRecentlyAddedTracks] pagination restore failed', e)
+    }
+
+    // fallback to previous behavior: try to restore cache then network
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        const keysToTry = [
+          CACHE_PREFIX + (to.fullPath || ''),
+          CACHE_PREFIX + (to.path || ''),
+          CACHE_PREFIX + 'recently_added'
+        ]
+        let cached = null
+        for (let i = 0; i < keysToTry.length; i++) {
+          try {
+            const v = sessionStorage.getItem(keysToTry[i])
+            if (v) { cached = v; break }
+          } catch (e) {
+            // ignore per-key read errors and continue
+          }
+        }
+
+        if (cached) {
+          const obj = JSON.parse(cached)
+          next((vm) => {
+            vm.pagnation = obj.pagnation || 1
+            const response = { data: { tracks: obj.tracksObj } }
+            try {
+              dataObject.set(vm, response, vm.pagnation)
+            } catch (err) {
+              console.debug('[PageBrowseRecentlyAddedTracks] restore from cache failed, falling back to network', err)
+              dataObject.load(1).then((response2) => {
+                dataObject.set(vm, response2, 1)
+                try { vm.saveCache() } catch (e) { /* ignore */ }
+              }).catch(() => {})
+            }
+          })
+          return
+        }
+      }
+    } catch (e) {
+      console.debug('[PageBrowseRecentlyAddedTracks] cache check failed', e)
+    }
+
     dataObject.load(1).then((response) => {
-      next((vm) => dataObject.set(vm, response, 1))
+      next((vm) => {
+        dataObject.set(vm, response, 1)
+        try { vm.pagnation = 1 } catch (e) { /* ignore */ }
+        try { vm.saveCache() } catch (e) { /* ignore */ }
+      })
     }).catch((err) => {
       console.error('[PageBrowseRecentlyAddedTracks] beforeRouteEnter load error', err)
       next()
@@ -162,10 +251,42 @@ export default {
         args.value
     },
 
+    // Save the current recently_added list and pagnation into sessionStorage so
+    // navigating back to this route can restore the previously loaded pages.
+    saveCache: function () {
+      try {
+        if (typeof sessionStorage === 'undefined') return
+        if (!this.recently_added || !Array.isArray(this.recently_added.items)) return
+        // Use the simple path key (without query/hash) to avoid spurious mismatches
+        const keyPath = (this.$route && (this.$route.path) ? this.$route.path : 'recently_added')
+        const keyFull = (this.$route && (this.$route.fullPath) ? this.$route.fullPath : keyPath)
+        const key = CACHE_PREFIX + (keyFull || keyPath || 'recently_added')
+        const tracksObj = {
+          items: this.recently_added.items,
+          total: this.recently_added.total || (this.recently_added.items ? this.recently_added.items.length : 0),
+          offset: this.recently_added.offset || 0,
+          limit: this.recently_added.limit || -1
+        }
+        const payload = { pagnation: this.pagnation || 1, tracksObj }
+        sessionStorage.setItem(key, JSON.stringify(payload))
+      } catch (e) {
+        console.debug('[PageBrowseRecentlyAddedTracks] saveCache failed', e)
+      }
+    },
+
     load_more: function () {
       this.pagnation = (this.pagnation || 1) + 1
       const page = this.pagnation
       const vm = this
+      // Persist the user's requested pagnation to Vuex so we can re-request it later
+      try {
+        if (this.$store && typeof this.$store.commit === 'function') {
+          this.$store.commit('RECENTLY_ADDED_PAGINATION', page)
+        }
+      } catch (e) {
+        console.debug('[PageBrowseRecentlyAddedTracks] store commit for pagination failed', e)
+      }
+
       //console.debug('[PageBrowseRecentlyAddedTracks] load_more requested', { page })
       dataObject.load(page).then((response) => {
         //console.debug('[PageBrowseRecentlyAddedTracks] load_more response', response)
@@ -192,10 +313,15 @@ export default {
             //console.warn('[PageBrowseRecentlyAddedTracks] load_more incoming items are duplicates', { page, existingCount: existingIds.size, incomingCount: incomingIds.length })
             this.pagnation = Math.max(1, this.pagnation - 1)
             try { store.dispatch('add_notification', { text: 'No new tracks to append', type: 'info', timeout: 1500 }) } catch (e) { console.debug('[PageBrowseRecentlyAddedTracks] notification dispatch failed', e) }
+            // revert the Vuex stored pagination since nothing new was added
+            try { if (this.$store && typeof this.$store.commit === 'function') this.$store.commit('RECENTLY_ADDED_PAGINATION', this.pagnation) } catch (e) { /* ignore */ }
             return
           }
 
           dataObject.set(vm, response, page)
+          // persist cache after successful append so back-navigation can restore it
+          try { this.saveCache() } catch (e) { console.debug('[PageBrowseRecentlyAddedTracks] saveCache failed after load_more', e) }
+
           console.debug('[PageBrowseRecentlyAddedTracks] load_more done', { page, currentCount: vm.recently_added.count })
         } catch (err) {
           console.error('[PageBrowseRecentlyAddedTracks] load_more set error', err)

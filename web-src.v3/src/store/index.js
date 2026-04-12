@@ -140,6 +140,11 @@ export default createStore({
       // `this.$store.getters.settings_option(...).value`.
       const option = category.options.find((elem) => elem.name === optionName)
       return option || { value: null }
+    },
+
+    // Return the last requested pagination (page) for the Recently Added page.
+    recently_added_pagnation: (state) => {
+      return state.recently_added_pagnation || 1
     }
   },
 
@@ -270,6 +275,11 @@ export default createStore({
     },
     [types.UPDATE_DIALOG_SCAN_KIND](state, scanKind) {
       state.update_dialog_scan_kind = scanKind
+    },
+
+    // Persist the last page the user requested for the Recently Added page.
+    [types.RECENTLY_ADDED_PAGINATION](state, page) {
+      state.recently_added_pagnation = page
     }
   },
 
